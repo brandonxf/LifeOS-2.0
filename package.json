@@ -1,0 +1,21 @@
+{
+  "name": "life-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal Life OS — multi-tenant SaaS dashboard to manage all aspects of your life",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --workspace server run dev",
+    "dev:client": "npm --workspace client run dev",
+    "build": "npm --workspace server run build && npm --workspace client run build",
+    "db:push": "npm --workspace server run db:push",
+    "db:seed": "npm --workspace server run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
