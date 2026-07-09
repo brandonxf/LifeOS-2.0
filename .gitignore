@@ -8,3 +8,6 @@ build/
 drizzle/meta/
 coverage/
 .vite/
+
+# PWA dev build output
+dev-dist/

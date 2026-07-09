@@ -12,6 +12,26 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Lee la respuesta y la parsea como JSON de forma segura.
+ * Si el body no es JSON (p. ej. el HTML de "The page could not be found"
+ * que Vercel devuelve cuando /api no está ruteado a un backend), lanza un
+ * ApiError legible en vez del críptico "Unexpected token 'T'".
+ */
+async function parseJsonSafe(res: Response): Promise<any> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    const snippet = text.trim().slice(0, 120);
+    throw new ApiError(
+      res.status,
+      `El servidor no devolvió JSON (¿API mal configurada o backend caído?). Respuesta: "${snippet}"`,
+    );
+  }
+}
+
 let refreshPromise: Promise<boolean> | null = null;
 
 async function doRefresh(): Promise<boolean> {
@@ -30,7 +50,7 @@ async function doRefresh(): Promise<boolean> {
       clear();
       return false;
     }
-    const data = await res.json();
+    const data = await parseJsonSafe(res);
     setSession(data);
     return true;
   } catch {
@@ -78,8 +98,7 @@ export async function api<T = unknown>(path: string, opts: RequestOpts = {}): Pr
     if (ok) return api<T>(path, { ...opts, retry: false });
   }
 
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  const data = await parseJsonSafe(res);
 
   if (!res.ok) {
     throw new ApiError(res.status, data?.error ?? res.statusText, data?.details);
@@ -94,8 +113,7 @@ export async function authApi<T = unknown>(path: string, body: unknown): Promise
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  const data = await parseJsonSafe(res);
   if (!res.ok) throw new ApiError(res.status, data?.error ?? res.statusText, data?.details);
   return data as T;
 }
