@@ -5,7 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Moon, Sun, Monitor, LogOut, User, Crown, Shield, Pencil, KeyRound } from 'lucide-react';
+import { Moon, Sun, Monitor, LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
@@ -16,9 +16,28 @@ import { format, parseISO } from 'date-fns';
 const profileSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(120),
   email: z.string().email('Email no válido'),
+  username: z
+    .string()
+    .regex(/^[a-zA-Z0-9_]{3,30}$/, '3-30 caracteres: letras, números o _')
+    .or(z.literal('')),
   avatar: z.string().url('Debe ser una URL válida').max(2048).or(z.literal('')),
+  bio: z.string().max(500, 'Máximo 500 caracteres').or(z.literal('')),
+  birthDate: z.string().or(z.literal('')),
+  location: z.string().max(120).or(z.literal('')),
+  phone: z.string().max(40).or(z.literal('')),
+  pronouns: z.string().max(40).or(z.literal('')),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
+
+/** Edad en años a partir de una fecha ISO YYYY-MM-DD. */
+function ageFrom(iso: string): number {
+  const b = parseISO(iso);
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age;
+}
 
 const passwordSchema = z
   .object({
@@ -85,13 +104,41 @@ export default function Settings() {
             )}
           </div>
           <div>
-            <p className="text-lg font-semibold">{user?.name}</p>
+            <p className="text-lg font-semibold">
+              {user?.name}
+              {user?.pronouns && <span className="ml-2 text-sm font-normal text-slate-400">({user.pronouns})</span>}
+            </p>
+            {user?.username && <p className="text-sm text-primary">@{user.username}</p>}
             <p className="text-sm text-slate-400">{user?.email}</p>
             <p className="mt-1 text-xs capitalize text-slate-400">
               Miembro desde {user?.createdAt ? format(parseISO(user.createdAt), 'MMMM yyyy') : '—'}
             </p>
           </div>
         </div>
+
+        {user?.bio && <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">{user.bio}</p>}
+
+        {(user?.location || user?.phone || user?.birthDate) && (
+          <div className="mt-4 grid grid-cols-1 gap-2 border-t pt-4 text-sm sm:grid-cols-2">
+            {user?.location && (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                <MapPin className="h-4 w-4 shrink-0" /> {user.location}
+              </div>
+            )}
+            {user?.phone && (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                <Phone className="h-4 w-4 shrink-0" /> {user.phone}
+              </div>
+            )}
+            {user?.birthDate && (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                <Cake className="h-4 w-4 shrink-0" />
+                {format(parseISO(user.birthDate), "d 'de' MMMM yyyy")}
+                <span className="text-slate-400">· {ageFrom(user.birthDate)} años</span>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* Plan */}
@@ -186,7 +233,13 @@ function EditProfileModal({
     defaultValues: {
       name: user?.name ?? '',
       email: user?.email ?? '',
+      username: user?.username ?? '',
       avatar: user?.avatar ?? '',
+      bio: user?.bio ?? '',
+      birthDate: user?.birthDate ?? '',
+      location: user?.location ?? '',
+      phone: user?.phone ?? '',
+      pronouns: user?.pronouns ?? '',
     },
   });
 
@@ -203,14 +256,36 @@ function EditProfileModal({
   });
 
   return (
-    <Modal open onClose={onClose} title="Editar perfil">
-      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-        <Field label="Nombre" error={errors.name?.message}>
-          <input className="input" {...register('name')} />
-        </Field>
+    <Modal open onClose={onClose} title="Editar perfil" wide>
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nombre" error={errors.name?.message}>
+            <input className="input" {...register('name')} />
+          </Field>
+          <Field label="Nombre de usuario" error={errors.username?.message}>
+            <input className="input" placeholder="tu_usuario" {...register('username')} />
+          </Field>
+        </div>
         <Field label="Email" error={errors.email?.message}>
           <input className="input" type="email" {...register('email')} />
         </Field>
+        <Field label="Sobre mí" error={errors.bio?.message}>
+          <textarea className="input min-h-[80px] resize-y" placeholder="Cuéntanos algo sobre ti…" {...register('bio')} />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Fecha de nacimiento" error={errors.birthDate?.message}>
+            <input className="input" type="date" {...register('birthDate')} />
+          </Field>
+          <Field label="Pronombres" error={errors.pronouns?.message}>
+            <input className="input" placeholder="él/ella/elle" {...register('pronouns')} />
+          </Field>
+          <Field label="Ubicación" error={errors.location?.message}>
+            <input className="input" placeholder="Ciudad, País" {...register('location')} />
+          </Field>
+          <Field label="Teléfono" error={errors.phone?.message}>
+            <input className="input" type="tel" placeholder="+52 …" {...register('phone')} />
+          </Field>
+        </div>
         <Field label="URL de avatar (opcional)" error={errors.avatar?.message}>
           <input className="input" placeholder="https://…" {...register('avatar')} />
         </Field>

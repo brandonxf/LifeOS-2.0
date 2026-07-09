@@ -30,12 +30,27 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+// Texto opcional que se puede limpiar: acepta string, null o '' (se guarda null).
+const optionalText = (max: number) => z.string().max(max).nullish().or(z.literal(''));
+
 const updateProfileSchema = z
   .object({
     name: z.string().min(1).max(120).optional(),
     email: z.string().email().optional(),
     // URL de avatar o null para quitarlo. Cadena vacía se trata como null.
     avatar: z.string().url().max(2048).nullish().or(z.literal('')),
+    // Handle: 3-30 chars, letras/números/guion bajo. '' o null lo limpian.
+    username: z
+      .string()
+      .regex(/^[a-zA-Z0-9_]{3,30}$/, 'Solo letras, números y guion bajo (3-30)')
+      .nullish()
+      .or(z.literal('')),
+    bio: optionalText(500),
+    // Fecha ISO YYYY-MM-DD, o '' / null para limpiar.
+    birthDate: z.string().date().nullish().or(z.literal('')),
+    location: optionalText(120),
+    phone: optionalText(40),
+    pronouns: optionalText(40),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'No fields to update' });
 
@@ -181,8 +196,26 @@ router.patch(
       updates.email = email;
     }
 
-    // avatar: '' o null limpian el campo; una URL lo asigna.
+    if (body.username !== undefined) {
+      const username = body.username ? body.username.toLowerCase() : null;
+      if (username && username !== user.username) {
+        const existing = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.username, username))
+          .limit(1);
+        if (existing.length) throw badRequest('Ese nombre de usuario ya está en uso');
+      }
+      updates.username = username;
+    }
+
+    // Texto opcional: '' o null limpian el campo.
     if (body.avatar !== undefined) updates.avatar = body.avatar ? body.avatar : null;
+    if (body.bio !== undefined) updates.bio = body.bio ? body.bio : null;
+    if (body.birthDate !== undefined) updates.birthDate = body.birthDate ? body.birthDate : null;
+    if (body.location !== undefined) updates.location = body.location ? body.location : null;
+    if (body.phone !== undefined) updates.phone = body.phone ? body.phone : null;
+    if (body.pronouns !== undefined) updates.pronouns = body.pronouns ? body.pronouns : null;
 
     const [updated] = await db
       .update(users)

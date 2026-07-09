@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, date, timestamp, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable(
   'users',
@@ -8,6 +8,13 @@ export const users = pgTable(
     passwordHash: text('password_hash').notNull(),
     name: text('name').notNull(),
     avatar: text('avatar'),
+    // Handle público único (opcional). NULL para cuentas que aún no lo fijan.
+    username: text('username').unique(),
+    bio: text('bio'),
+    birthDate: date('birth_date'),
+    location: text('location'),
+    phone: text('phone'),
+    pronouns: text('pronouns'),
     plan: text('plan', { enum: ['free', 'pro'] })
       .notNull()
       .default('free'),
@@ -16,6 +23,7 @@ export const users = pgTable(
   },
   (t) => ({
     emailIdx: index('users_email_idx').on(t.email),
+    usernameIdx: index('users_username_idx').on(t.username),
   }),
 );
 

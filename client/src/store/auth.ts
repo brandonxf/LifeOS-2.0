@@ -6,6 +6,12 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar: string | null;
+  username: string | null;
+  bio: string | null;
+  birthDate: string | null;
+  location: string | null;
+  phone: string | null;
+  pronouns: string | null;
   plan: 'free' | 'pro';
   createdAt: string;
 }
