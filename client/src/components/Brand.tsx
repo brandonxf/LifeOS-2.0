@@ -105,16 +105,30 @@ export function Ambient({ className }: { className?: string }) {
 
 /** Pantalla de carga de marca a pantalla completa (transición al entrar a la app). */
 export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: string }) {
+  const word = 'Life OS';
   return (
-    <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col items-center justify-center gap-7 bg-ink-950 text-center">
+    <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col items-center justify-center gap-10 bg-ink-950 text-center">
       <Ambient />
-      <div className="relative z-10 flex flex-col items-center gap-7">
-        <BrandSpinner size={112} />
-        <div>
-          <p className="font-display text-xl font-extrabold text-white">Life&nbsp;OS</p>
-          <p className="mt-1 text-sm text-slate-400">{label}</p>
+      <div className="relative z-10 flex flex-col items-center gap-8">
+        <h1
+          aria-label={word}
+          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgba(90,79,224,0.45)] sm:text-8xl"
+        >
+          {word.split('').map((ch, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              className="loader-letter"
+              style={{ animationDelay: `${i * 150}ms` }}
+            >
+              {ch === ' ' ? ' ' : ch}
+            </span>
+          ))}
+        </h1>
+        <div className="flex flex-col items-center gap-4">
+          <div className="progress-track h-1.5 w-56" />
+          <p className="text-sm text-slate-400">{label}</p>
         </div>
-        <div className="progress-track h-1.5 w-52" />
       </div>
     </div>
   );

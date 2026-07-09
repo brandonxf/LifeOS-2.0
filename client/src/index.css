@@ -106,6 +106,27 @@
     transform: translate(4%, -6%) scale(1.08);
   }
 }
+/* Aparición de cada letra deslizando desde la izquierda */
+@keyframes letter-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-0.55em);
+    filter: blur(8px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+.loader-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: letter-in 0.62s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
 .animate-orbit {
   transform-origin: 60px 60px;
   animation: orbit-spin 3.4s linear infinite;
@@ -131,9 +152,13 @@
   .animate-orbit,
   .animate-pulse-soft,
   .animate-blob,
+  .loader-letter,
   .progress-track::after {
     animation-duration: 0.001ms;
     animation-iteration-count: 1;
+  }
+  .loader-letter {
+    opacity: 1;
   }
 }
 

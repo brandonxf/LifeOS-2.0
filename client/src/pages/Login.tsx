@@ -38,7 +38,7 @@ export default function Login() {
       // primero, el guard PublicOnly redirigiría a /dashboard y el login se
       // desmontaría sin que el loader llegue a pintarse.
       setEntering(true);
-      await new Promise((r) => setTimeout(r, 1400));
+      await new Promise((r) => setTimeout(r, 3200));
       setSession(res); // ahora el usuario queda autenticado → entra a la app
       navigate('/dashboard');
     } catch (err: any) {
