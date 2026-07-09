@@ -34,14 +34,17 @@ export default function Login() {
         '/api/auth/login',
         data,
       );
-      setSession(res);
-      // Quita el login y muestra la animación de carga antes de entrar.
+      // Muestra el loader ANTES de setear la sesión: si seteáramos la sesión
+      // primero, el guard PublicOnly redirigiría a /dashboard y el login se
+      // desmontaría sin que el loader llegue a pintarse.
       setEntering(true);
-      await new Promise((r) => setTimeout(r, 1300));
+      await new Promise((r) => setTimeout(r, 1400));
+      setSession(res); // ahora el usuario queda autenticado → entra a la app
       navigate('/dashboard');
     } catch (err: any) {
       toast.error(err.message ?? 'Error al iniciar sesión');
       setLoading(false);
+      setEntering(false);
     }
   }
 
