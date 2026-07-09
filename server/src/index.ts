@@ -21,9 +21,21 @@ import aiRoutes from './routes/ai.routes';
 
 const app = express();
 
+// Lista blanca de orígenes (prod de Vercel + previews + localhost).
+const allowedOrigins = env.CLIENT_URL.split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin(origin, callback) {
+      // Sin origin (curl, health checks, apps móviles) o en la lista blanca.
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin no permitido por CORS: ${origin}`));
+      }
+    },
     credentials: true,
   }),
 );

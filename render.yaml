@@ -1,0 +1,40 @@
+# Render Blueprint — despliega el backend Express de Life OS.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Uso: en https://dashboard.render.com → New → Blueprint → conecta este repo.
+# Render leerá este archivo y creará el servicio. Luego rellena las env vars
+# marcadas con `sync: false` en el panel (son secretas).
+services:
+  - type: web
+    name: lifeos-api
+    runtime: node
+    plan: free
+    region: oregon
+    # Monorepo con npm workspaces: instala todo desde la raíz y compila el server.
+    buildCommand: npm install && npm --workspace server run build
+    startCommand: npm --workspace server run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render inyecta PORT automáticamente; el server ya lee process.env.PORT.
+      - key: NODE_VERSION
+        value: "20"
+      # Orígenes permitidos por CORS (prod de Vercel + previews, separados por coma).
+      - key: CLIENT_URL
+        sync: false
+      # --- Secretos: rellénalos en el panel de Render ---
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      # Opcionales:
+      - key: REDIS_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
