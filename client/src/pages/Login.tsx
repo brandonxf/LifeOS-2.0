@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Logo } from '../components/Brand';
+import { Logo, Ambient, AppLoader } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, Spinner } from '../components/ui';
@@ -19,6 +19,7 @@ export default function Login() {
   const navigate = useNavigate();
   const setSession = useAuth((s) => s.setSession);
   const [loading, setLoading] = useState(false);
+  const [entering, setEntering] = useState(false);
   const {
     register,
     handleSubmit,
@@ -34,11 +35,12 @@ export default function Login() {
         data,
       );
       setSession(res);
-      toast.success(`¡Bienvenido de nuevo, ${res.user.name}!`);
+      // Quita el login y muestra la animación de carga antes de entrar.
+      setEntering(true);
+      await new Promise((r) => setTimeout(r, 1300));
       navigate('/dashboard');
     } catch (err: any) {
       toast.error(err.message ?? 'Error al iniciar sesión');
-    } finally {
       setLoading(false);
     }
   }
@@ -47,6 +49,8 @@ export default function Login() {
     setValue('email', 'demo@lifeos.app');
     setValue('password', 'demo1234');
   }
+
+  if (entering) return <AppLoader label="Entrando a tu Life OS…" />;
 
   return (
     <AuthShell title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">
@@ -64,7 +68,7 @@ export default function Login() {
       <button onClick={fillDemo} className="btn-ghost mt-3 w-full text-xs">
         Usar cuenta demo (demo@lifeos.app / demo1234)
       </button>
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-400">
         ¿No tienes cuenta?{' '}
         <Link to="/register" className="font-semibold text-primary hover:underline">
           Regístrate
@@ -84,18 +88,24 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-ink-950 via-ink-900 to-primary-900/50 p-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 w-fit rounded-2xl shadow-glow">
-            <Logo size={56} />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-950 p-4">
+      <Ambient />
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="mb-5 rounded-[20px] shadow-glow">
+            <Logo size={60} />
           </div>
-          <h1 className="font-display text-2xl font-extrabold text-white">{title}</h1>
-          <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+          <h1 className="font-display text-[1.7rem] font-extrabold leading-tight tracking-tight text-white">
+            {title}
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-400">{subtitle}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-ink-900/80 p-6 shadow-2xl backdrop-blur">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7 shadow-2xl backdrop-blur-xl">
           {children}
         </div>
+        <p className="mt-6 text-center text-xs text-slate-600">
+          Tu vida, organizada · <span className="font-display font-semibold text-slate-500">Life&nbsp;OS</span>
+        </p>
       </div>
     </div>
   );

@@ -20,28 +20,38 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900/70 dark:backdrop-blur;
+    @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/[0.04] transition-shadow dark:border-white/[0.07] dark:bg-ink-900/60 dark:shadow-none dark:backdrop-blur-xl;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98];
   }
   .btn-primary {
-    @apply btn bg-primary text-white hover:bg-primary-700;
+    @apply btn bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 hover:brightness-[1.07];
   }
   .btn-ghost {
-    @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
+    @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5;
   }
   .btn-danger {
     @apply btn bg-danger/10 text-danger hover:bg-danger/20;
   }
   .input {
-    @apply w-full rounded-xl border bg-white px-3 py-2 text-sm outline-none ring-primary/40 transition focus:ring-2 dark:bg-slate-900 dark:text-slate-100;
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/25 dark:border-white/10 dark:bg-ink-850 dark:text-slate-100 dark:placeholder:text-slate-500;
   }
   .label {
     @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  /* Item de navegación del sidebar */
+  .nav-item {
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors;
+  }
+  .nav-item-idle {
+    @apply text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white;
+  }
+  .nav-item-active {
+    @apply bg-primary/10 font-semibold text-primary dark:bg-primary/15;
   }
 }
 
@@ -59,6 +69,71 @@
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* ── Marca / carga ─────────────────────────────────────────────── */
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse-soft {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 0.8;
+  }
+}
+@keyframes progress-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(4%, -6%) scale(1.08);
+  }
+}
+.animate-orbit {
+  transform-origin: 60px 60px;
+  animation: orbit-spin 3.4s linear infinite;
+}
+.animate-pulse-soft {
+  transform-origin: center;
+  animation: pulse-soft 1.8s ease-in-out infinite;
+}
+.animate-blob {
+  animation: blob-float 14s ease-in-out infinite;
+}
+.progress-track {
+  @apply relative overflow-hidden rounded-full bg-white/10;
+}
+.progress-track::after {
+  content: '';
+  @apply absolute inset-y-0 left-0 w-1/3 rounded-full;
+  background: linear-gradient(90deg, transparent, #6d68ee, #2dd4e7, transparent);
+  animation: progress-slide 1.15s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-orbit,
+  .animate-pulse-soft,
+  .animate-blob,
+  .progress-track::after {
+    animation-duration: 0.001ms;
+    animation-iteration-count: 1;
   }
 }
 

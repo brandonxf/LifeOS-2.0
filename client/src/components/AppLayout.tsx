@@ -22,7 +22,7 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { ThemeToggle } from './ThemeToggle';
-import { Logo, AiMark } from './Brand';
+import { Logo, AiMark, Ambient } from './Brand';
 
 const NAV = [
   { to: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -109,11 +109,12 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="relative flex h-screen overflow-hidden bg-slate-50 dark:bg-ink-950">
+      <Ambient />
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-white transition-all duration-200 dark:bg-slate-900 lg:static',
+          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-xl transition-all duration-200 dark:border-white/[0.06] dark:bg-ink-900/70 lg:static',
           sidebarCollapsed ? 'w-[68px]' : 'w-64',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
@@ -125,46 +126,43 @@ export function AppLayout() {
           )}
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+        {!sidebarCollapsed && (
+          <p className="px-5 pb-1 pt-3 text-[0.65rem] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Menú
+          </p>
+        )}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-1">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               onClick={() => setMobileOpen(false)}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-                )
-              }
+              className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
               title={sidebarCollapsed ? label : undefined}
             >
-              <Icon className="h-5 w-5 shrink-0" />
-              {!sidebarCollapsed && <span className="truncate">{label}</span>}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600" />
+                  )}
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {!sidebarCollapsed && <span className="truncate">{label}</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t p-3">
+        <div className="space-y-1 border-t border-slate-200/80 p-3 dark:border-white/[0.06]">
           <NavLink
             to="/settings"
             onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
-                isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-              )
-            }
+            className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
           >
             <Settings className="h-5 w-5 shrink-0" />
             {!sidebarCollapsed && <span>Ajustes</span>}
           </NavLink>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
+          <button onClick={handleLogout} className="nav-item nav-item-idle w-full">
             <LogOut className="h-5 w-5 shrink-0" />
             {!sidebarCollapsed && <span>Cerrar sesión</span>}
           </button>
@@ -177,7 +175,7 @@ export function AppLayout() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b bg-white/80 px-4 backdrop-blur dark:bg-slate-950/80">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/70 px-4 backdrop-blur-xl dark:border-white/[0.06] dark:bg-ink-950/70">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileOpen(true)}
