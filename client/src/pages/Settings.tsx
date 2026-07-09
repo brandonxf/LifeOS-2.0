@@ -1,18 +1,43 @@
+import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Moon, Sun, Monitor, LogOut, User, Crown, Shield } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Moon, Sun, Monitor, LogOut, User, Crown, Shield, Pencil, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { api } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
-import { SectionTitle, Card } from '../components/ui';
+import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { cn } from '../lib/utils';
 import { format, parseISO } from 'date-fns';
+
+const profileSchema = z.object({
+  name: z.string().min(1, 'El nombre es obligatorio').max(120),
+  email: z.string().email('Email no válido'),
+  avatar: z.string().url('Debe ser una URL válida').max(2048).or(z.literal('')),
+});
+type ProfileForm = z.infer<typeof profileSchema>;
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Ingresa tu contraseña actual'),
+    newPassword: z.string().min(8, 'Mínimo 8 caracteres'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
+  });
+type PasswordForm = z.infer<typeof passwordSchema>;
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { user, clear, refreshToken, setUser } = useAuth();
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
+  const [pwdOpen, setPwdOpen] = useState(false);
 
   // Refresh profile from the server.
   useQuery({
@@ -45,10 +70,19 @@ export default function Settings() {
 
       {/* Profile */}
       <Card>
-        <h3 className="mb-4 flex items-center gap-2 font-semibold"><User className="h-4 w-4" /> Perfil</h3>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-semibold"><User className="h-4 w-4" /> Perfil</h3>
+          <button className="btn-ghost" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4" /> Editar
+          </button>
+        </div>
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 text-2xl font-bold text-primary">
-            {user?.name?.[0]?.toUpperCase()}
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/15 text-2xl font-bold text-primary">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+            ) : (
+              user?.name?.[0]?.toUpperCase()
+            )}
           </div>
           <div>
             <p className="text-lg font-semibold">{user?.name}</p>
@@ -96,12 +130,145 @@ export default function Settings() {
       <Card>
         <h3 className="mb-4 flex items-center gap-2 font-semibold"><Shield className="h-4 w-4" /> Seguridad</h3>
         <p className="mb-4 text-sm text-slate-400">
-          Iniciaste sesión con un token de refresco rotativo. Cerrar sesión revoca la sesión de este dispositivo.
+          Iniciaste sesión con un token de refresco rotativo. Cambiar la contraseña cierra la sesión en todos los dispositivos.
         </p>
-        <button onClick={logout} className="btn-danger w-full">
-          <LogOut className="h-4 w-4" /> Cerrar sesión
-        </button>
+        <div className="space-y-2">
+          <button onClick={() => setPwdOpen(true)} className="btn-ghost w-full border">
+            <KeyRound className="h-4 w-4" /> Cambiar contraseña
+          </button>
+          <button onClick={logout} className="btn-danger w-full">
+            <LogOut className="h-4 w-4" /> Cerrar sesión
+          </button>
+        </div>
       </Card>
+
+      {editOpen && (
+        <EditProfileModal
+          user={user}
+          onClose={() => setEditOpen(false)}
+          onSaved={(u) => {
+            setUser(u);
+            setEditOpen(false);
+          }}
+        />
+      )}
+
+      {pwdOpen && (
+        <ChangePasswordModal
+          onClose={() => setPwdOpen(false)}
+          onDone={async () => {
+            setPwdOpen(false);
+            toast.success('Contraseña actualizada. Inicia sesión de nuevo.');
+            clear();
+            navigate('/login');
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function EditProfileModal({
+  user,
+  onClose,
+  onSaved,
+}: {
+  user: AuthUser | null;
+  onClose: () => void;
+  onSaved: (u: AuthUser) => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileForm>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      avatar: user?.avatar ?? '',
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: ProfileForm) =>
+      api<{ user: AuthUser }>('/api/auth/me', { method: 'PATCH', body: data }),
+    onSuccess: (res) => {
+      toast.success('Perfil actualizado');
+      onSaved(res.user);
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'No se pudo actualizar el perfil');
+    },
+  });
+
+  return (
+    <Modal open onClose={onClose} title="Editar perfil">
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        <Field label="Nombre" error={errors.name?.message}>
+          <input className="input" {...register('name')} />
+        </Field>
+        <Field label="Email" error={errors.email?.message}>
+          <input className="input" type="email" {...register('email')} />
+        </Field>
+        <Field label="URL de avatar (opcional)" error={errors.avatar?.message}>
+          <input className="input" placeholder="https://…" {...register('avatar')} />
+        </Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn-primary" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function ChangePasswordModal({
+  onClose,
+  onDone,
+}: {
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
+
+  const mutation = useMutation({
+    mutationFn: (data: PasswordForm) =>
+      api('/api/auth/change-password', {
+        method: 'POST',
+        body: { currentPassword: data.currentPassword, newPassword: data.newPassword },
+      }),
+    onSuccess: () => onDone(),
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'No se pudo cambiar la contraseña');
+    },
+  });
+
+  return (
+    <Modal open onClose={onClose} title="Cambiar contraseña">
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        <Field label="Contraseña actual" error={errors.currentPassword?.message}>
+          <input className="input" type="password" {...register('currentPassword')} />
+        </Field>
+        <Field label="Nueva contraseña" error={errors.newPassword?.message}>
+          <input className="input" type="password" {...register('newPassword')} />
+        </Field>
+        <Field label="Confirmar nueva contraseña" error={errors.confirmPassword?.message}>
+          <input className="input" type="password" {...register('confirmPassword')} />
+        </Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn-primary" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Guardando…' : 'Cambiar'}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

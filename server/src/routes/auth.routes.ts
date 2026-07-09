@@ -30,6 +30,20 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+const updateProfileSchema = z
+  .object({
+    name: z.string().min(1).max(120).optional(),
+    email: z.string().email().optional(),
+    // URL de avatar o null para quitarlo. Cadena vacía se trata como null.
+    avatar: z.string().url().max(2048).nullish().or(z.literal('')),
+  })
+  .refine((d) => Object.keys(d).length > 0, { message: 'No fields to update' });
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
 function publicUser(u: typeof users.$inferSelect) {
   const { passwordHash, deletedAt, ...rest } = u;
   return rest;
@@ -139,6 +153,65 @@ router.get(
   asyncHandler(async (req, res) => {
     const user = currentUser(req);
     res.json({ user: publicUser(user) });
+  }),
+);
+
+// PATCH /api/auth/me — update name / email / avatar
+router.patch(
+  '/me',
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(updateProfileSchema, req.body);
+
+    const updates: Partial<typeof users.$inferInsert> = {};
+
+    if (body.name !== undefined) updates.name = body.name;
+
+    if (body.email !== undefined) {
+      const email = body.email.toLowerCase();
+      if (email !== user.email) {
+        const existing = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+        if (existing.length) throw badRequest('An account with that email already exists');
+      }
+      updates.email = email;
+    }
+
+    // avatar: '' o null limpian el campo; una URL lo asigna.
+    if (body.avatar !== undefined) updates.avatar = body.avatar ? body.avatar : null;
+
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, user.id))
+      .returning();
+
+    res.json({ user: publicUser(updated) });
+  }),
+);
+
+// POST /api/auth/change-password — verify current, set new, revoke other sessions
+router.post(
+  '/change-password',
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(changePasswordSchema, req.body);
+
+    const ok = await verifyPassword(body.currentPassword, user.passwordHash);
+    if (!ok) throw badRequest('Current password is incorrect');
+
+    const passwordHash = await hashPassword(body.newPassword);
+    await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+
+    // Seguridad: invalida todas las sesiones (fuerza re-login en todos los dispositivos).
+    await db.delete(sessions).where(eq(sessions.userId, user.id));
+
+    res.json({ ok: true });
   }),
 );
 
