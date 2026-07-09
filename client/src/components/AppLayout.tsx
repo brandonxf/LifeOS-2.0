@@ -109,7 +109,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* Sidebar */}
       <aside
         className={cn(
@@ -208,8 +208,10 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
-          <Outlet />
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
