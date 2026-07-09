@@ -10,7 +10,8 @@ import {
   Tooltip,
 } from 'recharts';
 import { format, isToday, isPast, parseISO } from 'date-fns';
-import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, Sparkles, ArrowRight, Send } from 'lucide-react';
+import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, ArrowRight, Send } from 'lucide-react';
+import { AiMark } from '../components/Brand';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { Card, Skeleton } from '../components/ui';
@@ -97,8 +98,8 @@ export default function Dashboard() {
 
       {/* Quick AI bar */}
       <form onSubmit={submitPrompt} className="flex items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm dark:bg-slate-900">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Sparkles className="h-5 w-5" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <AiMark size={20} />
         </div>
         <input
           value={prompt}

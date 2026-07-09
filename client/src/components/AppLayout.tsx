@@ -10,7 +10,6 @@ import {
   BookOpen,
   StickyNote,
   HeartPulse,
-  Sparkles,
   Settings,
   Menu,
   Bell,
@@ -23,6 +22,7 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { ThemeToggle } from './ThemeToggle';
+import { Logo, AiMark } from './Brand';
 
 const NAV = [
   { to: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -33,7 +33,7 @@ const NAV = [
   { to: '/diary', label: 'Diario', icon: BookOpen },
   { to: '/notes', label: 'Notas', icon: StickyNote },
   { to: '/health', label: 'Salud', icon: HeartPulse },
-  { to: '/ai', label: 'Asistente IA', icon: Sparkles },
+  { to: '/ai', label: 'Asistente IA', icon: AiMark },
 ];
 
 interface Notif {
@@ -118,11 +118,11 @@ export function AppLayout() {
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <div className="flex h-16 items-center gap-2 px-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          {!sidebarCollapsed && <span className="text-lg font-extrabold tracking-tight">Life OS</span>}
+        <div className="flex h-16 items-center gap-2.5 px-4">
+          <Logo size={36} />
+          {!sidebarCollapsed && (
+            <span className="font-display text-lg font-extrabold tracking-tight">Life&nbsp;OS</span>
+          )}
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">

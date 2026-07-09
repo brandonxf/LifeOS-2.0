@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { Sparkles, Send, User, Database, Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Send, User, Database, Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { AiMark } from '../components/Brand';
 import toast from 'react-hot-toast';
 import { useAuth } from '../store/auth';
 import { api, API_BASE } from '../lib/api';
@@ -210,11 +211,11 @@ export default function AIChat() {
           >
             {showSidebar ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
           </button>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white">
-            <Sparkles className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <AiMark size={22} />
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">Asistente IA</h1>
+            <h1 className="font-display text-xl font-bold">Asistente IA</h1>
             <p className="text-xs text-slate-400">Basado en los datos en vivo de tu Life OS</p>
           </div>
           <button onClick={newChat} className="btn-ghost border md:hidden">
@@ -233,7 +234,7 @@ export default function AIChat() {
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto rounded-2xl border bg-white p-4 dark:bg-slate-900">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <Sparkles className="mb-3 h-10 w-10 text-primary/40" />
+              <AiMark size={44} className="mb-3 opacity-90" />
               <p className="font-semibold">Pregúntame lo que sea sobre tu vida</p>
               <p className="mb-6 text-sm text-slate-400">Puedo ver tus tareas, hábitos, finanzas, diario y salud.</p>
               <div className="grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2">
@@ -247,8 +248,8 @@ export default function AIChat() {
           ) : (
             messages.map((m, i) => (
               <div key={i} className={cn('flex gap-3', m.role === 'user' && 'flex-row-reverse')}>
-                <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full', m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-primary text-white')}>
-                  {m.role === 'user' ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full', m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-primary/10')}>
+                  {m.role === 'user' ? <User className="h-4 w-4" /> : <AiMark size={18} />}
                 </div>
                 <div className={cn('max-w-[80%] rounded-2xl px-4 py-2.5 text-sm', m.role === 'user' ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800')}>
                   {m.content ? (

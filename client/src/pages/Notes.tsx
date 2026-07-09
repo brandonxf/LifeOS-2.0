@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import { Plus, Trash2, Pin, PinOff, StickyNote, Search, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Pin, PinOff, StickyNote, Search } from 'lucide-react';
+import { AiMark } from '../components/Brand';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState } from '../components/ui';
@@ -69,7 +70,7 @@ export default function Notes() {
         </div>
         <button onClick={() => setSemantic((s) => !s)}
           className={cn('btn border', semantic ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost')}>
-          <Sparkles className="h-4 w-4" /> Semántica
+          <AiMark size={16} /> Semántica
         </button>
         {allTags.length > 0 && (
           <select className="input w-auto" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
