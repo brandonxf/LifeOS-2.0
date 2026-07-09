@@ -7,7 +7,7 @@ import {
   vector,
   index,
 } from 'drizzle-orm/pg-core';
-import { users } from './users';
+import { users } from './users.js';
 
 // Requires: CREATE EXTENSION IF NOT EXISTS vector; (run automatically in db/index.ts bootstrap)
 export const notes = pgTable(

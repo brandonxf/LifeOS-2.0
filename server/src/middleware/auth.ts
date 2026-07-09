@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import { and, eq, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { users, type User } from '../db/schema';
-import { verifyAccessToken } from '../lib/auth';
-import { unauthorized } from '../lib/http';
+import { db } from '../db/index.js';
+import { users, type User } from '../db/schema/index.js';
+import { verifyAccessToken } from '../lib/auth.js';
+import { unauthorized } from '../lib/http.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

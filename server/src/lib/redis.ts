@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 /**
  * Redis client (Upstash-compatible). Used for rate-limiting counters and a

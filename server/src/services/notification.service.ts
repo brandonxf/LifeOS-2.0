@@ -1,6 +1,6 @@
 import { and, eq, gte, isNull, lte } from 'drizzle-orm';
-import { db } from '../db';
-import { tasks, calendarEvents } from '../db/schema';
+import { db } from '../db/index.js';
+import { tasks, calendarEvents } from '../db/schema/index.js';
 
 export interface Notification {
   id: string;

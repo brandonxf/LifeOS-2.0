@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { HttpError } from '../lib/http';
-import { isProd } from '../config/env';
+import { HttpError } from '../lib/http.js';
+import { isProd } from '../config/env.js';
 
 export function notFoundHandler(_req: Request, res: Response) {
   res.status(404).json({ error: 'Route not found' });

@@ -2,22 +2,22 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
-import { env, isProd } from './config/env';
-import { AI_PROVIDER, CLAUDE_MODEL } from './services/ai.service';
-import { authMiddleware } from './middleware/auth';
-import { rateLimiter } from './middleware/rateLimit';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { env, isProd } from './config/env.js';
+import { AI_PROVIDER, CLAUDE_MODEL } from './services/ai.service.js';
+import { authMiddleware } from './middleware/auth.js';
+import { rateLimiter } from './middleware/rateLimit.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
-import authRoutes from './routes/auth.routes';
-import financeRoutes from './routes/finance.routes';
-import tasksRoutes from './routes/tasks.routes';
-import habitsRoutes from './routes/habits.routes';
-import goalsRoutes from './routes/goals.routes';
-import calendarRoutes from './routes/calendar.routes';
-import diaryRoutes from './routes/diary.routes';
-import notesRoutes from './routes/notes.routes';
-import healthRoutes from './routes/health.routes';
-import aiRoutes from './routes/ai.routes';
+import authRoutes from './routes/auth.routes.js';
+import financeRoutes from './routes/finance.routes.js';
+import tasksRoutes from './routes/tasks.routes.js';
+import habitsRoutes from './routes/habits.routes.js';
+import goalsRoutes from './routes/goals.routes.js';
+import calendarRoutes from './routes/calendar.routes.js';
+import diaryRoutes from './routes/diary.routes.js';
+import notesRoutes from './routes/notes.routes.js';
+import healthRoutes from './routes/health.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 

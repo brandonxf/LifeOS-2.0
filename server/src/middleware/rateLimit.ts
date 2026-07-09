@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { cache } from '../lib/redis';
+import { cache } from '../lib/redis.js';
 
 /**
  * Sliding-window-ish rate limiter backed by Redis (falls back to memory).

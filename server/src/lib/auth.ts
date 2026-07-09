@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 export interface AccessTokenPayload {
   sub: string; // user id

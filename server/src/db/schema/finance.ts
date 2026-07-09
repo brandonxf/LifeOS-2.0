@@ -7,7 +7,7 @@ import {
   date,
   index,
 } from 'drizzle-orm/pg-core';
-import { users } from './users';
+import { users } from './users.js';
 
 export const financeEntries = pgTable(
   'finance_entries',

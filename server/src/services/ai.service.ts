@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '../db/index.js';
 import {
   tasks,
   habits,
@@ -9,8 +9,8 @@ import {
   financeEntries,
   diaryEntries,
   healthLogs,
-} from '../db/schema';
-import { env } from '../config/env';
+} from '../db/schema/index.js';
+import { env } from '../config/env.js';
 
 export const CLAUDE_MODEL = 'claude-sonnet-4-6';
 

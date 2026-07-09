@@ -6,7 +6,7 @@ import {
   boolean,
   index,
 } from 'drizzle-orm/pg-core';
-import { users } from './users';
+import { users } from './users.js';
 
 export const calendarEvents = pgTable(
   'calendar_events',

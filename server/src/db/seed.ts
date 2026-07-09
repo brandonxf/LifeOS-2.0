@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';
-import { db } from './index';
+import { db } from './index.js';
 import {
   users,
   financeEntries,
@@ -13,9 +13,9 @@ import {
   diaryEntries,
   notes,
   healthLogs,
-} from './schema';
-import { hashPassword } from '../lib/auth';
-import { embed } from '../services/embedding.service';
+} from './schema/index.js';
+import { hashPassword } from '../lib/auth.js';
+import { embed } from '../services/embedding.service.js';
 
 const DEMO_EMAIL = 'demo@lifeos.app';
 const DEMO_PASSWORD = 'demo1234';

@@ -1,18 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { conversations, chatMessages } from '../db/schema';
-import { asyncHandler, notFound, validate } from '../lib/http';
-import { currentUser } from '../middleware/auth';
-import { getNotifications } from '../services/notification.service';
+import { db } from '../db/index.js';
+import { conversations, chatMessages } from '../db/schema/index.js';
+import { asyncHandler, notFound, validate } from '../lib/http.js';
+import { currentUser } from '../middleware/auth.js';
+import { getNotifications } from '../services/notification.service.js';
 import {
   buildUserContext,
   buildSystemPrompt,
   contextBadge,
   streamChat,
   type ChatMessage,
-} from '../services/ai.service';
+} from '../services/ai.service.js';
 
 const router = Router();
 

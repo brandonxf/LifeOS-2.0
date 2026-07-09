@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { diaryEntries } from '../db/schema';
-import { asyncHandler, notFound, validate } from '../lib/http';
-import { currentUser } from '../middleware/auth';
+import { db } from '../db/index.js';
+import { diaryEntries } from '../db/schema/index.js';
+import { asyncHandler, notFound, validate } from '../lib/http.js';
+import { currentUser } from '../middleware/auth.js';
 
 const router = Router();
 

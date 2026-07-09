@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { and, desc, eq, isNull, sql, cosineDistance, gt } from 'drizzle-orm';
-import { db } from '../db';
-import { notes } from '../db/schema';
-import { asyncHandler, notFound, validate } from '../lib/http';
-import { currentUser } from '../middleware/auth';
-import { embed } from '../services/embedding.service';
+import { db } from '../db/index.js';
+import { notes } from '../db/schema/index.js';
+import { asyncHandler, notFound, validate } from '../lib/http.js';
+import { currentUser } from '../middleware/auth.js';
+import { embed } from '../services/embedding.service.js';
 
 const router = Router();
 

@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { users, sessions } from '../db/schema';
+import { db } from '../db/index.js';
+import { users, sessions } from '../db/schema/index.js';
 import {
   hashPassword,
   verifyPassword,
   signAccessToken,
   generateRefreshToken,
   refreshTokenExpiry,
-} from '../lib/auth';
-import { asyncHandler, badRequest, unauthorized, validate } from '../lib/http';
-import { authMiddleware, currentUser } from '../middleware/auth';
+} from '../lib/auth.js';
+import { asyncHandler, badRequest, unauthorized, validate } from '../lib/http.js';
+import { authMiddleware, currentUser } from '../middleware/auth.js';
 
 const router = Router();
 
