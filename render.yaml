@@ -11,7 +11,9 @@ services:
     plan: free
     region: oregon
     # Monorepo con npm workspaces: instala todo desde la raíz y compila el server.
-    buildCommand: npm install && npm --workspace server run build
+    # --include=dev es obligatorio: NODE_ENV=production haría que npm omitiera las
+    # devDependencies (@types/*, typescript), y sin ellas `tsc` no compila.
+    buildCommand: npm install --include=dev && npm --workspace server run build
     startCommand: npm --workspace server run start
     healthCheckPath: /health
     autoDeploy: true
