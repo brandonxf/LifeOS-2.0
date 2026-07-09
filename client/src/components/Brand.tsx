@@ -92,6 +92,43 @@ export function BrandSpinner({ size = 96, className }: { size?: number; classNam
   );
 }
 
+/** Ilustración de línea espacial para el panel de marca del login (cohete + planeta + órbita). */
+export function AuthArt({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 240 240" fill="none" className={className} aria-hidden="true">
+      <g stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {/* Cohete */}
+        <path
+          d="M120 60c12 12 18 33 18 60v28c0 8-6 14-18 14s-18-6-18-14v-28c0-27 6-48 18-60Z"
+          opacity="0.95"
+        />
+        <circle cx="120" cy="108" r="9" opacity="0.95" />
+        {/* Aletas */}
+        <path d="M102 150c-12 4-18 12-18 22 8 0 14-4 18-10" opacity="0.9" />
+        <path d="M138 150c12 4 18 12 18 22-8 0-14-4-18-10" opacity="0.9" />
+        {/* Propulsión */}
+        <path d="M112 176c-3 6-3 12 0 18M128 176c3 6 3 12 0 18M120 178v20" opacity="0.7" />
+        {/* Horizonte del planeta */}
+        <path d="M46 210q74-26 148 0" strokeDasharray="2 10" opacity="0.75" />
+        {/* Órbita de marca (guiño al logo) */}
+        <ellipse cx="186" cy="66" rx="20" ry="8" transform="rotate(-24 186 66)" opacity="0.5" />
+        <circle cx="186" cy="66" r="3.4" fill="currentColor" stroke="none" />
+      </g>
+      {/* Estrellas */}
+      <g stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" opacity="0.85">
+        <path d="M64 96l0 10M59 101l10 0" />
+        <path d="M176 150l0 8M172 154l8 0" />
+        <path d="M58 158l0 8M54 162l8 0" />
+      </g>
+      <g fill="currentColor" opacity="0.7">
+        <circle cx="94" cy="70" r="2" />
+        <circle cx="150" cy="88" r="2" />
+        <circle cx="80" cy="132" r="1.8" />
+      </g>
+    </svg>
+  );
+}
+
 /** Fondo ambiental de "aurora" — blobs difuminados que flotan. Va en un contenedor relativo. */
 export function Ambient({ className }: { className?: string }) {
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,7 +44,7 @@ export default function Register() {
   }
 
   return (
-    <AuthShell title="Crea tu cuenta" subtitle="Empieza a organizar tu vida">
+    <AuthShell mode="register" title="Crea tu cuenta" subtitle="Empieza a organizar tu vida">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field label="Nombre" error={errors.name?.message}>
           <input className="input" placeholder="Juan Pérez" {...register('name')} />
@@ -59,12 +59,6 @@ export default function Register() {
           {loading ? <Spinner /> : 'Crear cuenta'}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="font-semibold text-primary hover:underline">
-          Inicia sesión
-        </Link>
-      </p>
     </AuthShell>
   );
 }

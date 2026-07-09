@@ -4,10 +4,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Logo, Ambient, AppLoader } from '../components/Brand';
+import { Logo, Ambient, AppLoader, AuthArt } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, Spinner } from '../components/ui';
+import { cn } from '../lib/utils';
 
 const schema = z.object({
   email: z.string().email('Ingresa un correo válido'),
@@ -56,7 +57,7 @@ export default function Login() {
   if (entering) return <AppLoader label="Entrando a tu Life OS…" />;
 
   return (
-    <AuthShell title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">
+    <AuthShell mode="login" title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field label="Correo" error={errors.email?.message}>
           <input className="input" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
@@ -71,12 +72,6 @@ export default function Login() {
       <button onClick={fillDemo} className="btn-ghost mt-3 w-full text-xs">
         Usar cuenta demo (demo@lifeos.app / demo1234)
       </button>
-      <p className="mt-6 text-center text-sm text-slate-400">
-        ¿No tienes cuenta?{' '}
-        <Link to="/register" className="font-semibold text-primary hover:underline">
-          Regístrate
-        </Link>
-      </p>
     </AuthShell>
   );
 }
@@ -84,31 +79,63 @@ export default function Login() {
 export function AuthShell({
   title,
   subtitle,
+  mode,
   children,
 }: {
   title: string;
   subtitle: string;
+  mode: 'login' | 'register';
   children: React.ReactNode;
 }) {
+  const tab = (to: string, label: string, active: boolean) => (
+    <Link
+      to={to}
+      className={cn(
+        'rounded-full px-4 py-1.5 transition-colors',
+        active ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-slate-400 hover:text-white',
+      )}
+    >
+      {label}
+    </Link>
+  );
+
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-950 p-4">
       <Ambient />
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-5 rounded-[20px] shadow-glow">
-            <Logo size={60} />
+      <div className="relative z-10 grid w-full max-w-4xl overflow-hidden rounded-[28px] border border-white/10 shadow-2xl md:grid-cols-2">
+        {/* Panel de marca */}
+        <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 p-10 text-white md:flex">
+          <div className="flex justify-center">
+            <Logo size={40} />
           </div>
-          <h1 className="font-display text-[1.7rem] font-extrabold leading-tight tracking-tight text-white">
-            {title}
-          </h1>
-          <p className="mt-1.5 text-sm text-slate-400">{subtitle}</p>
+          <div className="max-w-[16rem]">
+            <h2 className="font-display text-[1.7rem] font-bold leading-snug">Toma el mando de tu vida.</h2>
+            <p className="mt-2 text-sm text-white/80">
+              Finanzas, tareas, hábitos, metas y más — todo en un solo lugar.
+            </p>
+          </div>
+          <AuthArt className="mx-auto w-56 text-white/90" />
         </div>
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-7 shadow-2xl backdrop-blur-xl">
+
+        {/* Panel de formulario */}
+        <div className="relative bg-ink-900 p-8 sm:p-10">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="md:hidden">
+              <Logo size={32} />
+            </div>
+            <div className="ml-auto inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm font-semibold">
+              {tab('/login', 'Iniciar sesión', mode === 'login')}
+              {tab('/register', 'Registrarse', mode === 'register')}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h1 className="font-display text-2xl font-extrabold text-white">{title}</h1>
+            <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+          </div>
+
           {children}
         </div>
-        <p className="mt-6 text-center text-xs text-slate-600">
-          Tu vida, organizada · <span className="font-display font-semibold text-slate-500">Life&nbsp;OS</span>
-        </p>
       </div>
     </div>
   );
