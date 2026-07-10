@@ -5,29 +5,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Marca: iris / cobalto — reemplaza el violeta SaaS por defecto.
+        // Marca: lima neón / chartreuse — acento eléctrico sobre fondo casi-negro.
         primary: {
-          DEFAULT: '#5A4FE0',
-          50: '#eef0ff',
-          100: '#e0e3ff',
-          200: '#c7ccff',
-          300: '#a5abfb',
-          400: '#8688f6',
-          500: '#6d68ee',
-          600: '#5A4FE0',
-          700: '#4a3fc4',
-          800: '#3d359e',
-          900: '#35317d',
-          950: '#211d4a',
+          DEFAULT: '#c4f82a',
+          50: '#f7ffe0',
+          100: '#ecffb8',
+          200: '#dcff85',
+          300: '#c4f82a',
+          400: '#b2e81a',
+          500: '#97c910',
+          600: '#78a10c',
+          700: '#5d7c10',
+          800: '#4a6113',
+          900: '#3e5215',
+          950: '#1f2c05',
         },
-        // Fondo "ink": azul-negro cálido, más profundo que slate puro.
+        // Fondo "ink": casi-negro con un leve tinte verde-carbón.
         ink: {
-          950: '#0a0b14',
-          900: '#12131f',
-          850: '#171826',
-          800: '#1e2032',
+          950: '#080a08',
+          900: '#0e110e',
+          850: '#141814',
+          800: '#1b201b',
         },
-        success: '#10B981',
+        success: '#22C55E',
         warning: '#F59E0B',
         danger: '#F43F5E',
       },
@@ -36,7 +36,7 @@ export default {
         display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(90,79,224,0.15), 0 8px 30px -6px rgba(90,79,224,0.35)',
+        glow: '0 0 0 1px rgba(196,248,42,0.20), 0 8px 30px -6px rgba(196,248,42,0.35)',
       },
       keyframes: {
         'fade-in': { from: { opacity: 0, transform: 'translateY(4px)' }, to: { opacity: 1, transform: 'translateY(0)' } },

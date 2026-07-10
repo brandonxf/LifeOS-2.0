@@ -18,9 +18,9 @@ export function Logo({ size = 36, className }: { size?: number; className?: stri
     >
       <defs>
         <linearGradient id={`${id}-tile`} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7B78F5" />
-          <stop offset="0.55" stopColor="#5A4FE0" />
-          <stop offset="1" stopColor="#3D359E" />
+          <stop stopColor="#dcff85" />
+          <stop offset="0.55" stopColor="#c4f82a" />
+          <stop offset="1" stopColor="#97c910" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="16" fill={`url(#${id}-tile)`} />
@@ -31,15 +31,15 @@ export function Logo({ size = 36, className }: { size?: number; className?: stri
         rx="19"
         ry="8.5"
         transform="rotate(-28 32 32)"
-        stroke="#fff"
+        stroke="#080a08"
         strokeOpacity="0.9"
         strokeWidth="2.75"
         fill="none"
       />
       {/* Núcleo */}
-      <circle cx="32" cy="32" r="6.5" fill="#fff" />
+      <circle cx="32" cy="32" r="6.5" fill="#080a08" />
       {/* Satélite sobre la órbita */}
-      <circle cx="47.5" cy="20.5" r="3.4" fill="#fff" />
+      <circle cx="47.5" cy="20.5" r="3.4" fill="#080a08" />
     </svg>
   );
 }
@@ -69,8 +69,8 @@ export function BrandSpinner({ size = 96, className }: { size?: number; classNam
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" className={className} aria-hidden="true">
       <defs>
         <linearGradient id={`${id}-s`} x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#8688f6" />
-          <stop offset="1" stopColor="#5A4FE0" />
+          <stop stopColor="#dcff85" />
+          <stop offset="1" stopColor="#c4f82a" />
         </linearGradient>
       </defs>
       <g className="animate-orbit">
@@ -85,7 +85,7 @@ export function BrandSpinner({ size = 96, className }: { size?: number; classNam
           strokeLinecap="round"
           opacity="0.55"
         />
-        <circle cx="102" cy="41.3" r="6" fill="#2dd4e7" />
+        <circle cx="102" cy="41.3" r="6" fill="#c4f82a" />
       </g>
       <circle cx="60" cy="60" r="12" fill={`url(#${id}-s)`} className="animate-pulse-soft" />
     </svg>
@@ -134,8 +134,8 @@ export function Ambient({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden', className)}>
       <div className="animate-blob absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-      <div className="animate-blob absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-cyan-500/15 blur-3xl [animation-delay:3s]" />
-      <div className="animate-blob absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl [animation-delay:6s]" />
+      <div className="animate-blob absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-emerald-500/15 blur-3xl [animation-delay:3s]" />
+      <div className="animate-blob absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-lime-400/10 blur-3xl [animation-delay:6s]" />
     </div>
   );
 }
@@ -149,7 +149,7 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
       <div className="relative z-10 flex flex-col items-center gap-8">
         <h1
           aria-label={word}
-          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgba(90,79,224,0.45)] sm:text-8xl"
+          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgba(196,248,42,0.45)] sm:text-8xl"
         >
           {word.split('').map((ch, i) => (
             <span
@@ -188,9 +188,9 @@ export function AiMark({ size = 20, className }: { size?: number; className?: st
     >
       <defs>
         <linearGradient id={`${id}-ai`} x1="6" y1="8" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#2DD4E7" />
-          <stop offset="0.5" stopColor="#6D68EE" />
-          <stop offset="1" stopColor="#C026D3" />
+          <stop stopColor="#c4f82a" />
+          <stop offset="0.5" stopColor="#34d399" />
+          <stop offset="1" stopColor="#22d3ee" />
         </linearGradient>
       </defs>
       {/* Chispa principal (estrella cóncava de 4 puntas) */}

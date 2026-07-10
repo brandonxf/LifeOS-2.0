@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="tile" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7B78F5"/>
-      <stop offset="0.55" stop-color="#5A4FE0"/>
-      <stop offset="1" stop-color="#3D359E"/>
+      <stop stop-color="#dcff85"/>
+      <stop offset="0.55" stop-color="#c4f82a"/>
+      <stop offset="1" stop-color="#97c910"/>
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#tile)"/>
-  <ellipse cx="32" cy="32" rx="19" ry="8.5" transform="rotate(-28 32 32)" stroke="#fff" stroke-opacity="0.9" stroke-width="2.75" fill="none"/>
-  <circle cx="32" cy="32" r="6.5" fill="#fff"/>
-  <circle cx="47.5" cy="20.5" r="3.4" fill="#fff"/>
+  <ellipse cx="32" cy="32" rx="19" ry="8.5" transform="rotate(-28 32 32)" stroke="#080a08" stroke-opacity="0.9" stroke-width="2.75" fill="none"/>
+  <circle cx="32" cy="32" r="6.5" fill="#080a08"/>
+  <circle cx="47.5" cy="20.5" r="3.4" fill="#080a08"/>
 </svg>
