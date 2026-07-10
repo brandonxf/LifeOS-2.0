@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -89,9 +90,11 @@ export function Modal({
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
+  // Portal a document.body: evita que una superficie glass ancestro
+  // (backdrop-filter/transform) recorte el overlay fixed a su propia caja.
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-md" onClick={onClose} />
       <div
         className={cn(
           'relative z-10 w-full animate-fade-in rounded-3xl border border-white/10 bg-white p-6 shadow-glass-lg dark:bg-ink-900/85 dark:backdrop-blur-2xl',
@@ -106,7 +109,8 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

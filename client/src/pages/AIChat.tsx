@@ -157,23 +157,23 @@ export default function AIChat() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-white dark:bg-ink-950">
-      {/* Sidebar: conversation history (estilo ChatGPT) */}
+    <div className="flex h-full overflow-hidden">
+      {/* Sidebar: historial (glass) */}
       {showSidebar && (
-        <aside className="hidden w-64 shrink-0 flex-col border-r bg-slate-50 dark:border-white/[0.06] dark:bg-black/20 md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-white/[0.03] backdrop-blur-xl md:flex">
           <div className="p-3">
             <button
               onClick={newChat}
-              className="flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/5"
+              className="flex w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm font-medium transition hover:bg-white/[0.09]"
             >
               <Plus className="h-4 w-4" /> Nuevo chat
             </button>
           </div>
           <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
             {conversations.isLoading ? (
-              <p className="px-2 py-4 text-center text-xs text-slate-400">Cargando…</p>
+              <p className="px-2 py-4 text-center text-xs text-white/40">Cargando…</p>
             ) : !conversations.data?.length ? (
-              <p className="px-2 py-4 text-center text-xs text-slate-400">Sin conversaciones aún</p>
+              <p className="px-2 py-4 text-center text-xs text-white/40">Sin conversaciones aún</p>
             ) : (
               conversations.data.map((c) => (
                 <div
@@ -183,14 +183,14 @@ export default function AIChat() {
                     'group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition',
                     activeId === c.id
                       ? 'bg-slate-200/70 dark:bg-white/10'
-                      : 'hover:bg-slate-100 dark:hover:bg-white/5',
+                      : 'hover:bg-slate-100 dark:hover:bg-white/[0.06]',
                   )}
                 >
                   <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
                   <p className="min-w-0 flex-1 truncate">{c.title}</p>
                   <button
                     onClick={(e) => { e.stopPropagation(); delConvo.mutate(c.id); }}
-                    className="shrink-0 rounded-md p-1 text-slate-400 opacity-0 transition hover:text-danger group-hover:opacity-100"
+                    className="shrink-0 rounded-md p-1 text-white/40 opacity-0 transition hover:text-danger group-hover:opacity-100"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -207,7 +207,7 @@ export default function AIChat() {
         <div className="flex items-center gap-2 border-b px-3 py-2.5 dark:border-white/[0.06]">
           <button
             onClick={() => setShowSidebar((s) => !s)}
-            className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:hover:bg-white/5 md:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:hover:bg-white/[0.06] md:flex"
             title="Mostrar/ocultar historial"
           >
             {showSidebar ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
@@ -215,7 +215,7 @@ export default function AIChat() {
           <span className="font-display text-sm font-semibold">Asistente IA</span>
           <button
             onClick={newChat}
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:hover:bg-white/5"
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:hover:bg-white/[0.06]"
             title="Nuevo chat"
           >
             <Plus className="h-5 w-5" />
@@ -226,17 +226,18 @@ export default function AIChat() {
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-              <AiMark size={48} className="mb-4 opacity-95" />
-              <h2 className="font-display text-2xl font-bold">¿En qué puedo ayudarte?</h2>
-              <p className="mb-8 mt-1.5 text-sm text-slate-400">
+              <AiMark size={52} className="mb-4 opacity-95" />
+              <p className="eyebrow mb-2">Asistente IA</p>
+              <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">¿En qué puedo ayudarte?</h2>
+              <p className="mb-8 mt-2 text-sm text-white/50">
                 Veo tus tareas, hábitos, finanzas, diario y salud en vivo.
               </p>
-              <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-xl border p-3 text-left text-sm transition hover:border-primary/50 hover:bg-primary/5 dark:border-white/10"
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-left text-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.06]"
                   >
                     {s}
                   </button>
@@ -258,7 +259,7 @@ export default function AIChat() {
                 {messages.map((m, i) =>
                   m.role === 'user' ? (
                     <div key={i} className="flex justify-end">
-                      <div className="max-w-[85%] rounded-3xl bg-slate-100 px-4 py-2.5 text-sm dark:bg-white/[0.08]">
+                      <div className="max-w-[85%] rounded-3xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm backdrop-blur-sm">
                         <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1">
                           <ReactMarkdown>{m.content}</ReactMarkdown>
                         </div>
@@ -294,14 +295,14 @@ export default function AIChat() {
         <div className="px-4 pb-4 pt-2">
           <form
             onSubmit={(e) => { e.preventDefault(); send(input); }}
-            className="mx-auto flex max-w-3xl items-center gap-2 rounded-3xl border bg-slate-50 py-1.5 pl-4 pr-1.5 shadow-sm transition focus-within:border-primary/50 dark:border-white/10 dark:bg-white/5"
+            className="mx-auto flex max-w-3xl items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] py-1.5 pl-4 pr-1.5 shadow-glass backdrop-blur-xl transition focus-within:border-primary/40"
           >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Escríbele a tu asistente…"
               disabled={streaming}
-              className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-slate-400"
+              className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-white/40"
             />
             <button
               type="submit"
@@ -311,7 +312,7 @@ export default function AIChat() {
               <Send className="h-4 w-4" />
             </button>
           </form>
-          <p className="mx-auto mt-2 max-w-3xl text-center text-[11px] text-slate-400">
+          <p className="mx-auto mt-2 max-w-3xl text-center text-[11px] text-white/40">
             El asistente usa los datos en vivo de tu Life OS.
           </p>
         </div>
