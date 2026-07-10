@@ -171,15 +171,17 @@
   animation: progress-slide 1.15s ease-in-out infinite;
 }
 
-/* Entrada escalonada de cada item del menú flotante (FAB / speed-dial). */
+/* Entrada escalonada de cada item del menú flotante (FAB / speed-dial).
+   Solo opacidad + scale hacia adentro: NO usar translateY, porque el
+   transform amplía el área de scroll del contenedor y asoma una barra. */
 @keyframes fab-in {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.85);
+    transform: scale(0.85);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1);
   }
 }
 .fab-item {

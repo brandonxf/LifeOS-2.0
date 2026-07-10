@@ -38,6 +38,7 @@ export default function AIChat() {
   const [streaming, setStreaming] = useState(false);
   const [badge, setBadge] = useState<string[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileHistory, setMobileHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeIdRef = useRef<string | null>(null);
   activeIdRef.current = activeId;
@@ -156,50 +157,72 @@ export default function AIChat() {
     }
   }
 
+  const historyContent = (
+    <>
+      <div className="p-3">
+        <button
+          onClick={() => { newChat(); setMobileHistory(false); }}
+          className="flex w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm font-medium transition hover:bg-white/[0.09]"
+        >
+          <Plus className="h-4 w-4" /> Nuevo chat
+        </button>
+      </div>
+      <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
+        {conversations.isLoading ? (
+          <p className="px-2 py-4 text-center text-xs text-white/40">Cargando…</p>
+        ) : !conversations.data?.length ? (
+          <p className="px-2 py-4 text-center text-xs text-white/40">Sin conversaciones aún</p>
+        ) : (
+          conversations.data.map((c) => (
+            <div
+              key={c.id}
+              onClick={() => { openConversation(c.id); setMobileHistory(false); }}
+              className={cn(
+                'group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition',
+                activeId === c.id
+                  ? 'bg-slate-200/70 dark:bg-white/10'
+                  : 'hover:bg-slate-100 dark:hover:bg-white/[0.06]',
+              )}
+            >
+              <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
+              <p className="min-w-0 flex-1 truncate">{c.title}</p>
+              <button
+                onClick={(e) => { e.stopPropagation(); delConvo.mutate(c.id); }}
+                className="shrink-0 rounded-md p-1 text-white/40 opacity-0 transition hover:text-danger group-hover:opacity-100"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Sidebar: historial (glass) */}
+      {/* Sidebar: historial en desktop (glass) */}
       {showSidebar && (
         <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-white/[0.03] backdrop-blur-xl md:flex">
-          <div className="p-3">
-            <button
-              onClick={newChat}
-              className="flex w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm font-medium transition hover:bg-white/[0.09]"
-            >
-              <Plus className="h-4 w-4" /> Nuevo chat
-            </button>
-          </div>
-          <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
-            {conversations.isLoading ? (
-              <p className="px-2 py-4 text-center text-xs text-white/40">Cargando…</p>
-            ) : !conversations.data?.length ? (
-              <p className="px-2 py-4 text-center text-xs text-white/40">Sin conversaciones aún</p>
-            ) : (
-              conversations.data.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => openConversation(c.id)}
-                  className={cn(
-                    'group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition',
-                    activeId === c.id
-                      ? 'bg-slate-200/70 dark:bg-white/10'
-                      : 'hover:bg-slate-100 dark:hover:bg-white/[0.06]',
-                  )}
-                >
-                  <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
-                  <p className="min-w-0 flex-1 truncate">{c.title}</p>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); delConvo.mutate(c.id); }}
-                    className="shrink-0 rounded-md p-1 text-white/40 opacity-0 transition hover:text-danger group-hover:opacity-100"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+          {historyContent}
         </aside>
       )}
+
+      {/* Historial en móvil: drawer deslizable */}
+      {mobileHistory && (
+        <div
+          className="fixed inset-0 z-40 bg-ink-950/50 animate-scrim-in md:hidden"
+          onClick={() => setMobileHistory(false)}
+        />
+      )}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.07] bg-ink-900 transition-transform duration-200 md:hidden',
+          mobileHistory ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        {historyContent}
+      </aside>
 
       {/* Chat column */}
       <div className="relative flex min-w-0 flex-1 flex-col">
@@ -211,6 +234,13 @@ export default function AIChat() {
             title="Mostrar/ocultar historial"
           >
             {showSidebar ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={() => setMobileHistory(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:hover:bg-white/[0.06] md:hidden"
+            title="Historial de chats"
+          >
+            <PanelLeft className="h-5 w-5" />
           </button>
           <span className="font-display text-sm font-semibold">Asistente IA</span>
           <button
