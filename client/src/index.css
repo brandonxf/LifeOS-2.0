@@ -185,6 +185,36 @@
   }
 }
 
+/* ── Rendimiento en móvil ──────────────────────────────────────────
+   El look "glass" (aura animada + backdrop-blur apilado) es carísimo en
+   GPUs de celular y provoca jank al hacer scroll. En pantallas pequeñas
+   apagamos la aura animada y el desenfoque de fondo, y damos a las
+   superficies un fondo sólido: se ven casi igual (quedan sobre negro)
+   pero el scroll vuelve a ser fluido. */
+@media (max-width: 900px) {
+  .aurora-field {
+    display: none;
+  }
+  .animate-blob {
+    animation: none !important;
+  }
+  [class*='backdrop-blur'] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  /* Superficies de vidrio necesitan opacidad al perder el blur. */
+  .card {
+    background-color: rgba(18, 22, 18, 0.82) !important;
+  }
+  .app-rail {
+    background-color: rgba(11, 14, 11, 0.98) !important;
+  }
+  /* Ambiance lima estática (barata) que reemplaza a la aura animada. */
+  body {
+    background-image: radial-gradient(120% 55% at 50% -8%, rgba(196, 248, 42, 0.07), transparent 60%);
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;

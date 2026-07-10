@@ -117,7 +117,7 @@ export function AppLayout() {
       {/* Rail flotante de navegación */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/[0.07] bg-white/[0.045] backdrop-blur-2xl transition-all duration-200 lg:static lg:inset-auto lg:m-3 lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
+          'app-rail fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/[0.07] bg-white/[0.045] backdrop-blur-2xl transition-all duration-200 lg:static lg:inset-auto lg:m-3 lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
           sidebarCollapsed ? 'w-[68px]' : 'w-64',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}

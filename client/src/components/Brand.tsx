@@ -135,7 +135,7 @@ export function AuthArt({ className }: { className?: string }) {
  */
 export function AuroraField({ className }: { className?: string }) {
   return (
-    <div aria-hidden className={cn('pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
+    <div aria-hidden className={cn('aurora-field pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
       <div className="animate-blob absolute -left-40 -top-40 h-[42rem] w-[42rem] rounded-full bg-primary/[0.16] blur-[140px]" />
       <div className="animate-blob absolute -right-40 top-1/4 h-[38rem] w-[38rem] rounded-full bg-emerald-500/[0.12] blur-[150px] [animation-delay:5s]" />
       <div className="animate-blob absolute -bottom-48 left-1/3 h-[40rem] w-[40rem] rounded-full bg-lime-400/[0.08] blur-[160px] [animation-delay:9s]" />
