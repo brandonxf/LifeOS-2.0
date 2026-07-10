@@ -21,7 +21,6 @@ import { useAuth } from '../store/auth';
 import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
-import { ThemeToggle } from './ThemeToggle';
 import { Logo, AiMark, AuroraField } from './Brand';
 
 const NAV = [
@@ -196,7 +195,6 @@ export function AppLayout() {
 
           <div className="flex items-center gap-1.5">
             <NotificationsBell />
-            <ThemeToggle />
             <div className="ml-1 flex items-center gap-2 rounded-xl px-2 py-1">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
                 {user?.name?.[0]?.toUpperCase() ?? '?'}

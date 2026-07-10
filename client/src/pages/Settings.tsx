@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Moon, Sun, Monitor, LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
@@ -52,7 +51,6 @@ const passwordSchema = z
 type PasswordForm = z.infer<typeof passwordSchema>;
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme();
   const { user, clear, refreshToken, setUser } = useAuth();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
@@ -76,12 +74,6 @@ export default function Settings() {
     navigate('/login');
     toast.success('Sesión cerrada');
   }
-
-  const themes = [
-    { id: 'light', label: 'Claro', icon: Sun },
-    { id: 'dark', label: 'Oscuro', icon: Moon },
-    { id: 'system', label: 'Sistema', icon: Monitor },
-  ];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -156,20 +148,6 @@ export default function Settings() {
           ) : (
             <button className="btn-primary" onClick={() => toast('Los pagos no están configurados en esta demo')}>Mejorar plan</button>
           )}
-        </div>
-      </Card>
-
-      {/* Appearance */}
-      <Card>
-        <h3 className="mb-4 font-semibold">Apariencia</h3>
-        <div className="grid grid-cols-3 gap-2">
-          {themes.map((t) => (
-            <button key={t.id} onClick={() => setTheme(t.id)}
-              className={cn('flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium transition', theme === t.id ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800')}>
-              <t.icon className="h-5 w-5" />
-              {t.label}
-            </button>
-          ))}
         </div>
       </Card>
 

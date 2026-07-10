@@ -15,7 +15,7 @@ import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <App />
@@ -23,7 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             position="bottom-right"
             toastOptions={{
               className:
-                '!bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-slate-100 !rounded-xl !text-sm',
+                '!bg-ink-850 !text-slate-100 !border !border-white/10 !rounded-xl !text-sm',
             }}
           />
         </BrowserRouter>
