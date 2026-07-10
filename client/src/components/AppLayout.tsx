@@ -104,6 +104,10 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
   // abajo; el más cercano al botón anima primero.
   const items = [...NAV, { to: '/settings', label: 'Ajustes', icon: Settings }];
 
+  // En el chat de IA el composer (con su botón de enviar) va abajo a la
+  // derecha; subimos el FAB para no taparlo.
+  const onAi = pathname === '/ai';
+
   function go(to: string) {
     setOpen(false);
     navigate(to);
@@ -120,9 +124,14 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
         />
       )}
 
-      <div className="fixed bottom-5 right-4 z-50 flex flex-col items-end gap-3">
+      <div
+        className={cn(
+          'fixed right-4 z-50 flex flex-col items-end gap-3',
+          onAi ? 'bottom-28' : 'bottom-5',
+        )}
+      >
         {open && (
-          <div className="flex max-h-[calc(100vh-8rem)] flex-col items-end gap-3 overflow-y-auto pr-0.5 pt-2">
+          <div className="no-scrollbar flex max-h-[calc(100vh-8rem)] flex-col items-end gap-3 overflow-y-auto pr-0.5 pt-2">
             {items.map(({ to, label, icon: Icon }, i) => {
               const active = pathname === to;
               return (

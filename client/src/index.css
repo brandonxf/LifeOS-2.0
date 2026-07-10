@@ -201,6 +201,17 @@
   animation: scrim-in 0.2s ease-out;
 }
 
+/* Oculta la barra de scroll pero mantiene el scroll (táctil). Se usa en el
+   menú flotante: al animar la entrada, el transform amplía momentáneamente
+   el área de scroll del contenedor y asomaba una barra. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-orbit,
   .animate-pulse-soft,
