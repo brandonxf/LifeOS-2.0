@@ -171,11 +171,27 @@
   animation: progress-slide 1.15s ease-in-out infinite;
 }
 
+/* Entrada escalonada de cada item del menú flotante (FAB / speed-dial). */
+@keyframes fab-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.fab-item {
+  animation: fab-in 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-orbit,
   .animate-pulse-soft,
   .animate-blob,
   .loader-letter,
+  .fab-item,
   .progress-track::after {
     animation-duration: 0.001ms;
     animation-iteration-count: 1;

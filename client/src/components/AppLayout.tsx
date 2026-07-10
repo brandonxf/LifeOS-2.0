@@ -11,11 +11,12 @@ import {
   StickyNote,
   HeartPulse,
   Settings,
-  Menu,
   Bell,
   LogOut,
   ChevronLeft,
   CheckCircle2,
+  Plus,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useUI } from '../store/ui';
@@ -91,10 +92,107 @@ function NotificationsBell() {
   );
 }
 
+/** Menú flotante (speed-dial) para móvil: reemplaza el sidebar en pantallas
+ *  pequeñas. Un botón circular abajo-derecha se despliega hacia arriba
+ *  mostrando cada sección con su etiqueta e ícono. */
+function MobileFab({ onLogout }: { onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  // Items del menú (nav principal + ajustes). Se renderizan de arriba hacia
+  // abajo; el más cercano al botón anima primero.
+  const items = [...NAV, { to: '/settings', label: 'Ajustes', icon: Settings }];
+
+  function go(to: string) {
+    setOpen(false);
+    navigate(to);
+  }
+
+  return (
+    <div className="lg:hidden">
+      {/* Scrim */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-ink-950/60 animate-fade-in"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <div className="fixed bottom-5 right-4 z-50 flex flex-col items-end gap-3">
+        {open && (
+          <div className="flex max-h-[calc(100vh-8rem)] flex-col items-end gap-3 overflow-y-auto pr-0.5 pt-2">
+            {items.map(({ to, label, icon: Icon }, i) => {
+              const active = pathname === to;
+              return (
+                <button
+                  key={to}
+                  onClick={() => go(to)}
+                  className="fab-item flex items-center gap-3"
+                  style={{ animationDelay: `${(items.length - 1 - i) * 28}ms` }}
+                >
+                  <span
+                    className={cn(
+                      'rounded-full px-3 py-1.5 text-sm font-semibold shadow-lg',
+                      active
+                        ? 'bg-primary text-ink-950'
+                        : 'bg-ink-900/90 text-slate-100 backdrop-blur',
+                    )}
+                  >
+                    {label}
+                  </span>
+                  <span
+                    className={cn(
+                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-lg',
+                      active
+                        ? 'bg-primary text-ink-950'
+                        : 'bg-white text-primary-600 dark:bg-ink-900/90 dark:text-primary dark:backdrop-blur',
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Cerrar sesión */}
+            <button
+              onClick={() => {
+                setOpen(false);
+                onLogout();
+              }}
+              className="fab-item flex items-center gap-3"
+              style={{ animationDelay: '0ms' }}
+            >
+              <span className="rounded-full bg-ink-900/90 px-3 py-1.5 text-sm font-semibold text-danger shadow-lg backdrop-blur">
+                Cerrar sesión
+              </span>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-danger shadow-lg dark:bg-ink-900/90 dark:backdrop-blur">
+                <LogOut className="h-5 w-5" />
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Botón principal */}
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+          className={cn(
+            'flex h-14 w-14 items-center justify-center rounded-full text-ink-950 shadow-glow transition-transform active:scale-95',
+            open ? 'bg-primary-400 rotate-90' : 'bg-primary',
+          )}
+        >
+          {open ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AppLayout() {
   const { user, clear, refreshToken } = useAuth();
   const { sidebarCollapsed, toggleSidebar } = useUI();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   // El chat ocupa toda la ventana (sin el contenedor centrado/con padding).
@@ -116,9 +214,8 @@ export function AppLayout() {
       {/* Rail flotante de navegación */}
       <aside
         className={cn(
-          'app-rail fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/[0.07] bg-white/[0.045] backdrop-blur-2xl transition-all duration-200 lg:static lg:inset-auto lg:m-3 lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
+          'app-rail hidden flex-col border-r border-white/[0.07] bg-white/[0.045] backdrop-blur-2xl transition-all duration-200 lg:static lg:m-3 lg:flex lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
           sidebarCollapsed ? 'w-[68px]' : 'w-64',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
         <div className="flex h-16 items-center gap-2.5 px-4">
@@ -138,7 +235,6 @@ export function AppLayout() {
             <NavLink
               key={to}
               to={to}
-              onClick={() => setMobileOpen(false)}
               className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
               title={sidebarCollapsed ? label : undefined}
             >
@@ -158,7 +254,6 @@ export function AppLayout() {
         <div className="space-y-1 border-t border-white/[0.07] p-3">
           <NavLink
             to="/settings"
-            onClick={() => setMobileOpen(false)}
             className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
           >
             <Settings className="h-5 w-5 shrink-0" />
@@ -171,20 +266,16 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden" onClick={() => setMobileOpen(false)} />
-      )}
-
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] lg:hidden"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            {/* Marca en móvil (el sidebar está oculto). */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <Logo size={32} />
+              <span className="font-display text-base font-extrabold tracking-tight">Life&nbsp;OS</span>
+            </div>
+            {/* Colapsar sidebar en desktop. */}
             <button
               onClick={toggleSidebar}
               className="hidden h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] lg:flex"
@@ -217,6 +308,9 @@ export function AppLayout() {
           )}
         </main>
       </div>
+
+      {/* Menú flotante para móvil */}
+      <MobileFab onLogout={handleLogout} />
     </div>
   );
 }
