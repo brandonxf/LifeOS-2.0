@@ -9,7 +9,7 @@ import { SectionTitle, Skeleton, Modal, Field, EmptyState } from '../components/
 import { cn } from '../lib/utils';
 import type { Note } from '../lib/types';
 
-const NOTE_COLORS = ['#1f2937', '#312e81', '#134e4a', '#713f12', '#7f1d1d', '#3730a3'];
+const NOTE_COLORS = ['#1f2937', '#365314', '#134e4a', '#713f12', '#7f1d1d', '#581c87'];
 
 export default function Notes() {
   const qc = useQueryClient();

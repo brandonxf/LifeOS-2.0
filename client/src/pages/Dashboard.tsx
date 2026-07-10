@@ -174,7 +174,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div
                 className="relative flex h-24 w-24 items-center justify-center rounded-full"
-                style={{ background: `conic-gradient(#7C3AED ${ringDeg}deg, rgba(124,58,237,0.12) 0deg)` }}
+                style={{ background: `conic-gradient(#c4f82a ${ringDeg}deg, rgba(196,248,42,0.14) 0deg)` }}
               >
                 <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-white dark:bg-slate-900">
                   <span className="text-xl font-bold">{habitRing.pct}%</span>
@@ -255,7 +255,7 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
     <div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-lg font-bold text-sky-500">{water ? water.latest.toFixed(1) : '—'}</p>
+          <p className="text-lg font-bold text-primary">{water ? water.latest.toFixed(1) : '—'}</p>
           <p className="text-[10px] text-slate-400">Agua {water?.unit}</p>
         </div>
         <div>
@@ -274,7 +274,7 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
             <Bar dataKey="value" radius={[3, 3, 0, 0]}>
               {chartData.map((_, i) => (
-                <Cell key={i} fill="#0EA5E9" />
+                <Cell key={i} fill="#c4f82a" />
               ))}
             </Bar>
           </BarChart>

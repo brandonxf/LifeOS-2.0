@@ -5,6 +5,10 @@
 @layer base {
   :root {
     color-scheme: light dark;
+    accent-color: #c4f82a;
+  }
+  ::selection {
+    background-color: rgba(196, 248, 42, 0.28);
   }
   html {
     -webkit-font-smoothing: antialiased;

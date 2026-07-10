@@ -230,7 +230,7 @@ export function AiMark({ size = 20, className }: { size?: number; className?: st
         <linearGradient id={`${id}-ai`} x1="6" y1="8" x2="58" y2="60" gradientUnits="userSpaceOnUse">
           <stop stopColor="#c4f82a" />
           <stop offset="0.5" stopColor="#34d399" />
-          <stop offset="1" stopColor="#22d3ee" />
+          <stop offset="1" stopColor="#14b8a6" />
         </linearGradient>
       </defs>
       {/* Chispa principal (estrella cóncava de 4 puntas) */}

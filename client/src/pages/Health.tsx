@@ -11,8 +11,8 @@ import type { HealthLog, HealthSummary } from '../lib/types';
 
 const METRICS = {
   workout: { label: 'Ejercicio', unit: 'min', icon: Dumbbell, color: '#0D9488' },
-  water: { label: 'Agua', unit: 'L', icon: Droplet, color: '#0EA5E9' },
-  sleep: { label: 'Sueño', unit: 'horas', icon: Moon, color: '#7C3AED' },
+  water: { label: 'Agua', unit: 'L', icon: Droplet, color: '#22c55e' },
+  sleep: { label: 'Sueño', unit: 'horas', icon: Moon, color: '#e879f9' },
   weight: { label: 'Peso', unit: 'kg', icon: Scale, color: '#D97706' },
 } as const;
 
