@@ -111,10 +111,11 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div className="lg:hidden">
-      {/* Scrim */}
+      {/* Scrim con desenfoque de fondo */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-ink-950/60 animate-fade-in"
+          className="fixed inset-0 z-40 bg-ink-950/45 animate-scrim-in"
+          style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
           onClick={() => setOpen(false)}
         />
       )}
