@@ -65,7 +65,7 @@ function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-80 animate-fade-in rounded-2xl border bg-white p-2 shadow-xl dark:bg-ink-900/85 dark:backdrop-blur-2xl">
+          <div className="fixed inset-x-4 top-16 z-20 mx-auto w-auto max-w-sm animate-fade-in rounded-2xl border bg-white p-2 shadow-xl dark:bg-ink-900/85 dark:backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none">
             <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Notificaciones
             </p>
