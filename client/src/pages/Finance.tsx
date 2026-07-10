@@ -61,7 +61,7 @@ export default function Finance() {
         title="Finanzas"
         subtitle="Controla ingresos, gastos y presupuestos"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button onClick={() => setBudgetOpen(true)} className="btn-ghost border">Presupuestos</button>
             <button onClick={() => { setEditing(null); setModalOpen(true); }} className="btn-primary">
               <Plus className="h-4 w-4" /> Movimiento
