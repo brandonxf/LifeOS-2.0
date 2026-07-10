@@ -16,10 +16,10 @@ export function SectionTitle({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex items-end justify-between gap-4">
+    <div className="mb-6 flex items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>}
+        <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-[2.5rem] sm:leading-[1.05]">{title}</h1>
+        {subtitle && <p className="mt-1.5 text-sm text-slate-500 dark:text-white/50">{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -42,8 +42,8 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-14 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 py-16 text-center">
+      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
         <Icon className="h-6 w-6" />
       </div>
       <h3 className="font-semibold">{title}</h3>
@@ -94,13 +94,13 @@ export function Modal({
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          'relative z-10 w-full animate-fade-in rounded-2xl border bg-white p-6 shadow-2xl dark:bg-slate-900',
+          'relative z-10 w-full animate-fade-in rounded-3xl border border-white/10 bg-white p-6 shadow-glass-lg dark:bg-ink-900/85 dark:backdrop-blur-2xl',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">{title}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="font-display text-xl font-bold">{title}</h2>
+          <button onClick={onClose} className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -141,9 +141,9 @@ export function StatTile({
 }) {
   return (
     <div className="card">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
-      <p className={cn('mt-1 text-2xl font-bold', accent)}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
+      <p className="eyebrow">{label}</p>
+      <p className={cn('num mt-2 text-3xl font-bold', accent)}>{value}</p>
+      {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
     </div>
   );
 }

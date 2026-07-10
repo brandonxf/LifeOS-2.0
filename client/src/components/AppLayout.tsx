@@ -22,7 +22,7 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { ThemeToggle } from './ThemeToggle';
-import { Logo, AiMark, Ambient } from './Brand';
+import { Logo, AiMark, AuroraField } from './Brand';
 
 const NAV = [
   { to: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -56,7 +56,7 @@ function NotificationsBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.06]"
       >
         <Bell className="h-5 w-5" />
         {data.length > 0 && (
@@ -66,7 +66,7 @@ function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-80 animate-fade-in rounded-2xl border bg-white p-2 shadow-xl dark:bg-slate-900">
+          <div className="absolute right-0 z-20 mt-2 w-80 animate-fade-in rounded-2xl border bg-white p-2 shadow-xl dark:bg-ink-900/85 dark:backdrop-blur-2xl">
             <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Notificaciones
             </p>
@@ -78,7 +78,7 @@ function NotificationsBell() {
             ) : (
               <div className="max-h-80 space-y-1 overflow-auto">
                 {data.map((n) => (
-                  <div key={n.id} className="rounded-xl px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <div key={n.id} className="rounded-xl px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/[0.06]">
                     <p className="text-sm font-medium">{n.title}</p>
                     <p className="truncate text-xs text-slate-500">{n.message}</p>
                   </div>
@@ -112,12 +112,12 @@ export function AppLayout() {
   }
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-slate-50 dark:bg-ink-950">
-      <Ambient />
-      {/* Sidebar */}
+    <div className="relative flex h-screen overflow-hidden text-slate-100">
+      <AuroraField />
+      {/* Rail flotante de navegación */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-xl transition-all duration-200 dark:border-white/[0.06] dark:bg-ink-900/70 lg:static',
+          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-white/[0.07] bg-white/[0.045] backdrop-blur-2xl transition-all duration-200 lg:static lg:inset-auto lg:m-3 lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
           sidebarCollapsed ? 'w-[68px]' : 'w-64',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
@@ -156,7 +156,7 @@ export function AppLayout() {
           ))}
         </nav>
 
-        <div className="space-y-1 border-t border-slate-200/80 p-3 dark:border-white/[0.06]">
+        <div className="space-y-1 border-t border-white/[0.07] p-3">
           <NavLink
             to="/settings"
             onClick={() => setMobileOpen(false)}
@@ -178,17 +178,17 @@ export function AppLayout() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/70 px-4 backdrop-blur-xl dark:border-white/[0.06] dark:bg-ink-950/70">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
             <button
               onClick={toggleSidebar}
-              className="hidden h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:flex"
+              className="hidden h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] lg:flex"
             >
               <ChevronLeft className={cn('h-5 w-5 transition-transform', sidebarCollapsed && 'rotate-180')} />
             </button>
@@ -213,7 +213,7 @@ export function AppLayout() {
           {fullBleed ? (
             <Outlet />
           ) : (
-            <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
+            <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
               <Outlet />
             </div>
           )}

@@ -37,6 +37,10 @@ export default {
       },
       boxShadow: {
         glow: '0 0 0 1px rgba(196,248,42,0.20), 0 8px 30px -6px rgba(196,248,42,0.35)',
+        glass:
+          'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 50px -28px rgba(0,0,0,0.75)',
+        'glass-lg':
+          'inset 0 1px 0 0 rgba(255,255,255,0.08), 0 40px 80px -40px rgba(0,0,0,0.85)',
       },
       keyframes: {
         'fade-in': { from: { opacity: 0, transform: 'translateY(4px)' }, to: { opacity: 1, transform: 'translateY(0)' } },

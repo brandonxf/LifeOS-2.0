@@ -129,6 +129,22 @@ export function AuthArt({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Campo de aurora a pantalla completa para el shell de la app (fijo, detrás
+ * de todo): nebulosa lima que deriva + rejilla técnica tenue + viñeta.
+ */
+export function AuroraField({ className }: { className?: string }) {
+  return (
+    <div aria-hidden className={cn('pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
+      <div className="animate-blob absolute -left-40 -top-40 h-[42rem] w-[42rem] rounded-full bg-primary/[0.16] blur-[140px]" />
+      <div className="animate-blob absolute -right-40 top-1/4 h-[38rem] w-[38rem] rounded-full bg-emerald-500/[0.12] blur-[150px] [animation-delay:5s]" />
+      <div className="animate-blob absolute -bottom-48 left-1/3 h-[40rem] w-[40rem] rounded-full bg-lime-400/[0.08] blur-[160px] [animation-delay:9s]" />
+      <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,transparent_45%,rgba(0,0,0,0.5)_100%)]" />
+    </div>
+  );
+}
+
 /** Fondo ambiental de "aurora" — blobs difuminados que flotan. Va en un contenedor relativo. */
 export function Ambient({ className }: { className?: string }) {
   return (

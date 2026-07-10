@@ -18,17 +18,29 @@ import { Card, Skeleton } from '../components/ui';
 import { cn, formatCurrency } from '../lib/utils';
 import type { FinanceSummary, Task, Habit, Goal, CalendarEvent, HealthSummary } from '../lib/types';
 
-function WidgetShell({ title, icon: Icon, to, children }: { title: string; icon: any; to: string; children: React.ReactNode }) {
+function Tile({
+  title,
+  icon: Icon,
+  to,
+  className,
+  children,
+}: {
+  title: string;
+  icon: any;
+  to: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Card className="flex flex-col">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+    <Card className={cn('card-hover flex flex-col', className)}>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
             <Icon className="h-4 w-4" />
           </div>
-          <h3 className="font-semibold">{title}</h3>
+          <h3 className="text-sm font-semibold text-white/70">{title}</h3>
         </div>
-        <Link to={to} className="text-slate-400 hover:text-primary">
+        <Link to={to} className="text-white/30 transition hover:text-primary">
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -88,68 +100,72 @@ export default function Dashboard() {
   const ringDeg = habitRing.pct * 3.6;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {greeting()}, {user?.name?.split(' ')[0]}
+    <div>
+      {/* Hero */}
+      <div className="mb-7 pt-2">
+        <p className="eyebrow capitalize">{format(new Date(), "EEEE, d 'de' MMMM")}</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight sm:text-6xl">
+          {greeting()}, <span className="text-primary">{user?.name?.split(' ')[0]}</span>
         </h1>
-        <p className="mt-0.5 text-sm capitalize text-slate-500 dark:text-slate-400">{format(new Date(), "EEEE, d 'de' MMMM")}</p>
       </div>
 
-      {/* Quick AI bar */}
-      <form onSubmit={submitPrompt} className="flex items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm dark:bg-slate-900">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <AiMark size={20} />
-        </div>
+      {/* Barra IA en píldora de vidrio */}
+      <form
+        onSubmit={submitPrompt}
+        className="mb-6 flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] p-2 pl-4 shadow-glass backdrop-blur-xl transition focus-within:border-primary/40"
+      >
+        <AiMark size={20} />
         <input
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Pregúntale lo que sea a tu asistente de IA sobre tu vida…"
-          className="flex-1 bg-transparent text-sm outline-none"
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/40"
         />
-        <button type="submit" className="btn-primary px-3 py-2">
+        <button type="submit" className="btn-primary h-10 w-10 !px-0" aria-label="Preguntar">
           <Send className="h-4 w-4" />
         </button>
       </form>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         {/* Finance */}
-        <WidgetShell title="Finanzas" icon={Wallet} to="/finance">
+        <Tile title="Finanzas" icon={Wallet} to="/finance" className="lg:col-span-4">
           {finance.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
-            <div>
-              <p className="text-3xl font-bold text-success">{formatCurrency(finance.data?.balance ?? 0)}</p>
-              <p className="text-xs text-slate-400">balance de este periodo</p>
-              <div className="mt-3 space-y-1.5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="num text-4xl font-bold text-primary sm:text-5xl">{formatCurrency(finance.data?.balance ?? 0)}</p>
+                <p className="mt-1 text-xs text-white/40">balance de este periodo</p>
+              </div>
+              <div className="w-full space-y-1.5 sm:max-w-[52%]">
                 {(finance.data?.topCategories ?? []).slice(0, 3).map((c) => (
-                  <div key={c.category} className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">{c.category}</span>
-                    <span className="font-medium">{formatCurrency(c.total)}</span>
+                  <div key={c.category} className="flex items-center justify-between border-b border-white/[0.06] pb-1.5 text-sm last:border-0">
+                    <span className="text-white/50">{c.category}</span>
+                    <span className="num font-medium">{formatCurrency(c.total)}</span>
                   </div>
                 ))}
-                {!finance.data?.topCategories.length && <p className="text-sm text-slate-400">Aún no hay gastos</p>}
+                {!finance.data?.topCategories.length && <p className="text-sm text-white/40">Aún no hay gastos</p>}
               </div>
             </div>
           )}
-        </WidgetShell>
+        </Tile>
 
         {/* Tasks */}
-        <WidgetShell title="Tareas" icon={CheckSquare} to="/tasks">
+        <Tile title="Tareas" icon={CheckSquare} to="/tasks" className="lg:col-span-2">
           {tasks.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
             <div>
               <div className="flex gap-4">
                 <div>
-                  <p className={cn('text-3xl font-bold', taskStats.overdue ? 'text-danger' : 'text-slate-400')}>
+                  <p className={cn('num text-3xl font-bold', taskStats.overdue ? 'text-danger' : 'text-white/40')}>
                     {taskStats.overdue}
                   </p>
-                  <p className="text-xs text-slate-400">vencidas</p>
+                  <p className="text-xs text-white/40">vencidas</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-primary">{taskStats.dueToday.length}</p>
-                  <p className="text-xs text-slate-400">para hoy</p>
+                  <p className="num text-3xl font-bold text-primary">{taskStats.dueToday.length}</p>
+                  <p className="text-xs text-white/40">para hoy</p>
                 </div>
               </div>
               <div className="mt-3 space-y-1">
@@ -157,17 +173,17 @@ export default function Dashboard() {
                   <div key={t.id} className="flex items-center gap-2 text-sm">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                     <span className="flex-1 truncate">{t.title}</span>
-                    <span className="text-xs text-slate-400">{t.dueDate && format(parseISO(t.dueDate), 'MMM d')}</span>
+                    <span className="text-xs text-white/40">{t.dueDate && format(parseISO(t.dueDate), 'MMM d')}</span>
                   </div>
                 ))}
-                {!taskStats.upcoming.length && <p className="text-sm text-slate-400">Sin tareas próximas</p>}
+                {!taskStats.upcoming.length && <p className="text-sm text-white/40">Sin tareas próximas</p>}
               </div>
             </div>
           )}
-        </WidgetShell>
+        </Tile>
 
         {/* Habits */}
-        <WidgetShell title="Hábitos de hoy" icon={Flame} to="/habits">
+        <Tile title="Hábitos de hoy" icon={Flame} to="/habits" className="lg:col-span-2">
           {habits.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
@@ -176,22 +192,22 @@ export default function Dashboard() {
                 className="relative flex h-24 w-24 items-center justify-center rounded-full"
                 style={{ background: `conic-gradient(#c4f82a ${ringDeg}deg, rgba(196,248,42,0.14) 0deg)` }}
               >
-                <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-white dark:bg-slate-900">
-                  <span className="text-xl font-bold">{habitRing.pct}%</span>
+                <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-ink-900">
+                  <span className="num text-2xl font-bold">{habitRing.pct}%</span>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-white/50">
                   {habitRing.done} de {habitRing.total}
                 </p>
-                <p className="text-xs text-slate-400">hábitos completados hoy</p>
+                <p className="text-xs text-white/40">hábitos completados hoy</p>
               </div>
             </div>
           )}
-        </WidgetShell>
+        </Tile>
 
         {/* Goals */}
-        <WidgetShell title="Metas" icon={Target} to="/habits">
+        <Tile title="Metas" icon={Target} to="/habits" className="lg:col-span-2">
           {goals.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
@@ -202,21 +218,21 @@ export default function Dashboard() {
                   <div key={g.id}>
                     <div className="mb-1 flex justify-between text-sm">
                       <span className="truncate">{g.title}</span>
-                      <span className="text-slate-400">{pct}%</span>
+                      <span className="text-white/40">{pct}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800">
+                    <div className="h-2 rounded-full bg-white/[0.08]">
                       <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
               })}
-              {!goals.data?.some((g) => g.status === 'active') && <p className="text-sm text-slate-400">Sin metas activas</p>}
+              {!goals.data?.some((g) => g.status === 'active') && <p className="text-sm text-white/40">Sin metas activas</p>}
             </div>
           )}
-        </WidgetShell>
+        </Tile>
 
         {/* Calendar */}
-        <WidgetShell title="Próximos eventos" icon={CalIcon} to="/calendar">
+        <Tile title="Próximos eventos" icon={CalIcon} to="/calendar" className="lg:col-span-3">
           {events.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
@@ -225,22 +241,22 @@ export default function Dashboard() {
                 <div key={e.id} className="flex items-center gap-2 text-sm">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: e.color }} />
                   <span className="flex-1 truncate">{e.title}</span>
-                  <span className="text-xs text-slate-400">{format(parseISO(e.startTime), 'MMM d, HH:mm')}</span>
+                  <span className="text-xs text-white/40">{format(parseISO(e.startTime), 'MMM d, HH:mm')}</span>
                 </div>
               ))}
-              {!upcomingEvents.length && <p className="text-sm text-slate-400">Sin eventos próximos</p>}
+              {!upcomingEvents.length && <p className="text-sm text-white/40">Sin eventos próximos</p>}
             </div>
           )}
-        </WidgetShell>
+        </Tile>
 
         {/* Health */}
-        <WidgetShell title="Salud (7 días)" icon={HeartPulse} to="/health">
+        <Tile title="Salud (7 días)" icon={HeartPulse} to="/health" className="lg:col-span-3">
           {health.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
             <HealthMini summary={health.data ?? {}} />
           )}
-        </WidgetShell>
+        </Tile>
       </div>
     </div>
   );
@@ -255,16 +271,16 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
     <div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-lg font-bold text-primary">{water ? water.latest.toFixed(1) : '—'}</p>
-          <p className="text-[10px] text-slate-400">Agua {water?.unit}</p>
+          <p className="num text-2xl font-bold text-primary">{water ? water.latest.toFixed(1) : '—'}</p>
+          <p className="text-[10px] text-white/40">Agua {water?.unit}</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-primary">{sleep ? sleep.latest.toFixed(1) : '—'}</p>
-          <p className="text-[10px] text-slate-400">Sueño h</p>
+          <p className="num text-2xl font-bold text-primary">{sleep ? sleep.latest.toFixed(1) : '—'}</p>
+          <p className="text-[10px] text-white/40">Sueño h</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-success">{workout ? Math.round(workout.total) : '—'}</p>
-          <p className="text-[10px] text-slate-400">Ejercicio min</p>
+          <p className="num text-2xl font-bold text-success">{workout ? Math.round(workout.total) : '—'}</p>
+          <p className="text-[10px] text-white/40">Ejercicio min</p>
         </div>
       </div>
       {chartData.length > 0 && (
