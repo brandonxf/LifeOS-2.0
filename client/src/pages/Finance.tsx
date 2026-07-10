@@ -169,13 +169,13 @@ export default function Finance() {
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-semibold">Movimientos</h3>
-          <div className="flex gap-2">
-            <select className="input w-auto" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <select className="input w-full sm:w-auto" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="">Todos los tipos</option>
               <option value="income">Ingreso</option>
               <option value="expense">Gasto</option>
             </select>
-            <select className="input w-auto" value={filterCat} onChange={(e) => setFilterCat(e.target.value)}>
+            <select className="input w-full sm:w-auto" value={filterCat} onChange={(e) => setFilterCat(e.target.value)}>
               <option value="">Todas las categorías</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -193,13 +193,13 @@ export default function Finance() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{e.description || e.category}</p>
-                  <p className="text-xs text-slate-400">{e.category} · {format(parseISO(e.date), 'MMM d, yyyy')}</p>
+                  <p className="truncate text-xs text-slate-400">{e.category} · {format(parseISO(e.date), 'MMM d, yyyy')}</p>
                 </div>
-                <span className={cn('text-sm font-semibold', e.type === 'income' ? 'text-success' : 'text-slate-700 dark:text-slate-200')}>
+                <span className={cn('shrink-0 whitespace-nowrap text-sm font-semibold', e.type === 'income' ? 'text-success' : 'text-slate-700 dark:text-slate-200')}>
                   {e.type === 'income' ? '+' : '−'}{formatCurrencyPrecise(Number(e.amount))}
                 </span>
-                <button onClick={() => { setEditing(e); setModalOpen(true); }} className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-primary">Editar</button>
-                <button onClick={() => del.mutate(e.id)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger">
+                <button onClick={() => { setEditing(e); setModalOpen(true); }} className="shrink-0 rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-primary">Editar</button>
+                <button onClick={() => del.mutate(e.id)} className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-danger">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
