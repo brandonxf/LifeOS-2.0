@@ -22,7 +22,7 @@ import { SectionTitle, Modal, Field } from '../components/ui';
 import { cn } from '../lib/utils';
 import type { CalendarEvent } from '../lib/types';
 
-const EVENT_COLORS = ['#7C3AED', '#0D9488', '#D97706', '#DC2626', '#2563EB', '#DB2777'];
+const EVENT_COLORS = ['#c4f82a', '#22c55e', '#0d9488', '#f59e0b', '#f43f5e', '#e879f9'];
 const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function Calendar() {
@@ -108,7 +108,7 @@ export default function Calendar() {
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-sm', isToday(day) && 'bg-primary font-bold text-white')}>
+                  <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-sm', isToday(day) && 'bg-primary font-bold text-ink-950')}>
                     {format(day, 'd')}
                   </span>
                 </div>
@@ -117,8 +117,8 @@ export default function Calendar() {
                     <div
                       key={e.id}
                       onClick={(ev) => { ev.stopPropagation(); setEditing(e); setSelectedDay(day); setModalOpen(true); }}
-                      className="truncate rounded px-1.5 py-0.5 text-xs font-medium text-white"
-                      style={{ backgroundColor: e.color }}
+                      className="truncate rounded px-1.5 py-0.5 text-xs font-medium"
+                      style={{ backgroundColor: `${e.color}26`, color: e.color }}
                       title={e.title}
                     >
                       {!e.allDay && format(parseISO(e.startTime), 'HH:mm')} {e.title}
@@ -153,7 +153,7 @@ function EventModal({
   const qc = useQueryClient();
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
-  const [color, setColor] = useState('#7C3AED');
+  const [color, setColor] = useState('#c4f82a');
   const [start, setStart] = useState('09:00');
   const [end, setEnd] = useState('10:00');
   const [dateStr, setDateStr] = useState(format(day, 'yyyy-MM-dd'));
@@ -168,7 +168,7 @@ function EventModal({
         setEnd(format(parseISO(editing.endTime), 'HH:mm'));
         setDateStr(editing.startTime.slice(0, 10));
       } else {
-        setTitle(''); setLocation(''); setColor('#7C3AED'); setStart('09:00'); setEnd('10:00');
+        setTitle(''); setLocation(''); setColor('#c4f82a'); setStart('09:00'); setEnd('10:00');
         setDateStr(format(day, 'yyyy-MM-dd'));
       }
     }

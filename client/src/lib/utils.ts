@@ -21,7 +21,7 @@ export const MOOD_COLORS = ['', '#DC2626', '#D97706', '#eab308', '#22c55e', '#0D
 
 export const PRIORITY_STYLES: Record<string, string> = {
   low: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  medium: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+  medium: 'bg-lime-100 text-lime-700 dark:bg-primary/15 dark:text-primary',
   high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   urgent: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
 };
