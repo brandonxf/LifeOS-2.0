@@ -140,6 +140,46 @@ export function Ambient({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Fondo abstracto "seda" para las pantallas de auth: cintas fluidas en lima
+ * sobre negro, con brillos difuminados y viñeta para enfocar el centro.
+ */
+export function AuthBackdrop({ className }: { className?: string }) {
+  const id = useId();
+  return (
+    <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
+      {/* Brillos que flotan */}
+      <div className="animate-blob absolute -left-32 -top-24 h-[38rem] w-[38rem] rounded-full bg-primary/20 blur-[120px]" />
+      <div className="animate-blob absolute -right-28 top-1/4 h-[34rem] w-[34rem] rounded-full bg-emerald-500/15 blur-[120px] [animation-delay:4s]" />
+      <div className="animate-blob absolute -bottom-32 left-1/3 h-[36rem] w-[36rem] rounded-full bg-lime-400/[0.12] blur-[130px] [animation-delay:8s]" />
+      {/* Cintas de seda */}
+      <svg
+        className="absolute inset-0 h-full w-full opacity-70 [filter:blur(8px)]"
+        viewBox="0 0 1200 1200"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <defs>
+          <linearGradient id={`${id}-a`} x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#c4f82a" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#c4f82a" stopOpacity="0.55" />
+            <stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={`${id}-b`} x1="1200" y1="0" x2="0" y2="1200" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#34d399" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#a8e60a" stopOpacity="0.4" />
+            <stop offset="1" stopColor="#c4f82a" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d="M-120 340 C 220 140 420 560 700 400 S 1160 240 1320 540" fill="none" stroke={`url(#${id}-a)`} strokeWidth="150" strokeLinecap="round" />
+        <path d="M-120 780 C 180 640 400 960 660 800 S 1120 680 1320 860" fill="none" stroke={`url(#${id}-b)`} strokeWidth="130" strokeLinecap="round" />
+        <path d="M-120 560 C 260 460 460 720 760 600 S 1180 480 1320 700" fill="none" stroke={`url(#${id}-a)`} strokeWidth="60" strokeLinecap="round" opacity="0.6" />
+      </svg>
+      {/* Viñeta */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.7)_100%)]" />
+    </div>
+  );
+}
+
 /** Pantalla de carga de marca a pantalla completa (transición al entrar a la app). */
 export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: string }) {
   const word = 'Life OS';

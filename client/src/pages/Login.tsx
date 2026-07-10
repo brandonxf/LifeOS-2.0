@@ -4,11 +4,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Logo, Ambient, AppLoader, AuthArt } from '../components/Brand';
+import { Logo, AuthBackdrop, AppLoader } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, Spinner } from '../components/ui';
-import { cn } from '../lib/utils';
 
 const schema = z.object({
   email: z.string().email('Ingresa un correo válido'),
@@ -58,18 +57,29 @@ export default function Login() {
 
   return (
     <AuthShell mode="login" title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Field label="Correo" error={errors.email?.message}>
-          <input className="input" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
+          <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
         </Field>
         <Field label="Contraseña" error={errors.password?.message}>
-          <input className="input" type="password" placeholder="••••••••" {...register('password')} />
+          <input className="input-glass" type="password" placeholder="••••••••" {...register('password')} />
         </Field>
-        <button type="submit" className="btn-primary w-full" disabled={loading}>
+        <button
+          type="button"
+          onClick={() => toast('Función próximamente')}
+          className="text-sm text-white/60 transition hover:text-primary"
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+        <button
+          type="submit"
+          className="btn-primary w-full rounded-xl py-3 text-base shadow-glow"
+          disabled={loading}
+        >
           {loading ? <Spinner /> : 'Iniciar sesión'}
         </button>
       </form>
-      <button onClick={fillDemo} className="btn-ghost mt-3 w-full text-xs">
+      <button onClick={fillDemo} className="mt-4 w-full text-center text-xs text-white/50 transition hover:text-white/80">
         Usar cuenta demo (demo@lifeos.app / demo1234)
       </button>
     </AuthShell>
@@ -87,55 +97,42 @@ export function AuthShell({
   mode: 'login' | 'register';
   children: React.ReactNode;
 }) {
-  const tab = (to: string, label: string, active: boolean) => (
-    <Link
-      to={to}
-      className={cn(
-        'rounded-full px-4 py-1.5 transition-colors',
-        active ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-slate-400 hover:text-white',
-      )}
-    >
-      {label}
-    </Link>
-  );
-
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-950 p-4">
-      <Ambient />
-      <div className="relative z-10 grid w-full max-w-4xl overflow-hidden rounded-[28px] border border-white/10 shadow-2xl md:grid-cols-2">
-        {/* Panel de marca */}
-        <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 p-10 text-white md:flex">
-          <div className="flex justify-center">
-            <Logo size={40} />
-          </div>
-          <div className="max-w-[16rem]">
-            <h2 className="font-display text-[1.7rem] font-bold leading-snug">Toma el mando de tu vida.</h2>
-            <p className="mt-2 text-sm text-white/80">
-              Finanzas, tareas, hábitos, metas y más — todo en un solo lugar.
-            </p>
-          </div>
-          <AuthArt className="mx-auto w-56 text-white/90" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <AuthBackdrop />
+      <div className="relative z-10 w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10">
+        {/* Marca */}
+        <div className="flex flex-col items-center">
+          <Logo size={52} />
+          <span className="mt-3 font-display text-sm font-bold tracking-[0.35em] text-white/85">
+            LIFE&nbsp;OS
+          </span>
         </div>
 
-        {/* Panel de formulario */}
-        <div className="relative bg-ink-900 p-8 sm:p-10">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="md:hidden">
-              <Logo size={32} />
-            </div>
-            <div className="ml-auto inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm font-semibold">
-              {tab('/login', 'Iniciar sesión', mode === 'login')}
-              {tab('/register', 'Registrarse', mode === 'register')}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h1 className="font-display text-2xl font-extrabold text-white">{title}</h1>
-            <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
-          </div>
-
-          {children}
+        <div className="mb-8 mt-6 text-center">
+          <h1 className="font-display text-2xl font-bold text-white sm:text-[1.7rem]">{title}</h1>
+          <p className="mt-1.5 text-sm text-white/55">{subtitle}</p>
         </div>
+
+        {children}
+
+        <p className="mt-8 text-center text-sm text-white/60">
+          {mode === 'login' ? (
+            <>
+              ¿Nuevo por aquí?{' '}
+              <Link to="/register" className="font-bold text-white transition hover:text-primary">
+                Regístrate
+              </Link>
+            </>
+          ) : (
+            <>
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" className="font-bold text-white transition hover:text-primary">
+                Inicia sesión
+              </Link>
+            </>
+          )}
+        </p>
       </div>
     </div>
   );
