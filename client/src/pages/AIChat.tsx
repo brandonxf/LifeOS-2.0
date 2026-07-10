@@ -157,7 +157,7 @@ export default function AIChat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border bg-white dark:border-white/[0.06] dark:bg-ink-950">
+    <div className="flex h-full overflow-hidden bg-white dark:bg-ink-950">
       {/* Sidebar: conversation history (estilo ChatGPT) */}
       {showSidebar && (
         <aside className="hidden w-64 shrink-0 flex-col border-r bg-slate-50 dark:border-white/[0.06] dark:bg-black/20 md:flex">

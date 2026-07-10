@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard,
@@ -97,6 +97,9 @@ export function AppLayout() {
   const { sidebarCollapsed, toggleSidebar } = useUI();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // El chat ocupa toda la ventana (sin el contenedor centrado/con padding).
+  const fullBleed = pathname === '/ai';
 
   async function handleLogout() {
     try {
@@ -206,10 +209,14 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
+        <main className={cn('min-h-0 flex-1', fullBleed ? 'overflow-hidden' : 'overflow-y-auto')}>
+          {fullBleed ? (
             <Outlet />
-          </div>
+          ) : (
+            <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
+              <Outlet />
+            </div>
+          )}
         </main>
       </div>
     </div>
