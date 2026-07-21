@@ -97,7 +97,7 @@ export function Modal({
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-md" onClick={onClose} />
       <div
         className={cn(
-          'relative z-10 w-full animate-fade-in rounded-3xl border border-white/10 bg-white p-6 shadow-glass-lg dark:bg-ink-900/85 dark:backdrop-blur-2xl',
+          'glass-menu relative z-10 max-h-[85vh] w-full overflow-y-auto animate-fade-in rounded-3xl border border-white/10 bg-white p-6 shadow-glass-lg dark:bg-ink-900/85 dark:backdrop-blur-2xl',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
       >

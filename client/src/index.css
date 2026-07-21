@@ -253,8 +253,9 @@
   .app-rail {
     background-color: rgba(11, 14, 11, 0.98) !important;
   }
-  /* Popovers/menús (notificaciones, avatar): al perder el blur, su fondo
-     al 85% se transparentaba. Los volvemos casi opacos en móvil. */
+  /* Popovers, menús y modales (notificaciones, avatar, formularios): al
+     perder el blur en móvil, su fondo al 85% se transparentaba. Los
+     volvemos casi opacos. */
   .dark .glass-menu {
     background-color: rgba(14, 17, 14, 0.98) !important;
   }
