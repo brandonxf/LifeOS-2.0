@@ -28,13 +28,16 @@ const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 export default function Calendar() {
   const qc = useQueryClient();
   const [cursor, setCursor] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'agenda'>(
+    () => (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 'agenda' : 'month'),
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
 
-  const rangeStart = view === 'month' ? startOfWeek(startOfMonth(cursor)) : startOfWeek(cursor);
-  const rangeEnd = view === 'month' ? endOfWeek(endOfMonth(cursor)) : endOfWeek(cursor);
+  const monthRange = view === 'month' || view === 'agenda';
+  const rangeStart = monthRange ? startOfWeek(startOfMonth(cursor)) : startOfWeek(cursor);
+  const rangeEnd = monthRange ? endOfWeek(endOfMonth(cursor)) : endOfWeek(cursor);
   const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
 
   const events = useQuery({
@@ -77,17 +80,61 @@ export default function Calendar() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <button onClick={() => setCursor(view === 'month' ? subMonths(cursor, 1) : addDays(cursor, -7))} className="btn-ghost border"><ChevronLeft className="h-4 w-4" /></button>
+          <button onClick={() => setCursor(view === 'week' ? addDays(cursor, -7) : subMonths(cursor, 1))} className="btn-ghost border"><ChevronLeft className="h-4 w-4" /></button>
           <button onClick={() => setCursor(new Date())} className="btn-ghost border">Hoy</button>
-          <button onClick={() => setCursor(view === 'month' ? addMonths(cursor, 1) : addDays(cursor, 7))} className="btn-ghost border"><ChevronRight className="h-4 w-4" /></button>
+          <button onClick={() => setCursor(view === 'week' ? addDays(cursor, 7) : addMonths(cursor, 1))} className="btn-ghost border"><ChevronRight className="h-4 w-4" /></button>
         </div>
         <div className="flex rounded-xl border p-1">
-          {(['month', 'week'] as const).map((v) => (
-            <button key={v} onClick={() => setView(v)} className={cn('rounded-lg px-3 py-1.5 text-sm', view === v && 'bg-primary/10 text-primary')}>{v === 'month' ? 'Mes' : 'Semana'}</button>
+          {(['month', 'week', 'agenda'] as const).map((v) => (
+            <button key={v} onClick={() => setView(v)} className={cn('rounded-lg px-3 py-1.5 text-sm', view === v && 'bg-primary/10 text-primary')}>
+              {v === 'month' ? 'Mes' : v === 'week' ? 'Semana' : 'Agenda'}
+            </button>
           ))}
         </div>
       </div>
 
+      {view === 'agenda' ? (
+        <div className="space-y-3">
+          {(() => {
+            const withEvents = days.filter((d) => (eventsByDay[d.toISOString().slice(0, 10)] ?? []).length);
+            if (!withEvents.length) {
+              return <p className="rounded-2xl border bg-white p-8 text-center text-sm text-slate-400 dark:bg-slate-900">No hay eventos este mes.</p>;
+            }
+            return withEvents.map((day) => {
+              const key = day.toISOString().slice(0, 10);
+              const dayEvents = [...(eventsByDay[key] ?? [])].sort((a, b) => a.startTime.localeCompare(b.startTime));
+              return (
+                <div key={key} className="overflow-hidden rounded-2xl border bg-white dark:bg-slate-900">
+                  <div className={cn('flex items-center justify-between px-4 py-2.5 text-sm font-semibold capitalize', isToday(day) ? 'bg-primary/10 text-primary' : 'bg-slate-50 dark:bg-slate-800/50')}>
+                    <span>{format(day, "EEEE d 'de' MMMM")}</span>
+                    <button onClick={() => openDay(day)} className="text-xs font-medium opacity-70 hover:opacity-100">+ Agregar</button>
+                  </div>
+                  <div className="divide-y">
+                    {dayEvents.map((e) => (
+                      <button
+                        key={e.id}
+                        onClick={() => { setEditing(e); setSelectedDay(day); setModalOpen(true); }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      >
+                        <span className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{e.title}</p>
+                          {e.location && (
+                            <p className="flex items-center gap-1 truncate text-xs text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{e.location}</p>
+                          )}
+                        </div>
+                        <span className="flex shrink-0 items-center gap-1 text-xs text-slate-400">
+                          <Clock className="h-3 w-3" />{e.allDay ? 'Todo el día' : format(parseISO(e.startTime), 'HH:mm')}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+      ) : (
       <div className="overflow-hidden rounded-2xl border bg-white dark:bg-slate-900">
         <div className="grid grid-cols-7 border-b bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/50">
           {WEEKDAYS.map((d) => <div key={d} className="py-2">{d}</div>)}
@@ -133,6 +180,7 @@ export default function Calendar() {
           })}
         </div>
       </div>
+      )}
 
       <EventModal
         open={modalOpen}

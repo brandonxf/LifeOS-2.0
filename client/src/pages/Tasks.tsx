@@ -134,7 +134,7 @@ export default function Tasks() {
                             <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
                               onClick={() => { setEditing(task); setModalOpen(true); }}
                               className={cn('cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition dark:bg-slate-900', snap.isDragging && 'rotate-1 shadow-lg')}>
-                              <TaskCard task={task} onDelete={() => del.mutate(task.id)} />
+                              <TaskCard task={task} onDelete={() => del.mutate(task.id)} onMove={(status) => updateStatus.mutate({ id: task.id, status })} />
                             </div>
                           )}
                         </Draggable>
@@ -176,7 +176,7 @@ export default function Tasks() {
   );
 }
 
-function TaskCard({ task, onDelete }: { task: Task; onDelete: () => void }) {
+function TaskCard({ task, onDelete, onMove }: { task: Task; onDelete: () => void; onMove?: (status: Task['status']) => void }) {
   const overdue = task.dueDate && isPast(parseISO(task.dueDate)) && !isToday(parseISO(task.dueDate)) && task.status !== 'done';
   return (
     <div>
@@ -196,6 +196,19 @@ function TaskCard({ task, onDelete }: { task: Task; onDelete: () => void }) {
         )}
         {task.tags.map((tag) => <span key={tag} className="chip bg-primary/10 text-primary">#{tag}</span>)}
       </div>
+      {onMove && (
+        <select
+          value={task.status}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => { e.stopPropagation(); onMove(e.target.value as Task['status']); }}
+          className="input mt-2 h-8 py-1 text-xs md:hidden"
+          aria-label="Mover tarea"
+        >
+          <option value="todo">Por hacer</option>
+          <option value="in_progress">En progreso</option>
+          <option value="done">Hecho</option>
+        </select>
+      )}
     </div>
   );
 }

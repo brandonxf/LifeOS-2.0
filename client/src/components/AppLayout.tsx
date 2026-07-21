@@ -23,6 +23,8 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
+import { QuickAdd } from './QuickAdd';
+import { PullToRefresh } from './PullToRefresh';
 
 const NAV = [
   { to: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -190,10 +192,8 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
       )}
 
       <div
-        className={cn(
-          'fixed right-4 z-50 flex flex-col items-end gap-3',
-          onAi ? 'bottom-28' : 'bottom-5',
-        )}
+        className="fixed right-4 z-50 flex flex-col items-end gap-3"
+        style={{ bottom: onAi ? 'calc(7rem + env(safe-area-inset-bottom))' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
       >
         {open && (
           <div className="no-scrollbar flex max-h-[calc(100vh-8rem)] flex-col items-end gap-3 overflow-y-auto pr-0.5 pt-2">
@@ -360,18 +360,21 @@ export function AppLayout() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            <QuickAdd />
             <NotificationsBell />
             <UserMenu onLogout={handleLogout} />
           </div>
         </header>
 
-        <main className={cn('min-h-0 flex-1', fullBleed ? 'overflow-hidden' : 'overflow-y-auto')}>
+        <main className="min-h-0 flex-1 overflow-hidden">
           {fullBleed ? (
             <Outlet />
           ) : (
-            <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
-              <Outlet />
-            </div>
+            <PullToRefresh className="h-full overflow-y-auto">
+              <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
+                <Outlet />
+              </div>
+            </PullToRefresh>
           )}
         </main>
       </div>
