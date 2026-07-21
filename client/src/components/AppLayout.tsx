@@ -92,6 +92,71 @@ function NotificationsBell() {
   );
 }
 
+/** Menú desplegable del avatar: datos del usuario + acceso a Ajustes y
+ *  cerrar sesión. */
+function UserMenu({ onLogout }: { onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const initial = user?.name?.[0]?.toUpperCase() ?? '?';
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Menú de usuario"
+        className="ml-1 flex items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+      >
+        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-bold text-primary">
+          {user?.avatar ? (
+            <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+          ) : (
+            initial
+          )}
+        </div>
+        <div className="hidden text-left sm:block">
+          <p className="text-sm font-semibold leading-tight">{user?.name}</p>
+          <p className="text-xs capitalize text-slate-400">Plan {user?.plan}</p>
+        </div>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="fixed inset-x-4 top-16 z-20 mx-auto w-auto max-w-xs animate-fade-in rounded-2xl border bg-white p-2 shadow-xl dark:bg-ink-900/85 dark:backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-64 sm:max-w-none">
+            <div className="flex items-center gap-3 px-3 py-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-base font-bold text-primary">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initial
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold leading-tight">{user?.name}</p>
+                {user?.email && <p className="truncate text-xs text-slate-400">{user.email}</p>}
+                <p className="text-xs capitalize text-slate-400">Plan {user?.plan}</p>
+              </div>
+            </div>
+            <div className="my-1 h-px bg-slate-200/70 dark:bg-white/10" />
+            <button
+              onClick={() => { setOpen(false); navigate('/settings'); }}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            >
+              <Settings className="h-4 w-4 opacity-70" /> Ajustes
+            </button>
+            <button
+              onClick={() => { setOpen(false); onLogout(); }}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-danger transition hover:bg-danger/10"
+            >
+              <LogOut className="h-4 w-4" /> Cerrar sesión
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Menú flotante (speed-dial) para móvil: reemplaza el sidebar en pantallas
  *  pequeñas. Un botón circular abajo-derecha se despliega hacia arriba
  *  mostrando cada sección con su etiqueta e ícono. */
@@ -296,15 +361,7 @@ export function AppLayout() {
 
           <div className="flex items-center gap-1.5">
             <NotificationsBell />
-            <div className="ml-1 flex items-center gap-2 rounded-xl px-2 py-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-                {user?.name?.[0]?.toUpperCase() ?? '?'}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-semibold leading-tight">{user?.name}</p>
-                <p className="text-xs capitalize text-slate-400">Plan {user?.plan}</p>
-              </div>
-            </div>
+            <UserMenu onLogout={handleLogout} />
           </div>
         </header>
 
