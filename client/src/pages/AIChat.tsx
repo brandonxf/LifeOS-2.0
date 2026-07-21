@@ -28,6 +28,16 @@ const SUGGESTIONS = [
   '¿Qué tareas tengo vencidas?',
 ];
 
+/** Oculta los bloques ```action del texto (los ejecuta el servidor, no se
+ *  muestran al usuario). También cubre un bloque incompleto durante el stream. */
+function stripActions(s: string): string {
+  return s
+    .replace(/```action[\s\S]*?```/g, '')
+    .replace(/```action[\s\S]*$/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export default function AIChat() {
   const { accessToken } = useAuth();
   const location = useLocation();
@@ -136,6 +146,17 @@ export default function AIChat() {
               copy[copy.length - 1] = { role: 'assistant', content: copy[copy.length - 1].content + data.text };
               return copy;
             });
+          } else if (event === 'action') {
+            for (const r of data.results as { ok: boolean; kind: string; label: string; error?: string }[]) {
+              if (r.ok) {
+                toast.success(`✓ ${r.label}`);
+                if (r.kind === 'task') qc.invalidateQueries({ queryKey: ['tasks'] });
+                else if (r.kind === 'finance') qc.invalidateQueries({ queryKey: ['finance'] });
+                else if (r.kind === 'event') qc.invalidateQueries({ queryKey: ['events'] });
+              } else {
+                toast.error(`No se pudo crear ${r.label}${r.error ? `: ${r.error}` : ''}`);
+              }
+            }
           } else if (event === 'error') {
             setMessages((m) => {
               const copy = [...m];
@@ -303,7 +324,7 @@ export default function AIChat() {
                       <div className="min-w-0 flex-1 pt-0.5">
                         {m.content ? (
                           <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-pre:bg-black/40">
-                            <ReactMarkdown>{m.content}</ReactMarkdown>
+                            <ReactMarkdown>{stripActions(m.content)}</ReactMarkdown>
                           </div>
                         ) : (
                           <span className="inline-flex gap-1 pt-1.5">

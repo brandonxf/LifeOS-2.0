@@ -7,6 +7,7 @@ import {
   habits,
   habitLogs,
   financeEntries,
+  calendarEvents,
   diaryEntries,
   healthLogs,
 } from '../db/schema/index.js';
@@ -170,6 +171,23 @@ detalle únicamente si el usuario lo pide. Menciona cifras concretas del
 contexto cuando sea relevante. Si algo no está en los datos, dilo con
 honestidad.
 
+ACCIONES: puedes CREAR elementos en la app. Cuando el usuario pida crear algo
+y tengas los datos obligatorios, incluye AL FINAL de tu respuesta un bloque
+con el formato exacto (fenced \`\`\`action) y antes una sola frase de
+confirmación. Tipos y campos:
+- create_task — title (obligatorio); priority ("low"|"medium"|"high"|"urgent"); dueDate ("YYYY-MM-DD"); description.
+- create_finance_entry — entryType ("income"|"expense", obligatorio); amount (número, obligatorio); category (obligatorio); date ("YYYY-MM-DD", hoy por defecto); description.
+- create_event — title (obligatorio); date ("YYYY-MM-DD", obligatorio); startTime ("HH:mm"); endTime ("HH:mm"); allDay (bool); location.
+Ejemplo:
+\`\`\`action
+{"type":"create_task","title":"Comprar leche","priority":"medium","dueDate":"${todayISO()}"}
+\`\`\`
+Reglas: si faltan datos OBLIGATORIOS, NO generes el bloque; pide brevemente lo
+que necesitas indicando el formato (ej.: si solo dicen "añade una tarea", pide
+el título y, opcional, prioridad y fecha). Nunca inventes datos que el usuario
+no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action no se
+muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
+
 ## Tareas recientes
 ${tasksTxt}
 
@@ -269,4 +287,106 @@ export async function streamChat(
   } catch (err) {
     cb.onError((err as Error).message ?? 'La solicitud a la IA falló');
   }
+}
+
+// ── Acciones del asistente ──────────────────────────────────────────────
+// El modelo puede pedir crear elementos mediante bloques ```action {json}```.
+// Aquí los parseamos y ejecutamos de forma segura (solo creación).
+
+export interface ActionResult {
+  ok: boolean;
+  kind: 'task' | 'finance' | 'event' | 'unknown';
+  label: string;
+  error?: string;
+}
+
+const ACTION_RE = /```action\s*([\s\S]*?)```/g;
+
+/** Quita los bloques de acción del texto (para no mostrarlos ni guardarlos). */
+export function stripActionBlocks(text: string): string {
+  return text
+    .replace(ACTION_RE, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+async function executeOne(userId: string, p: any): Promise<ActionResult> {
+  const today = todayISO();
+  switch (p?.type) {
+    case 'create_task': {
+      if (!p.title) return { ok: false, kind: 'task', label: 'tarea', error: 'falta el título' };
+      const priority = ['low', 'medium', 'high', 'urgent'].includes(p.priority) ? p.priority : 'medium';
+      await db.insert(tasks).values({
+        userId,
+        title: String(p.title),
+        description: p.description ? String(p.description) : null,
+        priority,
+        status: 'todo',
+        tags: Array.isArray(p.tags) ? p.tags.map(String) : [],
+        dueDate: ISO_DATE.test(p.dueDate ?? '') ? new Date(p.dueDate) : null,
+        completedAt: null,
+      });
+      return { ok: true, kind: 'task', label: `Tarea: ${p.title}` };
+    }
+    case 'create_finance_entry': {
+      const type = p.entryType === 'income' ? 'income' : 'expense';
+      const amount = Number(p.amount);
+      if (!amount || amount <= 0) return { ok: false, kind: 'finance', label: 'movimiento', error: 'monto inválido' };
+      if (!p.category) return { ok: false, kind: 'finance', label: 'movimiento', error: 'falta la categoría' };
+      const date = ISO_DATE.test(p.date ?? '') ? p.date : today;
+      await db.insert(financeEntries).values({
+        userId,
+        type,
+        amount: amount.toFixed(2),
+        category: String(p.category),
+        description: p.description ? String(p.description) : null,
+        date,
+      });
+      return { ok: true, kind: 'finance', label: `${type === 'income' ? 'Ingreso' : 'Gasto'} de $${amount} en ${p.category}` };
+    }
+    case 'create_event': {
+      if (!p.title) return { ok: false, kind: 'event', label: 'evento', error: 'falta el título' };
+      const date = ISO_DATE.test(p.date ?? '') ? p.date : today;
+      const allDay = Boolean(p.allDay);
+      const startHM = /^\d{2}:\d{2}$/.test(p.startTime ?? '') ? p.startTime : '09:00';
+      const endHM = /^\d{2}:\d{2}$/.test(p.endTime ?? '') ? p.endTime : startHM;
+      const start = allDay ? `${date}T00:00:00` : `${date}T${startHM}:00`;
+      const end = allDay ? `${date}T23:59:00` : `${date}T${endHM}:00`;
+      await db.insert(calendarEvents).values({
+        userId,
+        title: String(p.title),
+        description: p.description ? String(p.description) : null,
+        location: p.location ? String(p.location) : null,
+        color: typeof p.color === 'string' ? p.color : '#7C3AED',
+        startTime: new Date(start),
+        endTime: new Date(end),
+        allDay,
+      });
+      return { ok: true, kind: 'event', label: `Evento: ${p.title}` };
+    }
+    default:
+      return { ok: false, kind: 'unknown', label: 'acción', error: `tipo desconocido: ${p?.type}` };
+  }
+}
+
+/** Parsea y ejecuta todas las acciones presentes en la respuesta del modelo. */
+export async function runAssistantActions(userId: string, text: string): Promise<ActionResult[]> {
+  const results: ActionResult[] = [];
+  for (const m of text.matchAll(ACTION_RE)) {
+    let payload: any;
+    try {
+      payload = JSON.parse(m[1].trim());
+    } catch {
+      results.push({ ok: false, kind: 'unknown', label: 'acción', error: 'JSON inválido' });
+      continue;
+    }
+    try {
+      results.push(await executeOne(userId, payload));
+    } catch (e: any) {
+      results.push({ ok: false, kind: payload?.type?.includes('task') ? 'task' : 'unknown', label: 'acción', error: e?.message ?? 'error al ejecutar' });
+    }
+  }
+  return results;
 }

@@ -11,6 +11,8 @@ import {
   buildSystemPrompt,
   contextBadge,
   streamChat,
+  runAssistantActions,
+  stripActionBlocks,
   type ChatMessage,
 } from '../services/ai.service.js';
 
@@ -178,11 +180,20 @@ router.post(
       onDone: async () => {
         // Save the assistant reply and bump the conversation's timestamp.
         if (assistantText.trim()) {
+          // Ejecuta cualquier acción que el asistente haya solicitado.
+          let results: Awaited<ReturnType<typeof runAssistantActions>> = [];
+          try {
+            results = await runAssistantActions(user.id, assistantText);
+          } catch {
+            /* si falla la ejecución, no rompemos el chat */
+          }
+          if (results.length) send('action', { results });
+
           await db.insert(chatMessages).values({
             conversationId: convo.id,
             userId: user.id,
             role: 'assistant',
-            content: assistantText,
+            content: stripActionBlocks(assistantText) || assistantText,
           });
         }
         await db
