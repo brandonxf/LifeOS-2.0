@@ -147,12 +147,15 @@ export default function AIChat() {
               return copy;
             });
           } else if (event === 'action') {
+            const KEY: Record<string, string> = {
+              task: 'tasks', finance: 'finance', event: 'events', habit: 'habits',
+              goal: 'goals', note: 'notes', diary: 'diary', health: 'health',
+            };
             for (const r of data.results as { ok: boolean; kind: string; label: string; error?: string }[]) {
               if (r.ok) {
                 toast.success(`✓ ${r.label}`);
-                if (r.kind === 'task') qc.invalidateQueries({ queryKey: ['tasks'] });
-                else if (r.kind === 'finance') qc.invalidateQueries({ queryKey: ['finance'] });
-                else if (r.kind === 'event') qc.invalidateQueries({ queryKey: ['events'] });
+                const key = KEY[r.kind];
+                if (key) qc.invalidateQueries({ queryKey: [key] });
               } else {
                 toast.error(`No se pudo crear ${r.label}${r.error ? `: ${r.error}` : ''}`);
               }

@@ -8,9 +8,12 @@ import {
   habitLogs,
   financeEntries,
   calendarEvents,
+  goals,
+  notes,
   diaryEntries,
   healthLogs,
 } from '../db/schema/index.js';
+import { embed } from './embedding.service.js';
 import { env } from '../config/env.js';
 
 export const CLAUDE_MODEL = 'claude-sonnet-4-6';
@@ -171,22 +174,28 @@ detalle únicamente si el usuario lo pide. Menciona cifras concretas del
 contexto cuando sea relevante. Si algo no está en los datos, dilo con
 honestidad.
 
-ACCIONES: puedes CREAR elementos en la app. Cuando el usuario pida crear algo
-y tengas los datos obligatorios, incluye AL FINAL de tu respuesta un bloque
-con el formato exacto (fenced \`\`\`action) y antes una sola frase de
-confirmación. Tipos y campos:
-- create_task — title (obligatorio); priority ("low"|"medium"|"high"|"urgent"); dueDate ("YYYY-MM-DD"); description.
-- create_finance_entry — entryType ("income"|"expense", obligatorio); amount (número, obligatorio); category (obligatorio); date ("YYYY-MM-DD", hoy por defecto); description.
-- create_event — title (obligatorio); date ("YYYY-MM-DD", obligatorio); startTime ("HH:mm"); endTime ("HH:mm"); allDay (bool); location.
+ACCIONES: puedes CREAR elementos en cualquier módulo de la app. Cuando el
+usuario pida crear algo y tengas los datos obligatorios, incluye AL FINAL de
+tu respuesta un bloque con el formato exacto (fenced \`\`\`action) y antes una
+sola frase de confirmación. Tipos y campos (obligatorios marcados *):
+- create_task — title*; priority ("low"|"medium"|"high"|"urgent"); dueDate ("YYYY-MM-DD"); description.
+- create_finance_entry — entryType* ("income"|"expense"); amount* (número); category*; date ("YYYY-MM-DD", hoy por defecto); description.
+- create_event — title*; date* ("YYYY-MM-DD"); startTime ("HH:mm"); endTime ("HH:mm"); allDay (bool); location.
+- create_habit — name*; frequency ("daily"|"weekly"); targetPerWeek (1-7); description.
+- create_goal — title*; targetValue (número); currentValue (número); unit; category; deadline ("YYYY-MM-DD"); description.
+- create_note — content* (o title); title; tags (array); pinned (bool).
+- create_diary_entry — content*; mood (1-5); title; tags (array); date ("YYYY-MM-DD", hoy por defecto).
+- create_health_log — type* ("workout"|"water"|"sleep"|"weight"); value* (número); unit* (ej. "min","L","h","kg"); date ("YYYY-MM-DD"); notes.
 Ejemplo:
 \`\`\`action
 {"type":"create_task","title":"Comprar leche","priority":"medium","dueDate":"${todayISO()}"}
 \`\`\`
-Reglas: si faltan datos OBLIGATORIOS, NO generes el bloque; pide brevemente lo
-que necesitas indicando el formato (ej.: si solo dicen "añade una tarea", pide
-el título y, opcional, prioridad y fecha). Nunca inventes datos que el usuario
-no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action no se
-muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
+Puedes incluir varios bloques \`\`\`action si el usuario pide crear varias cosas.
+Reglas: si faltan datos OBLIGATORIOS (*), NO generes el bloque; pide brevemente
+lo que necesitas indicando el formato (ej.: si solo dicen "añade una tarea",
+pide el título y, opcional, prioridad y fecha). Nunca inventes datos que el
+usuario no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action
+no se muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
 
 ## Tareas recientes
 ${tasksTxt}
@@ -295,7 +304,7 @@ export async function streamChat(
 
 export interface ActionResult {
   ok: boolean;
-  kind: 'task' | 'finance' | 'event' | 'unknown';
+  kind: 'task' | 'finance' | 'event' | 'habit' | 'goal' | 'note' | 'diary' | 'health' | 'unknown';
   label: string;
   error?: string;
 }
@@ -365,6 +374,85 @@ async function executeOne(userId: string, p: any): Promise<ActionResult> {
         allDay,
       });
       return { ok: true, kind: 'event', label: `Evento: ${p.title}` };
+    }
+    case 'create_habit': {
+      if (!p.name) return { ok: false, kind: 'habit', label: 'hábito', error: 'falta el nombre' };
+      const frequency = p.frequency === 'weekly' ? 'weekly' : 'daily';
+      const target = Number(p.targetPerWeek);
+      await db.insert(habits).values({
+        userId,
+        name: String(p.name),
+        description: p.description ? String(p.description) : null,
+        icon: typeof p.icon === 'string' ? p.icon : undefined,
+        color: typeof p.color === 'string' ? p.color : undefined,
+        frequency,
+        targetPerWeek: Number.isInteger(target) && target >= 1 && target <= 7 ? target : 7,
+      });
+      return { ok: true, kind: 'habit', label: `Hábito: ${p.name}` };
+    }
+    case 'create_goal': {
+      if (!p.title) return { ok: false, kind: 'goal', label: 'meta', error: 'falta el título' };
+      const targetValue = Number(p.targetValue);
+      const currentValue = Number(p.currentValue);
+      await db.insert(goals).values({
+        userId,
+        title: String(p.title),
+        description: p.description ? String(p.description) : null,
+        category: p.category ? String(p.category) : 'personal',
+        targetValue: (targetValue > 0 ? targetValue : 100).toString(),
+        currentValue: (currentValue >= 0 ? currentValue : 0).toString(),
+        unit: p.unit ? String(p.unit) : '%',
+        status: 'active',
+        deadline: ISO_DATE.test(p.deadline ?? '') ? p.deadline : null,
+      });
+      return { ok: true, kind: 'goal', label: `Meta: ${p.title}` };
+    }
+    case 'create_note': {
+      const title = p.title ? String(p.title) : 'Sin título';
+      const content = p.content ? String(p.content) : '';
+      if (!content.trim() && !p.title) return { ok: false, kind: 'note', label: 'nota', error: 'falta el contenido' };
+      await db.insert(notes).values({
+        userId,
+        title,
+        content,
+        color: typeof p.color === 'string' ? p.color : '#1f2937',
+        tags: Array.isArray(p.tags) ? p.tags.map(String) : [],
+        pinned: Boolean(p.pinned),
+        embedding: embed(`${title}\n${content}`),
+      });
+      return { ok: true, kind: 'note', label: `Nota: ${title}` };
+    }
+    case 'create_diary_entry': {
+      const content = p.content ? String(p.content) : '';
+      if (!content.trim()) return { ok: false, kind: 'diary', label: 'entrada de diario', error: 'falta el contenido' };
+      const mood = Number(p.mood);
+      const date = ISO_DATE.test(p.date ?? '') ? p.date : today;
+      await db.insert(diaryEntries).values({
+        userId,
+        title: p.title ? String(p.title) : null,
+        content,
+        mood: Number.isInteger(mood) && mood >= 1 && mood <= 5 ? mood : 3,
+        tags: Array.isArray(p.tags) ? p.tags.map(String) : [],
+        date,
+      });
+      return { ok: true, kind: 'diary', label: 'Entrada de diario' };
+    }
+    case 'create_health_log': {
+      const type = ['workout', 'water', 'sleep', 'weight'].includes(p.type) ? p.type : null;
+      if (!type) return { ok: false, kind: 'health', label: 'registro de salud', error: 'tipo inválido (workout|water|sleep|weight)' };
+      const value = Number(p.value);
+      if (!value || value <= 0) return { ok: false, kind: 'health', label: 'registro de salud', error: 'valor inválido' };
+      if (!p.unit) return { ok: false, kind: 'health', label: 'registro de salud', error: 'falta la unidad' };
+      const date = ISO_DATE.test(p.date ?? '') ? p.date : today;
+      await db.insert(healthLogs).values({
+        userId,
+        type,
+        value: value.toString(),
+        unit: String(p.unit),
+        notes: p.notes ? String(p.notes) : null,
+        date,
+      });
+      return { ok: true, kind: 'health', label: `Salud: ${type} ${value}${p.unit}` };
     }
     default:
       return { ok: false, kind: 'unknown', label: 'acción', error: `tipo desconocido: ${p?.type}` };
