@@ -253,6 +253,11 @@
   .app-rail {
     background-color: rgba(11, 14, 11, 0.98) !important;
   }
+  /* Popovers/menús (notificaciones, avatar): al perder el blur, su fondo
+     al 85% se transparentaba. Los volvemos casi opacos en móvil. */
+  .dark .glass-menu {
+    background-color: rgba(14, 17, 14, 0.98) !important;
+  }
   /* Ambiance lima estática (barata) que reemplaza a la aura animada. */
   body {
     background-image: radial-gradient(120% 55% at 50% -8%, rgba(196, 248, 42, 0.07), transparent 60%);
