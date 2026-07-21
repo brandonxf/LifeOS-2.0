@@ -159,10 +159,16 @@ export function buildSystemPrompt(ctx: UserContext, userName: string): string {
     : '- (no health logs)';
 
   return `Eres el asistente personal dentro de "Life OS", un panel de gestión de vida para ${userName}.
-Tienes acceso en vivo a una foto de sus datos, abajo. Sé conciso, cercano y práctico.
-Responde SIEMPRE en español. Menciona cifras concretas del contexto cuando sea relevante.
-Si te preguntan algo que no está en los datos, dilo con honestidad. Usa markdown para
-estructurar. Hoy es ${todayISO()}.
+Tienes acceso en vivo a una foto de sus datos, abajo.
+Responde SIEMPRE en español. Hoy es ${todayISO()}.
+
+ESTILO (importante): sé breve y directo. Da la respuesta primero, en 1-3
+frases. Para preguntas simples, una sola frase. Nada de introducciones,
+relleno ni resúmenes de lo que vas a decir. No repitas la pregunta. Usa
+viñetas solo si piden varios elementos, y como máximo 3-5. Amplía con más
+detalle únicamente si el usuario lo pide. Menciona cifras concretas del
+contexto cuando sea relevante. Si algo no está en los datos, dilo con
+honestidad.
 
 ## Tareas recientes
 ${tasksTxt}
@@ -231,7 +237,7 @@ export async function streamChat(
         model: env.AI_MODEL,
         temperature: 0.6,
         top_p: 0.95,
-        max_tokens: 1024,
+        max_tokens: 512,
         stream: true,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -249,7 +255,7 @@ export async function streamChat(
     if (anthropic) {
       const stream = anthropic.messages.stream({
         model: CLAUDE_MODEL,
-        max_tokens: 1024,
+        max_tokens: 512,
         system: systemPrompt,
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
       });
