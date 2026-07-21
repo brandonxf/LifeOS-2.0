@@ -23,7 +23,6 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
-import { QuickAdd } from './QuickAdd';
 import { PullToRefresh } from './PullToRefresh';
 
 const NAV = [
@@ -360,7 +359,6 @@ export function AppLayout() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <QuickAdd />
             <NotificationsBell />
             <UserMenu onLogout={handleLogout} />
           </div>
