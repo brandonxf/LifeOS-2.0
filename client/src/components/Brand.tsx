@@ -19,8 +19,8 @@ export function Logo({ size = 36, className }: { size?: number; className?: stri
       <defs>
         <linearGradient id={`${id}-tile`} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
           <stop stopColor="#dcff85" />
-          <stop offset="0.55" stopColor="#c4f82a" />
-          <stop offset="1" stopColor="#97c910" />
+          <stop offset="0.55" stopColor="#37e779" />
+          <stop offset="1" stopColor="#15b657" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="16" fill={`url(#${id}-tile)`} />
@@ -70,7 +70,7 @@ export function BrandSpinner({ size = 96, className }: { size?: number; classNam
       <defs>
         <linearGradient id={`${id}-s`} x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
           <stop stopColor="#dcff85" />
-          <stop offset="1" stopColor="#c4f82a" />
+          <stop offset="1" stopColor="#37e779" />
         </linearGradient>
       </defs>
       <g className="animate-orbit">
@@ -85,7 +85,7 @@ export function BrandSpinner({ size = 96, className }: { size?: number; classNam
           strokeLinecap="round"
           opacity="0.55"
         />
-        <circle cx="102" cy="41.3" r="6" fill="#c4f82a" />
+        <circle cx="102" cy="41.3" r="6" fill="#37e779" />
       </g>
       <circle cx="60" cy="60" r="12" fill={`url(#${id}-s)`} className="animate-pulse-soft" />
     </svg>
@@ -176,14 +176,14 @@ export function AuthBackdrop({ className }: { className?: string }) {
       >
         <defs>
           <linearGradient id={`${id}-a`} x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#c4f82a" stopOpacity="0" />
-            <stop offset="0.5" stopColor="#c4f82a" stopOpacity="0.55" />
+            <stop stopColor="#37e779" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#37e779" stopOpacity="0.55" />
             <stop offset="1" stopColor="#22c55e" stopOpacity="0" />
           </linearGradient>
           <linearGradient id={`${id}-b`} x1="1200" y1="0" x2="0" y2="1200" gradientUnits="userSpaceOnUse">
             <stop stopColor="#34d399" stopOpacity="0" />
             <stop offset="0.5" stopColor="#a8e60a" stopOpacity="0.4" />
-            <stop offset="1" stopColor="#c4f82a" stopOpacity="0" />
+            <stop offset="1" stopColor="#37e779" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d="M-120 340 C 220 140 420 560 700 400 S 1160 240 1320 540" fill="none" stroke={`url(#${id}-a)`} strokeWidth="150" strokeLinecap="round" />
@@ -205,7 +205,7 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
       <div className="relative z-10 flex flex-col items-center gap-8">
         <h1
           aria-label={word}
-          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgba(196,248,42,0.45)] sm:text-8xl"
+          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgba(55,231,121,0.45)] sm:text-8xl"
         >
           {word.split('').map((ch, i) => (
             <span
@@ -244,7 +244,7 @@ export function AiMark({ size = 20, className }: { size?: number; className?: st
     >
       <defs>
         <linearGradient id={`${id}-ai`} x1="6" y1="8" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#c4f82a" />
+          <stop stopColor="#37e779" />
           <stop offset="0.5" stopColor="#34d399" />
           <stop offset="1" stopColor="#14b8a6" />
         </linearGradient>

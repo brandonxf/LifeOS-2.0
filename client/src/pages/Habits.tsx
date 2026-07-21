@@ -199,16 +199,16 @@ export default function Habits() {
   );
 }
 
-const HABIT_COLORS = ['#c4f82a', '#0d9488', '#f59e0b', '#22c55e', '#f43f5e', '#e879f9', '#a3e635'];
+const HABIT_COLORS = ['#37e779', '#0d9488', '#f59e0b', '#22c55e', '#f43f5e', '#e879f9', '#a3e635'];
 
 function HabitModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('flame');
-  const [color, setColor] = useState('#c4f82a');
+  const [color, setColor] = useState('#37e779');
 
-  useEffect(() => { if (open) { setName(''); setDescription(''); setIcon('flame'); setColor('#c4f82a'); } }, [open]);
+  useEffect(() => { if (open) { setName(''); setDescription(''); setIcon('flame'); setColor('#37e779'); } }, [open]);
 
   const save = useMutation({
     mutationFn: () => api('/api/habits', { method: 'POST', body: { name, description, icon, color } }),

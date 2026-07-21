@@ -22,7 +22,7 @@ import { SectionTitle, Modal, Field } from '../components/ui';
 import { cn } from '../lib/utils';
 import type { CalendarEvent } from '../lib/types';
 
-const EVENT_COLORS = ['#c4f82a', '#22c55e', '#0d9488', '#f59e0b', '#f43f5e', '#e879f9'];
+const EVENT_COLORS = ['#37e779', '#22c55e', '#0d9488', '#f59e0b', '#f43f5e', '#e879f9'];
 const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function Calendar() {
@@ -201,7 +201,7 @@ function EventModal({
   const qc = useQueryClient();
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
-  const [color, setColor] = useState('#c4f82a');
+  const [color, setColor] = useState('#37e779');
   const [start, setStart] = useState('09:00');
   const [end, setEnd] = useState('10:00');
   const [dateStr, setDateStr] = useState(format(day, 'yyyy-MM-dd'));
@@ -216,7 +216,7 @@ function EventModal({
         setEnd(format(parseISO(editing.endTime), 'HH:mm'));
         setDateStr(editing.startTime.slice(0, 10));
       } else {
-        setTitle(''); setLocation(''); setColor('#c4f82a'); setStart('09:00'); setEnd('10:00');
+        setTitle(''); setLocation(''); setColor('#37e779'); setStart('09:00'); setEnd('10:00');
         setDateStr(format(day, 'yyyy-MM-dd'));
       }
     }

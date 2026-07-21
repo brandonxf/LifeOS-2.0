@@ -43,7 +43,7 @@ export default function Diary() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13 }} formatter={(v: number) => [`${MOOD_LABELS[v]} (${v}/5)`, 'Ánimo']} />
-              <Line type="monotone" dataKey="mood" stroke="#c4f82a" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="mood" stroke="#37e779" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

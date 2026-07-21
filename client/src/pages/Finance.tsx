@@ -21,7 +21,7 @@ import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from
 import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
 import type { FinanceEntry, FinanceBudget, FinanceSummary } from '../lib/types';
 
-const PIE_COLORS = ['#c4f82a', '#0d9488', '#f59e0b', '#f43f5e', '#22c55e', '#e879f9', '#a3e635', '#14b8a6'];
+const PIE_COLORS = ['#37e779', '#0d9488', '#f59e0b', '#f43f5e', '#22c55e', '#e879f9', '#a3e635', '#14b8a6'];
 const CATEGORIES = ['Salario', 'Supermercado', 'Renta', 'Transporte', 'Restaurantes', 'Entretenimiento', 'Servicios', 'Salud', 'Compras', 'Otro'];
 
 export default function Finance() {

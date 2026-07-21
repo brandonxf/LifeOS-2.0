@@ -190,7 +190,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div
                 className="relative flex h-24 w-24 items-center justify-center rounded-full"
-                style={{ background: `conic-gradient(#c4f82a ${ringDeg}deg, rgba(196,248,42,0.14) 0deg)` }}
+                style={{ background: `conic-gradient(#37e779 ${ringDeg}deg, rgba(55,231,121,0.14) 0deg)` }}
               >
                 <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-ink-900">
                   <span className="num text-2xl font-bold">{habitRing.pct}%</span>
@@ -290,7 +290,7 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
             <Bar dataKey="value" radius={[3, 3, 0, 0]}>
               {chartData.map((_, i) => (
-                <Cell key={i} fill="#c4f82a" />
+                <Cell key={i} fill="#37e779" />
               ))}
             </Bar>
           </BarChart>
