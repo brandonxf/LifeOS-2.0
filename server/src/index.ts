@@ -39,7 +39,8 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json({ limit: '1mb' }));
+// 10mb: las entradas de diario pueden traer fotos como data URIs base64.
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(morgan(isProd ? 'combined' : 'dev'));
 

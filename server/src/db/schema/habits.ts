@@ -6,6 +6,7 @@ import {
   integer,
   date,
   numeric,
+  boolean,
   index,
   unique,
 } from 'drizzle-orm/pg-core';
@@ -79,9 +80,31 @@ export const goals = pgTable(
   }),
 );
 
+export const goalMilestones = pgTable(
+  'goal_milestones',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    goalId: uuid('goal_id')
+      .notNull()
+      .references(() => goals.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    done: boolean('done').notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    goalIdx: index('goal_milestones_goal_idx').on(t.goalId),
+  }),
+);
+
 export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
 export type HabitLog = typeof habitLogs.$inferSelect;
 export type NewHabitLog = typeof habitLogs.$inferInsert;
 export type Goal = typeof goals.$inferSelect;
 export type NewGoal = typeof goals.$inferInsert;
+export type GoalMilestone = typeof goalMilestones.$inferSelect;
+export type NewGoalMilestone = typeof goalMilestones.$inferInsert;

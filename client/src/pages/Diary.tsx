@@ -4,8 +4,10 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import { Plus, Trash2, BookOpen, Bold, Italic, List as ListIcon, Heading2 } from 'lucide-react';
+import { Plus, Trash2, BookOpen, Bold, Italic, List as ListIcon, Heading2, Camera as CameraIcon, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { MoodFace, MOOD_LABELS } from '../components/icons';
@@ -74,6 +76,13 @@ export default function Diary() {
                   </div>
                 </div>
                 <div className="prose-sm mt-2 line-clamp-3 text-sm text-slate-600 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: e.content }} />
+                {e.photos?.length > 0 && (
+                  <div className="mt-2 flex gap-2 overflow-x-auto">
+                    {e.photos.map((src, i) => (
+                      <img key={i} src={src} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                    ))}
+                  </div>
+                )}
                 {e.tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {e.tags.map((t) => <span key={t} className="chip bg-primary/10 text-primary">#{t}</span>)}
@@ -96,6 +105,27 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
   const [mood, setMood] = useState(3);
   const [tags, setTags] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [photos, setPhotos] = useState<string[]>([]);
+  const nativeCamera = Capacitor.isNativePlatform();
+
+  async function addPhoto() {
+    try {
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Prompt,
+        quality: 55,
+        width: 1080,
+        promptLabelHeader: 'Agregar foto',
+        promptLabelPhoto: 'Elegir de la galería',
+        promptLabelPicture: 'Tomar foto',
+      });
+      if (photo.base64String) {
+        setPhotos((p) => [...p, `data:image/${photo.format};base64,${photo.base64String}`]);
+      }
+    } catch {
+      /* usuario canceló */
+    }
+  }
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -109,6 +139,7 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
       setMood(editing?.mood ?? 3);
       setTags(editing?.tags.join(', ') ?? '');
       setDate(editing?.date ?? new Date().toISOString().slice(0, 10));
+      setPhotos(editing?.photos ?? []);
       editor?.commands.setContent(editing?.content ?? '<p></p>');
     }
   }, [open, editing, editor]);
@@ -121,6 +152,7 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
         mood,
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         date,
+        photos,
       };
       return editing
         ? api(`/api/diary/${editing.id}`, { method: 'PUT', body })
@@ -165,6 +197,34 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
         </Field>
 
         <Field label="Etiquetas (separadas por coma)"><input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="agradecido, productivo" /></Field>
+
+        <Field label="Fotos">
+          <div className="flex flex-wrap gap-2">
+            {photos.map((src, i) => (
+              <div key={i} className="group relative h-16 w-16">
+                <img src={src} alt="" className="h-full w-full rounded-lg object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-white shadow"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {nativeCamera && photos.length < 6 && (
+              <button
+                type="button"
+                onClick={addPhoto}
+                className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed text-slate-400 hover:border-primary hover:text-primary"
+              >
+                <CameraIcon className="h-5 w-5" />
+                <span className="text-[10px]">Agregar</span>
+              </button>
+            )}
+          </div>
+        </Field>
+
         <button type="submit" className="btn-primary w-full" disabled={save.isPending}>{editing ? 'Guardar cambios' : 'Guardar entrada'}</button>
       </form>
     </Modal>

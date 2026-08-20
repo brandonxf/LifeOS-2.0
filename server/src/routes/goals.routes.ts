@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { goals } from '../db/schema/index.js';
+import { goals, goalMilestones } from '../db/schema/index.js';
 import { asyncHandler, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
+
+const milestoneSchema = z.object({
+  title: z.string().min(1).max(200),
+});
 
 const router = Router();
 
@@ -117,6 +121,85 @@ router.delete(
       .where(and(eq(goals.id, req.params.id), eq(goals.userId, user.id)))
       .returning();
     if (!row) throw notFound('Goal not found');
+    res.json({ ok: true });
+  }),
+);
+
+// ── Hitos de una meta ──────────────────────────────────────────────────
+router.get(
+  '/:goalId/milestones',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const rows = await db
+      .select()
+      .from(goalMilestones)
+      .where(and(eq(goalMilestones.goalId, req.params.goalId), eq(goalMilestones.userId, user.id)))
+      .orderBy(asc(goalMilestones.sortOrder), asc(goalMilestones.createdAt));
+    res.json(rows);
+  }),
+);
+
+router.post(
+  '/:goalId/milestones',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(milestoneSchema, req.body);
+    const [existing] = await db
+      .select()
+      .from(goals)
+      .where(and(eq(goals.id, req.params.goalId), eq(goals.userId, user.id)))
+      .limit(1);
+    if (!existing) throw notFound('Goal not found');
+
+    const [count] = await db
+      .select({ n: goalMilestones.sortOrder })
+      .from(goalMilestones)
+      .where(eq(goalMilestones.goalId, req.params.goalId))
+      .orderBy(desc(goalMilestones.sortOrder))
+      .limit(1);
+
+    const [row] = await db
+      .insert(goalMilestones)
+      .values({
+        goalId: req.params.goalId,
+        userId: user.id,
+        title: body.title,
+        sortOrder: (count?.n ?? -1) + 1,
+      })
+      .returning();
+    res.status(201).json(row);
+  }),
+);
+
+router.patch(
+  '/milestones/:id/toggle',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const [existing] = await db
+      .select()
+      .from(goalMilestones)
+      .where(and(eq(goalMilestones.id, req.params.id), eq(goalMilestones.userId, user.id)))
+      .limit(1);
+    if (!existing) throw notFound('Milestone not found');
+
+    const [row] = await db
+      .update(goalMilestones)
+      .set({ done: !existing.done })
+      .where(eq(goalMilestones.id, existing.id))
+      .returning();
+    res.json(row);
+  }),
+);
+
+router.delete(
+  '/milestones/:id',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const [row] = await db
+      .delete(goalMilestones)
+      .where(and(eq(goalMilestones.id, req.params.id), eq(goalMilestones.userId, user.id)))
+      .returning();
+    if (!row) throw notFound('Milestone not found');
     res.json({ ok: true });
   }),
 );

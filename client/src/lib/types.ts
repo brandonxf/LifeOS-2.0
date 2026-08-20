@@ -5,6 +5,7 @@ export interface FinanceEntry {
   category: string;
   description: string | null;
   date: string;
+  recurringId: string | null;
 }
 export interface FinanceBudget {
   id: string;
@@ -18,6 +19,18 @@ export interface FinanceSummary {
   balance: number;
   topCategories: { category: string; total: number }[];
   monthly: { month: string; income: number; expenses: number }[];
+}
+export interface FinanceRecurring {
+  id: string;
+  type: 'income' | 'expense';
+  amount: string;
+  category: string;
+  description: string | null;
+  frequency: 'weekly' | 'monthly' | 'yearly';
+  startDate: string;
+  endDate: string | null;
+  lastGeneratedDate: string | null;
+  active: boolean;
 }
 
 export interface Task {
@@ -60,6 +73,13 @@ export interface Goal {
   status: 'active' | 'completed' | 'archived';
   deadline: string | null;
 }
+export interface GoalMilestone {
+  id: string;
+  goalId: string;
+  title: string;
+  done: boolean;
+  sortOrder: number;
+}
 
 export interface CalendarEvent {
   id: string;
@@ -78,6 +98,7 @@ export interface DiaryEntry {
   content: string;
   mood: number;
   tags: string[];
+  photos: string[];
   date: string;
   updatedAt: string;
 }

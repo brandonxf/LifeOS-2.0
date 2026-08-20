@@ -265,16 +265,14 @@
   }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* Scrollbar: oculta en toda la app (incluye modales y páginas), el scroll
+   sigue funcionando por touch/rueda, solo se esconde el indicador visual. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-slate-300 dark:bg-slate-700;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
+*::-webkit-scrollbar {
+  display: none;
 }
 
 /* TipTap editor */

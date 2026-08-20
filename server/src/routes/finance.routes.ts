@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { and, desc, eq, gte, isNull, lte } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { financeEntries, financeBudgets } from '../db/schema/index.js';
+import { financeEntries, financeBudgets, financeRecurring } from '../db/schema/index.js';
 import { asyncHandler, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
+import { generateDueRecurringEntries } from '../services/finance-recurring.service.js';
 
 const router = Router();
 
@@ -22,11 +23,22 @@ const budgetSchema = z.object({
   period: z.enum(['monthly', 'weekly', 'yearly']).default('monthly'),
 });
 
+const recurringSchema = z.object({
+  type: z.enum(['income', 'expense']),
+  amount: z.number().positive(),
+  category: z.string().min(1),
+  description: z.string().optional().nullable(),
+  frequency: z.enum(['weekly', 'monthly', 'yearly']),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+});
+
 // ── Entries ────────────────────────────────────────────────────────────
 router.get(
   '/entries',
   asyncHandler(async (req, res) => {
     const user = currentUser(req);
+    await generateDueRecurringEntries(user.id);
     const { type, category, start, end } = req.query as Record<string, string>;
     const conds = [eq(financeEntries.userId, user.id), isNull(financeEntries.deletedAt)];
     if (type === 'income' || type === 'expense') conds.push(eq(financeEntries.type, type));
@@ -143,11 +155,77 @@ router.delete(
   }),
 );
 
+// ── Transacciones recurrentes / suscripciones ────────────────────────────
+router.get(
+  '/recurring',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const rows = await db
+      .select()
+      .from(financeRecurring)
+      .where(and(eq(financeRecurring.userId, user.id), isNull(financeRecurring.deletedAt)))
+      .orderBy(desc(financeRecurring.createdAt));
+    res.json(rows);
+  }),
+);
+
+router.post(
+  '/recurring',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(recurringSchema, req.body);
+    const [row] = await db
+      .insert(financeRecurring)
+      .values({
+        userId: user.id,
+        type: body.type,
+        amount: body.amount.toFixed(2),
+        category: body.category,
+        description: body.description ?? null,
+        frequency: body.frequency,
+        startDate: body.startDate,
+        endDate: body.endDate ?? null,
+      })
+      .returning();
+    res.status(201).json(row);
+  }),
+);
+
+router.patch(
+  '/recurring/:id/active',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const { active } = validate(z.object({ active: z.boolean() }), req.body);
+    const [row] = await db
+      .update(financeRecurring)
+      .set({ active })
+      .where(and(eq(financeRecurring.id, req.params.id), eq(financeRecurring.userId, user.id)))
+      .returning();
+    if (!row) throw notFound('Recurring entry not found');
+    res.json(row);
+  }),
+);
+
+router.delete(
+  '/recurring/:id',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const [row] = await db
+      .update(financeRecurring)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(financeRecurring.id, req.params.id), eq(financeRecurring.userId, user.id)))
+      .returning();
+    if (!row) throw notFound('Recurring entry not found');
+    res.json({ ok: true });
+  }),
+);
+
 // ── Summary ────────────────────────────────────────────────────────────
 router.get(
   '/summary',
   asyncHandler(async (req, res) => {
     const user = currentUser(req);
+    await generateDueRecurringEntries(user.id);
     const rows = await db
       .select()
       .from(financeEntries)

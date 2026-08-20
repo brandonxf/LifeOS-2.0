@@ -244,6 +244,10 @@ export default function AIChat() {
           'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.07] bg-ink-900 transition-transform duration-200 md:hidden',
           mobileHistory ? 'translate-x-0' : '-translate-x-full',
         )}
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
       >
         {historyContent}
       </aside>

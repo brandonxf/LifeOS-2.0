@@ -14,20 +14,22 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import { Plus, Trash2, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, Wallet, TrendingUp, TrendingDown, Repeat, Pause, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from '../components/ui';
 import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
-import type { FinanceEntry, FinanceBudget, FinanceSummary } from '../lib/types';
+import type { FinanceEntry, FinanceBudget, FinanceSummary, FinanceRecurring } from '../lib/types';
 
 const PIE_COLORS = ['#37e779', '#0d9488', '#f59e0b', '#f43f5e', '#22c55e', '#e879f9', '#a3e635', '#14b8a6'];
 const CATEGORIES = ['Salario', 'Supermercado', 'Renta', 'Transporte', 'Restaurantes', 'Entretenimiento', 'Servicios', 'Salud', 'Compras', 'Otro'];
+const FREQUENCY_LABELS: Record<string, string> = { weekly: 'Semanal', monthly: 'Mensual', yearly: 'Anual' };
 
 export default function Finance() {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
+  const [recurringOpen, setRecurringOpen] = useState(false);
   const [editing, setEditing] = useState<FinanceEntry | null>(null);
   const [filterType, setFilterType] = useState('');
   const [filterCat, setFilterCat] = useState('');
@@ -62,6 +64,7 @@ export default function Finance() {
         subtitle="Controla ingresos, gastos y presupuestos"
         action={
           <div className="flex flex-wrap gap-2">
+            <button onClick={() => setRecurringOpen(true)} className="btn-ghost border"><Repeat className="h-4 w-4" /> Recurrentes</button>
             <button onClick={() => setBudgetOpen(true)} className="btn-ghost border">Presupuestos</button>
             <button onClick={() => { setEditing(null); setModalOpen(true); }} className="btn-primary">
               <Plus className="h-4 w-4" /> Movimiento
@@ -192,7 +195,10 @@ export default function Finance() {
                   {e.type === 'income' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{e.description || e.category}</p>
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                    {e.description || e.category}
+                    {e.recurringId && <Repeat className="h-3 w-3 shrink-0 text-slate-400" />}
+                  </p>
                   <p className="truncate text-xs text-slate-400">{e.category} · {format(parseISO(e.date), 'MMM d, yyyy')}</p>
                 </div>
                 <span className={cn('shrink-0 whitespace-nowrap text-sm font-semibold', e.type === 'income' ? 'text-success' : 'text-slate-700 dark:text-slate-200')}>
@@ -212,6 +218,7 @@ export default function Finance() {
 
       <EntryModal open={modalOpen} onClose={() => setModalOpen(false)} editing={editing} />
       <BudgetModal open={budgetOpen} onClose={() => setBudgetOpen(false)} />
+      <RecurringModal open={recurringOpen} onClose={() => setRecurringOpen(false)} />
     </div>
   );
 }
@@ -309,6 +316,112 @@ function BudgetModal({ open, onClose }: { open: boolean; onClose: () => void }) 
         </select>
         <input className="input" type="number" placeholder="Límite" value={limit} onChange={(e) => setLimit(e.target.value)} />
         <button className="btn-primary shrink-0"><Plus className="h-4 w-4" /></button>
+      </form>
+    </Modal>
+  );
+}
+
+function RecurringModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const qc = useQueryClient();
+  const recurring = useQuery({
+    queryKey: ['finance', 'recurring'],
+    queryFn: () => api<FinanceRecurring[]>('/api/finance/recurring'),
+    enabled: open,
+  });
+
+  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('Servicios');
+  const [description, setDescription] = useState('');
+  const [frequency, setFrequency] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+
+  const add = useMutation({
+    mutationFn: () =>
+      api('/api/finance/recurring', {
+        method: 'POST',
+        body: { type, amount: Number(amount), category, description, frequency, startDate },
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['finance'] });
+      setAmount('');
+      setDescription('');
+      toast.success('Transacción recurrente creada');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      api(`/api/finance/recurring/${id}/active`, { method: 'PATCH', body: { active } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['finance'] }),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => api(`/api/finance/recurring/${id}`, { method: 'DELETE' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['finance'] }); toast.success('Recurrente eliminada'); },
+  });
+
+  return (
+    <Modal open={open} onClose={onClose} title="Transacciones recurrentes" wide>
+      <p className="mb-4 text-sm text-slate-400">
+        Suscripciones, sueldo, renta… se generan solas como movimientos cada vez que abras la app.
+      </p>
+      <div className="mb-5 space-y-2">
+        {recurring.data?.map((r) => (
+          <div key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
+            <div className="min-w-0 flex-1">
+              <p className={cn('truncate text-sm font-medium', !r.active && 'text-slate-400 line-through')}>
+                {r.description || r.category}
+              </p>
+              <p className="text-xs text-slate-400">
+                {r.category} · {FREQUENCY_LABELS[r.frequency]} · {r.type === 'income' ? '+' : '−'}{formatCurrency(Number(r.amount))}
+              </p>
+            </div>
+            <button
+              onClick={() => toggleActive.mutate({ id: r.id, active: !r.active })}
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-primary"
+              title={r.active ? 'Pausar' : 'Reanudar'}
+            >
+              {r.active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </button>
+            <button onClick={() => del.mutate(r.id)} className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-danger">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+        {!recurring.isLoading && !recurring.data?.length && (
+          <p className="text-sm text-slate-400">Sin transacciones recurrentes definidas.</p>
+        )}
+      </div>
+
+      <form onSubmit={(e) => { e.preventDefault(); if (!amount) return toast.error('Ingresa un monto'); add.mutate(); }} className="space-y-4 border-t pt-4">
+        <div className="grid grid-cols-2 gap-2">
+          {(['expense', 'income'] as const).map((t) => (
+            <button key={t} type="button" onClick={() => setType(t)}
+              className={cn('rounded-xl border py-2 text-sm font-semibold', type === t ? 'border-primary bg-primary/10 text-primary' : 'text-slate-500')}>
+              {t === 'expense' ? 'Gasto' : 'Ingreso'}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Monto"><input className="input" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" /></Field>
+          <Field label="Frecuencia">
+            <select className="input" value={frequency} onChange={(e) => setFrequency(e.target.value as any)}>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensual</option>
+              <option value="yearly">Anual</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="Categoría">
+          <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+        </Field>
+        <Field label="Descripción"><input className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="ej. Netflix" /></Field>
+        <Field label="Empieza el"><input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
+        <button type="submit" className="btn-primary w-full" disabled={add.isPending}>Crear recurrente</button>
       </form>
     </Modal>
   );

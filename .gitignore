@@ -11,3 +11,13 @@ coverage/
 
 # PWA dev build output
 dev-dist/
+
+# Android (Capacitor) build artifacts and machine-specific config
+client/android/app/build/
+client/android/build/
+client/android/.gradle/
+client/android/capacitor-cordova-android-plugins/build/
+client/android/local.properties
+client/android/app/src/main/assets/public/
+client/android/*.iml
+client/android/.idea/

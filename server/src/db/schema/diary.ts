@@ -20,6 +20,8 @@ export const diaryEntries = pgTable(
     content: text('content').notNull().default(''),
     mood: integer('mood').notNull().default(3), // 1-5
     tags: text('tags').array().notNull().default([]),
+    // Fotos como data URIs base64 (comprimidas en el cliente antes de subir).
+    photos: text('photos').array().notNull().default([]),
     date: date('date').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

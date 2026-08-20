@@ -14,6 +14,7 @@ const diarySchema = z.object({
   mood: z.number().int().min(1).max(5).default(3),
   tags: z.array(z.string()).default([]),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  photos: z.array(z.string()).max(6).default([]),
 });
 
 router.get(
@@ -43,6 +44,7 @@ router.post(
         mood: body.mood,
         tags: body.tags,
         date: body.date,
+        photos: body.photos,
       })
       .returning();
     res.status(201).json(row);
@@ -62,6 +64,7 @@ router.put(
         ...(body.mood !== undefined && { mood: body.mood }),
         ...(body.tags && { tags: body.tags }),
         ...(body.date && { date: body.date }),
+        ...(body.photos && { photos: body.photos }),
         updatedAt: new Date(),
       })
       .where(and(eq(diaryEntries.id, req.params.id), eq(diaryEntries.userId, user.id)))

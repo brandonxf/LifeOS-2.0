@@ -17,5 +17,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.4"
   }
 }

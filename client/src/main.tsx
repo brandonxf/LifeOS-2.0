@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { setDefaultOptions } from 'date-fns';
 import { es } from 'date-fns/locale';
 import App from './App';
+import { BiometricGate } from './components/BiometricGate';
 
 // Localiza todas las fechas (date-fns) a español.
 setDefaultOptions({ locale: es });
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <App />
+          <BiometricGate>
+            <App />
+          </BiometricGate>
           <Toaster
             position="bottom-right"
             toastOptions={{

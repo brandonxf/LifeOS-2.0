@@ -1,13 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInCalendarDays, format, parseISO, subDays } from 'date-fns';
-import { Plus, Trash2, Flame, Target, Check, Trophy } from 'lucide-react';
+import { Plus, Trash2, Flame, Target, Check, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
 import { cn } from '../lib/utils';
-import type { Habit, Goal } from '../lib/types';
+import type { Habit, Goal, GoalMilestone } from '../lib/types';
+import { hapticSuccess, hapticTap } from '../lib/haptics';
+
+// Hitos de racha: al cruzarlos se celebra con un toast + haptic extra.
+const STREAK_MILESTONES = [7, 14, 30, 60, 100, 365];
+
+/** Insignia visual de logro según la racha actual y el total acumulado. */
+function achievementBadge(streakCount: number, totalLogs: number): { label: string; emoji: string } | null {
+  if (streakCount >= 100) return { label: '100 días seguidos', emoji: '👑' };
+  if (streakCount >= 30) return { label: '30 días seguidos', emoji: '🏆' };
+  if (streakCount >= 7) return { label: '7 días seguidos', emoji: '🔥' };
+  if (totalLogs >= 100) return { label: '100 registros', emoji: '💯' };
+  if (totalLogs >= 50) return { label: '50 registros', emoji: '⭐' };
+  return null;
+}
 
 const HEATMAP_DAYS = 119; // 17 weeks × 7
 
@@ -48,6 +62,82 @@ function streak(logs: string[]): number {
     cursor = subDays(cursor, 1);
   }
   return count;
+}
+
+/** Checklist de hitos dentro de una tarjeta de meta: se puede expandir para
+ *  ver/editar; colapsada solo muestra "2/5 hitos" para no saturar la vista. */
+function GoalMilestones({ goalId }: { goalId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState('');
+
+  const milestones = useQuery({
+    queryKey: ['goal-milestones', goalId],
+    queryFn: () => api<GoalMilestone[]>(`/api/goals/${goalId}/milestones`),
+  });
+
+  const add = useMutation({
+    mutationFn: (title: string) => api(`/api/goals/${goalId}/milestones`, { method: 'POST', body: { title } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['goal-milestones', goalId] }); setTitle(''); },
+  });
+  const toggle = useMutation({
+    mutationFn: (id: string) => api(`/api/goals/milestones/${id}/toggle`, { method: 'PATCH' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['goal-milestones', goalId] }),
+  });
+  const del = useMutation({
+    mutationFn: (id: string) => api(`/api/goals/milestones/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['goal-milestones', goalId] }),
+  });
+
+  const done = milestones.data?.filter((m) => m.done).length ?? 0;
+  const total = milestones.data?.length ?? 0;
+
+  return (
+    <div className="mt-3 border-t pt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <span>Hitos {total > 0 && `· ${done}/${total}`}</span>
+        {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {open && (
+        <div className="mt-2 space-y-1.5">
+          {milestones.data?.map((m) => (
+            <div key={m.id} className="group flex items-center gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => toggle.mutate(m.id)}
+                className={cn(
+                  'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+                  m.done ? 'border-primary bg-primary text-ink-950' : 'border-slate-300 dark:border-slate-600',
+                )}
+              >
+                {m.done && <Check className="h-3 w-3" />}
+              </button>
+              <span className={cn('min-w-0 flex-1 truncate', m.done && 'text-slate-400 line-through')}>{m.title}</span>
+              <button onClick={() => del.mutate(m.id)} className="shrink-0 text-slate-300 opacity-0 hover:text-danger group-hover:opacity-100">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+          <form
+            onSubmit={(e) => { e.preventDefault(); if (title.trim()) add.mutate(title.trim()); }}
+            className="flex items-center gap-2 pt-1"
+          >
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Nuevo hito…"
+              className="input h-8 flex-1 py-1 text-xs"
+            />
+            <button type="submit" className="shrink-0 text-slate-400 hover:text-primary"><Plus className="h-4 w-4" /></button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Habits() {
@@ -104,8 +194,20 @@ export default function Habits() {
               <div className="flex flex-wrap gap-2">
                 {habits.data.map((h) => {
                   const done = h.logs.includes(today);
+                  function onToggle() {
+                    if (!done) {
+                      hapticSuccess();
+                      const before = streak(h.logs);
+                      const after = streak([...h.logs, today]);
+                      const hit = STREAK_MILESTONES.find((m) => after === m && before < m);
+                      if (hit) toast.success(`🔥 ¡${hit} días de racha en ${h.name}!`, { duration: 4000 });
+                    } else {
+                      hapticTap();
+                    }
+                    toggle.mutate(h.id);
+                  }
                   return (
-                    <button key={h.id} onClick={() => toggle.mutate(h.id)}
+                    <button key={h.id} onClick={onToggle}
                       className={cn('flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition', done ? 'border-transparent text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800')}
                       style={done ? { backgroundColor: h.color } : {}}>
                       <HabitIcon name={h.icon} className="h-4 w-4" style={done ? undefined : { color: h.color }} />
@@ -118,29 +220,37 @@ export default function Habits() {
             </Card>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {habits.data.map((h) => (
-                <Card key={h.id}>
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: `${h.color}22`, color: h.color }}>
-                        <HabitIcon name={h.icon} className="h-5 w-5" />
+              {habits.data.map((h) => {
+                const badge = achievementBadge(streak(h.logs), h.logs.length);
+                return (
+                  <Card key={h.id}>
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: `${h.color}22`, color: h.color }}>
+                          <HabitIcon name={h.icon} className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{h.name}</h3>
+                          {h.description && <p className="text-xs text-slate-400">{h.description}</p>}
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold">{h.name}</h3>
-                        {h.description && <p className="text-xs text-slate-400">{h.description}</p>}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                          <Flame className="h-4 w-4" /> {streak(h.logs)}
+                        </div>
+                        <button onClick={() => delHabit.mutate(h.id)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                        <Flame className="h-4 w-4" /> {streak(h.logs)}
-                      </div>
-                      <button onClick={() => delHabit.mutate(h.id)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </div>
-                  <Heatmap logs={h.logs} color={h.color} />
-                  <p className="mt-2 text-xs text-slate-400">{h.logs.length} veces completado · últimas 17 semanas</p>
-                </Card>
-              ))}
+                    {badge && (
+                      <span className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                        <span>{badge.emoji}</span> {badge.label}
+                      </span>
+                    )}
+                    <Heatmap logs={h.logs} color={h.color} />
+                    <p className="mt-2 text-xs text-slate-400">{h.logs.length} veces completado · últimas 17 semanas</p>
+                  </Card>
+                );
+              })}
             </div>
           </>
         )}
@@ -186,6 +296,7 @@ export default function Habits() {
                     ) : <span />}
                     <button onClick={() => { setEditingGoal(g); setGoalModal(true); }} className="text-xs font-semibold text-primary hover:underline">Actualizar progreso</button>
                   </div>
+                  <GoalMilestones goalId={g.id} />
                 </Card>
               );
             })}

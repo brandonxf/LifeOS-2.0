@@ -4,13 +4,21 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { cn } from '../lib/utils';
 import { format, parseISO } from 'date-fns';
+import { Capacitor } from '@capacitor/core';
+import { useSettings } from '../store/settings';
+import {
+  cancelDailyHabitReminder,
+  ensureNotificationPermission,
+  scheduleDailyHabitReminder,
+} from '../lib/notifications';
+import { isBiometricAvailable, verifyBiometric } from '../lib/biometric';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(120),
@@ -49,6 +57,128 @@ const passwordSchema = z
     path: ['confirmPassword'],
   });
 type PasswordForm = z.infer<typeof passwordSchema>;
+
+/** Interruptor simple estilo iOS (usa los colores del theme). */
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+        checked ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700',
+      )}
+    >
+      <span
+        className={cn(
+          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
+          checked ? 'translate-x-[22px]' : 'translate-x-0.5',
+        )}
+      />
+    </button>
+  );
+}
+
+function PreferencesCard() {
+  const native = Capacitor.isNativePlatform();
+  const {
+    taskRemindersEnabled, setTaskRemindersEnabled,
+    habitReminderEnabled, setHabitReminderEnabled,
+    habitReminderTime, setHabitReminderTime,
+    biometricLockEnabled, setBiometricLockEnabled,
+  } = useSettings();
+
+  async function onToggleTaskReminders(v: boolean) {
+    if (v) {
+      const granted = await ensureNotificationPermission();
+      if (!granted) return toast.error('Necesitas dar permiso de notificaciones');
+    }
+    setTaskRemindersEnabled(v);
+  }
+
+  async function onToggleHabitReminder(v: boolean) {
+    if (v) {
+      const granted = await ensureNotificationPermission();
+      if (!granted) return toast.error('Necesitas dar permiso de notificaciones');
+      await scheduleDailyHabitReminder(habitReminderTime);
+    } else {
+      await cancelDailyHabitReminder();
+    }
+    setHabitReminderEnabled(v);
+  }
+
+  async function onChangeHabitTime(time: string) {
+    setHabitReminderTime(time);
+    if (habitReminderEnabled) await scheduleDailyHabitReminder(time);
+  }
+
+  async function onToggleBiometric(v: boolean) {
+    if (v) {
+      const available = await isBiometricAvailable();
+      if (!available) return toast.error('Este dispositivo no tiene huella/rostro configurado');
+      const ok = await verifyBiometric();
+      if (!ok) return toast.error('No se pudo verificar tu identidad');
+    }
+    setBiometricLockEnabled(v);
+    toast.success(v ? 'Bloqueo biométrico activado' : 'Bloqueo biométrico desactivado');
+  }
+
+  if (!native) {
+    return (
+      <Card>
+        <h3 className="mb-1 flex items-center gap-2 font-semibold"><Bell className="h-4 w-4" /> Notificaciones y seguridad</h3>
+        <p className="text-sm text-slate-400">Estas opciones solo están disponibles en la app de Android.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <h3 className="mb-4 flex items-center gap-2 font-semibold"><Bell className="h-4 w-4" /> Notificaciones y seguridad</h3>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Recordatorios de tareas</p>
+            <p className="text-xs text-slate-400">Aviso a las 9am el día que vence una tarea</p>
+          </div>
+          <Toggle checked={taskRemindersEnabled} onChange={onToggleTaskReminders} />
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t pt-4">
+          <div>
+            <p className="text-sm font-medium">Recordatorio diario de hábitos</p>
+            <p className="text-xs text-slate-400">Un aviso para revisar tu checklist de hábitos</p>
+          </div>
+          <Toggle checked={habitReminderEnabled} onChange={onToggleHabitReminder} />
+        </div>
+        {habitReminderEnabled && (
+          <div className="flex items-center justify-between gap-4 pl-1">
+            <p className="text-xs text-slate-400">Hora del recordatorio</p>
+            <input
+              type="time"
+              className="input w-auto py-1.5"
+              value={habitReminderTime}
+              onChange={(e) => onChangeHabitTime(e.target.value)}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-4 border-t pt-4">
+          <div className="flex items-center gap-2">
+            <Fingerprint className="h-4 w-4 text-slate-400" />
+            <div>
+              <p className="text-sm font-medium">Bloqueo biométrico</p>
+              <p className="text-xs text-slate-400">Pide huella/rostro al abrir la app</p>
+            </div>
+          </div>
+          <Toggle checked={biometricLockEnabled} onChange={onToggleBiometric} />
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function Settings() {
   const { user, clear, refreshToken, setUser } = useAuth();
@@ -150,6 +280,8 @@ export default function Settings() {
           )}
         </div>
       </Card>
+
+      <PreferencesCard />
 
       {/* Security / session */}
       <Card>

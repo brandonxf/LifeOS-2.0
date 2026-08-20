@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BarChart,
@@ -10,13 +10,75 @@ import {
   Tooltip,
 } from 'recharts';
 import { format, isToday, isPast, parseISO } from 'date-fns';
-import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, ArrowRight, Send } from 'lucide-react';
+import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, ArrowRight, Send, Sparkles } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { AiMark } from '../components/Brand';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { Card, Skeleton } from '../components/ui';
 import { cn, formatCurrency } from '../lib/utils';
+import { updateHomeWidget } from '../lib/widget';
 import type { FinanceSummary, Task, Habit, Goal, CalendarEvent, HealthSummary } from '../lib/types';
+
+/** Tarjeta de resumen generado por IA (semanal/mensual). Se pide bajo
+ *  demanda —no en cada carga del dashboard— porque cada generación es una
+ *  llamada real al modelo. */
+function AISummaryCard() {
+  const [period, setPeriod] = useState<'week' | 'month'>('week');
+  const [summary, setSummary] = useState<string | null>(null);
+
+  const generate = useMutation({
+    mutationFn: (p: 'week' | 'month') => api<{ summary: string }>('/api/ai/summary', { query: { period: p } }),
+    onSuccess: (res) => setSummary(res.summary),
+    onError: (e: any) => toast.error(e.message ?? 'No se pudo generar el resumen'),
+  });
+
+  function run(p: 'week' | 'month') {
+    setPeriod(p);
+    setSummary(null);
+    generate.mutate(p);
+  }
+
+  return (
+    <Card className="mb-6">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <h3 className="text-sm font-semibold text-white/70">Resumen con IA</h3>
+        </div>
+        <div className="flex overflow-hidden rounded-full border border-white/10">
+          {(['week', 'month'] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => run(p)}
+              disabled={generate.isPending}
+              className={cn('px-3 py-1 text-xs font-medium transition', period === p && summary ? 'bg-primary text-ink-950' : 'text-white/60 hover:bg-white/[0.06]')}
+            >
+              {p === 'week' ? 'Semana' : 'Mes'}
+            </button>
+          ))}
+        </div>
+      </div>
+      {generate.isPending ? (
+        <div className="flex items-center gap-2 py-2 text-sm text-white/50">
+          <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" style={{ animationDelay: '0ms' }} />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" style={{ animationDelay: '150ms' }} />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" style={{ animationDelay: '300ms' }} />
+        </div>
+      ) : summary ? (
+        <p className="text-sm leading-relaxed text-white/80">{summary}</p>
+      ) : (
+        <p className="text-sm text-white/50">
+          Genera un recuento de tu {period === 'week' ? 'semana' : 'mes'} con tus datos reales de tareas, hábitos, finanzas y ánimo.
+          {' '}
+          <button onClick={() => run(period)} className="font-semibold text-primary hover:underline">Generar ahora</button>
+        </p>
+      )}
+    </Card>
+  );
+}
 
 function Tile({
   title,
@@ -72,7 +134,7 @@ export default function Dashboard() {
       .filter((t) => t.dueDate && !isPast(parseISO(t.dueDate)))
       .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1))
       .slice(0, 3);
-    return { overdue: overdue.length, dueToday, upcoming };
+    return { overdue: overdue.length, dueToday, upcoming, pending: active.length };
   }, [tasks.data]);
 
   const habitRing = useMemo(() => {
@@ -90,6 +152,15 @@ export default function Dashboard() {
         .slice(0, 3),
     [events.data],
   );
+
+  // Empuja el snapshot al widget del home screen cada vez que se refrescan
+  // tareas/hábitos (el widget nativo no puede llamar a la API él mismo).
+  useEffect(() => {
+    if (tasks.data && habits.data) {
+      updateHomeWidget(taskStats.pending, habitRing.done, habitRing.total);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks.data, habits.data]);
 
   function submitPrompt(e: React.FormEvent) {
     e.preventDefault();
@@ -125,6 +196,8 @@ export default function Dashboard() {
           <Send className="h-4 w-4" />
         </button>
       </form>
+
+      <AISummaryCard />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         {/* Finance */}

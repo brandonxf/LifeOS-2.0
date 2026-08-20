@@ -220,4 +220,32 @@ router.get(
   }),
 );
 
+// GET /api/ai/summary?period=week|month — resumen escrito por la IA a
+// partir de la misma foto de datos que usa el chat (no se persiste).
+router.get(
+  '/summary',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const period = req.query.period === 'month' ? 'month' : 'week';
+
+    const ctx = await buildUserContext(user.id);
+    const systemPrompt = buildSystemPrompt(ctx, user.name);
+    const prompt =
+      period === 'week'
+        ? 'Genera un resumen de mi semana: qué avancé, qué quedó pendiente y una sugerencia concreta para los próximos días. 4-6 frases, con cifras del contexto. No uses el formato de bloque ```action.'
+        : 'Genera un resumen de mi mes: hábitos, finanzas y ánimo general, con una recomendación concreta. 4-6 frases, con cifras del contexto. No uses el formato de bloque ```action.';
+
+    let text = '';
+    let errorMsg: string | null = null;
+    await streamChat(systemPrompt, [], prompt, {
+      onDelta: (chunk) => { text += chunk; },
+      onDone: () => {},
+      onError: (message) => { errorMsg = message; },
+    });
+
+    if (errorMsg) return res.status(502).json({ error: errorMsg });
+    res.json({ period, summary: stripActionBlocks(text) || text });
+  }),
+);
+
 export default router;

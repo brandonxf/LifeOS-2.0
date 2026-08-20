@@ -8,6 +8,9 @@ import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { cn, PRIORITY_STYLES } from '../lib/utils';
 import type { Task } from '../lib/types';
+import { hapticSuccess, hapticTap } from '../lib/haptics';
+import { cancelTaskReminder, scheduleTaskReminder } from '../lib/notifications';
+import { useSettings } from '../store/settings';
 
 const COLUMNS: { id: Task['status']; label: string; accent: string }[] = [
   { id: 'todo', label: 'Por hacer', accent: 'bg-slate-400' },
@@ -21,6 +24,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 
 export default function Tasks() {
   const qc = useQueryClient();
+  const taskRemindersEnabled = useSettings((s) => s.taskRemindersEnabled);
   const [view, setView] = useState<'board' | 'list'>('board');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -42,9 +46,26 @@ export default function Tasks() {
     onSettled: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
+  // Cambia el estado de una tarea + feedback háptico + (des)programa el
+  // recordatorio local según si queda pendiente o hecha.
+  function changeStatus(task: Task, status: Task['status']) {
+    updateStatus.mutate({ id: task.id, status });
+    if (status === 'done') {
+      hapticSuccess();
+      cancelTaskReminder(task.id);
+    } else {
+      hapticTap();
+      if (taskRemindersEnabled) scheduleTaskReminder({ ...task, dueDate: task.dueDate });
+    }
+  }
+
   const del = useMutation({
     mutationFn: (id: string) => api(`/api/tasks/${id}`, { method: 'DELETE' }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks'] }); toast.success('Tarea eliminada'); },
+    onSuccess: (_d, id) => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      cancelTaskReminder(id);
+      toast.success('Tarea eliminada');
+    },
   });
 
   const allTags = useMemo(() => {
@@ -64,7 +85,9 @@ export default function Tasks() {
   function onDragEnd(result: DropResult) {
     const { destination, draggableId, source } = result;
     if (!destination || destination.droppableId === source.droppableId) return;
-    updateStatus.mutate({ id: draggableId, status: destination.droppableId as Task['status'] });
+    const task = (tasks.data ?? []).find((t) => t.id === draggableId);
+    if (!task) return;
+    changeStatus(task, destination.droppableId as Task['status']);
   }
 
   const byColumn = (status: Task['status']) => filtered.filter((t) => t.status === status);
@@ -134,7 +157,7 @@ export default function Tasks() {
                             <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
                               onClick={() => { setEditing(task); setModalOpen(true); }}
                               className={cn('cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition dark:bg-slate-900', snap.isDragging && 'rotate-1 shadow-lg')}>
-                              <TaskCard task={task} onDelete={() => del.mutate(task.id)} onMove={(status) => updateStatus.mutate({ id: task.id, status })} />
+                              <TaskCard task={task} onDelete={() => del.mutate(task.id)} onMove={(status) => changeStatus(task, status)} />
                             </div>
                           )}
                         </Draggable>
@@ -154,7 +177,7 @@ export default function Tasks() {
             {filtered.map((task) => (
               <div key={task.id} className="flex items-center gap-3 py-3">
                 <input type="checkbox" checked={task.status === 'done'}
-                  onChange={() => updateStatus.mutate({ id: task.id, status: task.status === 'done' ? 'todo' : 'done' })}
+                  onChange={() => changeStatus(task, task.status === 'done' ? 'todo' : 'done')}
                   className="h-4 w-4 accent-primary" />
                 <div className="min-w-0 flex-1 cursor-pointer" onClick={() => { setEditing(task); setModalOpen(true); }}>
                   <p className={cn('truncate text-sm font-medium', task.status === 'done' && 'text-slate-400 line-through')}>{task.title}</p>
@@ -215,6 +238,7 @@ function TaskCard({ task, onDelete, onMove }: { task: Task; onDelete: () => void
 
 function TaskModal({ open, onClose, editing }: { open: boolean; onClose: () => void; editing: Task | null }) {
   const qc = useQueryClient();
+  const taskRemindersEnabled = useSettings((s) => s.taskRemindersEnabled);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Task['priority']>('medium');
@@ -244,10 +268,16 @@ function TaskModal({ open, onClose, editing }: { open: boolean; onClose: () => v
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       };
       return editing
-        ? api(`/api/tasks/${editing.id}`, { method: 'PUT', body })
-        : api('/api/tasks', { method: 'POST', body });
+        ? api<Task>(`/api/tasks/${editing.id}`, { method: 'PUT', body })
+        : api<Task>('/api/tasks', { method: 'POST', body });
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks'] }); toast.success(editing ? 'Tarea actualizada' : 'Tarea creada'); onClose(); },
+    onSuccess: (saved) => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success(editing ? 'Tarea actualizada' : 'Tarea creada');
+      onClose();
+      if (saved.status === 'done' || !saved.dueDate) cancelTaskReminder(saved.id);
+      else if (taskRemindersEnabled) scheduleTaskReminder(saved);
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
