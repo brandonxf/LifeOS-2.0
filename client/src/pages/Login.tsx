@@ -96,7 +96,7 @@ export function AuthShell({
       <div className="relative z-10 w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10">
         {/* Marca */}
         <div className="flex flex-col items-center">
-          <Logo size={52} />
+          <Logo size={88} />
           <span className="mt-3 font-display text-sm font-bold tracking-[0.35em] text-white/85">
             LIFE&nbsp;OS
           </span>
