@@ -1,15 +1,43 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import { Plus, Trash2, Pin, PinOff, StickyNote, Search } from 'lucide-react';
+import remarkBreaks from 'remark-breaks';
+import { Plus, Trash2, Pin, PinOff, StickyNote, Search, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { AiMark } from '../components/Brand';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState } from '../components/ui';
 import { cn } from '../lib/utils';
-import type { Note } from '../lib/types';
+import { confirm } from '../store/confirm';
+import type { Note, NoteFont, NoteFontSize, NoteAlign } from '../lib/types';
 
-const NOTE_COLORS = ['#1f2937', '#365314', '#134e4a', '#713f12', '#7f1d1d', '#581c87'];
+const NOTE_COLORS = [
+  '#1f2937', '#365314', '#134e4a', '#713f12', '#7f1d1d', '#581c87',
+  '#0c4a6e', '#831843', '#14532d', '#78350f', '#3f3f46', '#164e63',
+];
+
+const FONT_OPTIONS: { value: NoteFont; label: string; className: string }[] = [
+  { value: 'sans', label: 'Sans', className: 'font-sans' },
+  { value: 'serif', label: 'Serif', className: 'font-serif' },
+  { value: 'mono', label: 'Mono', className: 'font-mono' },
+  { value: 'display', label: 'Display', className: 'font-display' },
+];
+const SIZE_OPTIONS: { value: NoteFontSize; label: string }[] = [
+  { value: 'sm', label: 'Pequeño' },
+  { value: 'md', label: 'Mediano' },
+  { value: 'lg', label: 'Grande' },
+];
+const ALIGN_OPTIONS: { value: NoteAlign; icon: typeof AlignLeft }[] = [
+  { value: 'left', icon: AlignLeft },
+  { value: 'center', icon: AlignCenter },
+  { value: 'right', icon: AlignRight },
+];
+
+const FONT_CLASS: Record<NoteFont, string> = {
+  sans: 'font-sans', serif: 'font-serif', mono: 'font-mono', display: 'font-display',
+};
+const SIZE_CLASS: Record<NoteFontSize, string> = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' };
+const ALIGN_CLASS: Record<NoteAlign, string> = { left: 'text-left', center: 'text-center', right: 'text-right' };
 
 export default function Notes() {
   const qc = useQueryClient();
@@ -36,6 +64,16 @@ export default function Notes() {
     mutationFn: (id: string) => api(`/api/notes/${id}`, { method: 'DELETE' }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['notes'] }); toast.success('Nota eliminada'); },
   });
+
+  async function confirmDeleteNote(n: Note) {
+    const ok = await confirm({
+      title: 'Eliminar nota',
+      message: `¿Seguro que quieres eliminar "${n.title || 'esta nota'}"? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(n.id);
+  }
   const togglePin = useMutation({
     mutationFn: (n: Note) => api(`/api/notes/${n.id}`, { method: 'PUT', body: { pinned: !n.pinned } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
@@ -90,17 +128,23 @@ export default function Notes() {
         <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
           {visible.map((n) => (
             <div key={n.id} className="mb-4 break-inside-avoid rounded-2xl border p-4 text-white shadow-sm" style={{ backgroundColor: n.color }}>
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <h3 className="font-semibold leading-tight">{n.title}</h3>
+              <div className={cn('mb-2 flex items-start justify-between gap-2', FONT_CLASS[n.font])}>
+                <h3 className={cn('font-semibold leading-tight', ALIGN_CLASS[n.align], n.align !== 'left' && 'flex-1')}>{n.title}</h3>
                 <div className="flex shrink-0 gap-1">
                   <button onClick={() => togglePin.mutate(n)} className="text-white/60 hover:text-white">
                     {n.pinned ? <Pin className="h-4 w-4 fill-current" /> : <PinOff className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => del.mutate(n.id)} className="text-white/60 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => confirmDeleteNote(n)} className="text-white/60 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
-              <div className="prose prose-sm prose-invert max-w-none text-sm text-white/80 [&_a]:text-white cursor-pointer" onClick={() => { setEditing(n); setModalOpen(true); }}>
-                <ReactMarkdown>{n.content}</ReactMarkdown>
+              <div
+                className={cn(
+                  'prose prose-invert max-w-none whitespace-pre-wrap text-white/80 [&_a]:text-white cursor-pointer',
+                  FONT_CLASS[n.font], SIZE_CLASS[n.fontSize], ALIGN_CLASS[n.align],
+                )}
+                onClick={() => { setEditing(n); setModalOpen(true); }}
+              >
+                <ReactMarkdown remarkPlugins={[remarkBreaks]}>{n.content}</ReactMarkdown>
               </div>
               {n.similarity !== undefined && (
                 <p className="mt-2 text-xs text-white/50">{Math.round(n.similarity * 100)}% de coincidencia</p>
@@ -127,6 +171,9 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
   const [color, setColor] = useState(NOTE_COLORS[0]);
   const [tags, setTags] = useState('');
   const [pinned, setPinned] = useState(false);
+  const [font, setFont] = useState<NoteFont>('sans');
+  const [fontSize, setFontSize] = useState<NoteFontSize>('md');
+  const [align, setAlign] = useState<NoteAlign>('left');
 
   useEffect(() => {
     if (open) {
@@ -135,12 +182,18 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
       setColor(editing?.color ?? NOTE_COLORS[0]);
       setTags(editing?.tags.join(', ') ?? '');
       setPinned(editing?.pinned ?? false);
+      setFont(editing?.font ?? 'sans');
+      setFontSize(editing?.fontSize ?? 'md');
+      setAlign(editing?.align ?? 'left');
     }
   }, [open, editing]);
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { title: title || 'Sin título', content, color, pinned, tags: tags.split(',').map((t) => t.trim()).filter(Boolean) };
+      const body = {
+        title: title || 'Sin título', content, color, pinned, font, fontSize, align,
+        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+      };
       return editing
         ? api(`/api/notes/${editing.id}`, { method: 'PUT', body })
         : api('/api/notes', { method: 'POST', body });
@@ -153,13 +206,49 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
     <Modal open={open} onClose={onClose} title={editing ? 'Editar nota' : 'Nueva nota'} wide>
       <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-4">
         <Field label="Título"><input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título de la nota" /></Field>
-        <Field label="Contenido (compatible con Markdown)"><textarea className="input min-h-[160px] font-mono text-sm" value={content} onChange={(e) => setContent(e.target.value)} placeholder="# Encabezado&#10;- elemento&#10;**negrita**" /></Field>
+        <Field label="Contenido (Markdown; los saltos de línea y espacios se respetan tal cual los escribes)">
+          <textarea
+            className={cn('input min-h-[160px] whitespace-pre-wrap', FONT_CLASS[font])}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="# Encabezado&#10;- elemento&#10;**negrita**"
+          />
+        </Field>
         <Field label="Etiquetas (separadas por coma)"><input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ideas, trabajo" /></Field>
+
+        <Field label="Color">
+          <div className="flex flex-wrap gap-2">
+            {NOTE_COLORS.map((c) => (
+              <button key={c} type="button" onClick={() => setColor(c)} className={cn('h-8 w-8 rounded-full ring-offset-2 dark:ring-offset-slate-900', color === c && 'ring-2 ring-primary')} style={{ backgroundColor: c }} />
+            ))}
+          </div>
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Tipografía">
+            <select className="input" value={font} onChange={(e) => setFont(e.target.value as NoteFont)}>
+              {FONT_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+          </Field>
+          <Field label="Tamaño de texto">
+            <select className="input" value={fontSize} onChange={(e) => setFontSize(e.target.value as NoteFontSize)}>
+              {SIZE_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </Field>
+        </div>
+
         <div className="flex items-center justify-between">
-          <Field label="Color">
-            <div className="flex gap-2">
-              {NOTE_COLORS.map((c) => (
-                <button key={c} type="button" onClick={() => setColor(c)} className={cn('h-8 w-8 rounded-full ring-offset-2 dark:ring-offset-slate-900', color === c && 'ring-2 ring-primary')} style={{ backgroundColor: c }} />
+          <Field label="Alineación">
+            <div className="flex gap-1">
+              {ALIGN_OPTIONS.map(({ value, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setAlign(value)}
+                  className={cn('flex h-9 w-9 items-center justify-center rounded-xl border', align === value ? 'border-primary bg-primary/10 text-primary' : 'border-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]')}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
               ))}
             </div>
           </Field>
@@ -167,6 +256,21 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
             <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="h-4 w-4 accent-primary" /> Fijar arriba
           </label>
         </div>
+
+        {content && (
+          <Field label="Vista previa">
+            <div
+              className={cn(
+                'prose prose-invert max-w-none whitespace-pre-wrap rounded-2xl border border-white/10 p-4 text-white/80',
+                FONT_CLASS[font], SIZE_CLASS[fontSize], ALIGN_CLASS[align],
+              )}
+              style={{ backgroundColor: color }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
+            </div>
+          </Field>
+        )}
+
         <button type="submit" className="btn-primary w-full" disabled={save.isPending}>{editing ? 'Guardar cambios' : 'Crear nota'}</button>
       </form>
     </Modal>

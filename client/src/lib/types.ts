@@ -103,6 +103,10 @@ export interface DiaryEntry {
   updatedAt: string;
 }
 
+export type NoteFont = 'sans' | 'serif' | 'mono' | 'display';
+export type NoteFontSize = 'sm' | 'md' | 'lg';
+export type NoteAlign = 'left' | 'center' | 'right';
+
 export interface Note {
   id: string;
   title: string;
@@ -110,6 +114,9 @@ export interface Note {
   color: string;
   tags: string[];
   pinned: boolean;
+  font: NoteFont;
+  fontSize: NoteFontSize;
+  align: NoteAlign;
   createdAt: string;
   updatedAt: string;
   similarity?: number;

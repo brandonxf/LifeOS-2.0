@@ -12,6 +12,7 @@ import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { MoodFace, MOOD_LABELS } from '../components/icons';
 import { cn, MOOD_COLORS } from '../lib/utils';
+import { confirm } from '../store/confirm';
 import type { DiaryEntry } from '../lib/types';
 
 export default function Diary() {
@@ -25,6 +26,16 @@ export default function Diary() {
     mutationFn: (id: string) => api(`/api/diary/${id}`, { method: 'DELETE' }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['diary'] }); toast.success('Entrada eliminada'); },
   });
+
+  async function confirmDeleteEntry(e: DiaryEntry) {
+    const ok = await confirm({
+      title: 'Eliminar entrada',
+      message: `¿Seguro que quieres eliminar "${e.title || 'esta entrada'}"? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(e.id);
+  }
 
   const moodChart = useMemo(() => {
     const list = [...(entries.data ?? [])].reverse();
@@ -72,7 +83,7 @@ export default function Diary() {
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => { setEditing(e); setModalOpen(true); }} className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-primary">Editar</button>
-                    <button onClick={() => del.mutate(e.id)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => confirmDeleteEntry(e)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
                 <div className="prose-sm mt-2 line-clamp-3 text-sm text-slate-600 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: e.content }} />

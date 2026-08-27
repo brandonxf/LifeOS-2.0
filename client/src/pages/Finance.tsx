@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from '../components/ui';
 import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
+import { confirm } from '../store/confirm';
 import type { FinanceEntry, FinanceBudget, FinanceSummary, FinanceRecurring } from '../lib/types';
 
 const PIE_COLORS = ['#37e779', '#0d9488', '#f59e0b', '#f43f5e', '#22c55e', '#e879f9', '#a3e635', '#14b8a6'];
@@ -48,6 +49,16 @@ export default function Finance() {
       toast.success('Movimiento eliminado');
     },
   });
+
+  async function confirmDeleteEntry(e: FinanceEntry) {
+    const ok = await confirm({
+      title: 'Eliminar movimiento',
+      message: `¿Seguro que quieres eliminar "${e.description || e.category}"?`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(e.id);
+  }
 
   const spentByCategory = useMemo(() => {
     const map: Record<string, number> = {};
@@ -205,7 +216,7 @@ export default function Finance() {
                   {e.type === 'income' ? '+' : '−'}{formatCurrencyPrecise(Number(e.amount))}
                 </span>
                 <button onClick={() => { setEditing(e); setModalOpen(true); }} className="shrink-0 rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-primary">Editar</button>
-                <button onClick={() => del.mutate(e.id)} className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-danger">
+                <button onClick={() => confirmDeleteEntry(e)} className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-danger">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -296,6 +307,16 @@ function BudgetModal({ open, onClose }: { open: boolean; onClose: () => void }) 
     onSuccess: () => qc.invalidateQueries({ queryKey: ['finance', 'budgets'] }),
   });
 
+  async function confirmDeleteBudget(b: FinanceBudget) {
+    const ok = await confirm({
+      title: 'Eliminar presupuesto',
+      message: `¿Seguro que quieres eliminar el presupuesto de "${b.category}"?`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(b.id);
+  }
+
   return (
     <Modal open={open} onClose={onClose} title="Presupuestos mensuales">
       <div className="mb-4 space-y-2">
@@ -304,7 +325,7 @@ function BudgetModal({ open, onClose }: { open: boolean; onClose: () => void }) 
             <span>{b.category}</span>
             <div className="flex items-center gap-3">
               <span className="font-medium">{formatCurrency(Number(b.limit))}</span>
-              <button onClick={() => del.mutate(b.id)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+              <button onClick={() => confirmDeleteBudget(b)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
             </div>
           </div>
         ))}
@@ -362,6 +383,16 @@ function RecurringModal({ open, onClose }: { open: boolean; onClose: () => void 
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['finance'] }); toast.success('Recurrente eliminada'); },
   });
 
+  async function confirmDeleteRecurring(r: FinanceRecurring) {
+    const ok = await confirm({
+      title: 'Eliminar recurrente',
+      message: `¿Seguro que quieres eliminar "${r.description || r.category}"? Dejará de generar movimientos.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(r.id);
+  }
+
   return (
     <Modal open={open} onClose={onClose} title="Transacciones recurrentes" wide>
       <p className="mb-4 text-sm text-slate-400">
@@ -385,7 +416,7 @@ function RecurringModal({ open, onClose }: { open: boolean; onClose: () => void 
             >
               {r.active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </button>
-            <button onClick={() => del.mutate(r.id)} className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-danger">
+            <button onClick={() => confirmDeleteRecurring(r)} className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-danger">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>

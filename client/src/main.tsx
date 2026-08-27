@@ -8,20 +8,28 @@ import { setDefaultOptions } from 'date-fns';
 import { es } from 'date-fns/locale';
 import App from './App';
 import { BiometricGate } from './components/BiometricGate';
+import { ConfirmDialogHost } from './components/ConfirmDialogHost';
+import { SplashGate } from './components/SplashGate';
 
 // Localiza todas las fechas (date-fns) a español.
 setDefaultOptions({ locale: es });
 import { queryClient } from './lib/queryClient';
+import { initWidgetSync } from './lib/widgetSync';
 import './index.css';
+
+initWidgetSync(queryClient);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="life-os-theme">
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <BiometricGate>
-            <App />
-          </BiometricGate>
+          <SplashGate>
+            <BiometricGate>
+              <App />
+            </BiometricGate>
+          </SplashGate>
+          <ConfirmDialogHost />
           <Toaster
             position="bottom-right"
             toastOptions={{

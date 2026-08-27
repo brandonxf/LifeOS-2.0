@@ -13,6 +13,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Life OS" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <script>
+      // Evita el parpadeo oscuro->claro al cargar: aplica el tema guardado
+      // antes de que React monte (next-themes solo lo hace después).
+      try {
+        if (localStorage.getItem('life-os-theme') === 'light') {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

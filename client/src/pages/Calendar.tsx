@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Modal, Field } from '../components/ui';
 import { cn } from '../lib/utils';
+import { confirm } from '../store/confirm';
 import type { CalendarEvent } from '../lib/types';
 
 const EVENT_COLORS = ['#37e779', '#22c55e', '#0d9488', '#f59e0b', '#f43f5e', '#e879f9'];
@@ -52,6 +53,19 @@ export default function Calendar() {
     mutationFn: (id: string) => api(`/api/calendar/events/${id}`, { method: 'DELETE' }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['events'] }); toast.success('Evento eliminado'); },
   });
+
+  async function confirmDeleteEvent(id: string) {
+    const ok = await confirm({
+      title: 'Eliminar evento',
+      message: `¿Seguro que quieres eliminar "${editing?.title ?? 'este evento'}"?`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) {
+      del.mutate(id);
+      setModalOpen(false);
+    }
+  }
 
   const eventsByDay = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
@@ -187,7 +201,7 @@ export default function Calendar() {
         onClose={() => setModalOpen(false)}
         day={selectedDay ?? new Date()}
         editing={editing}
-        onDelete={(id) => { del.mutate(id); setModalOpen(false); }}
+        onDelete={confirmDeleteEvent}
       />
     </div>
   );

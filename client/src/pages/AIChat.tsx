@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../store/auth';
 import { api, API_BASE } from '../lib/api';
 import { cn } from '../lib/utils';
+import { confirm } from '../store/confirm';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -98,6 +99,16 @@ export default function AIChat() {
     },
   });
 
+  async function confirmDeleteConvo(c: Conversation) {
+    const ok = await confirm({
+      title: 'Eliminar conversación',
+      message: `¿Seguro que quieres eliminar "${c.title}"? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) delConvo.mutate(c.id);
+  }
+
   async function send(text: string) {
     if (!text.trim() || streaming) return;
     const history = messages;
@@ -186,16 +197,16 @@ export default function AIChat() {
       <div className="p-3">
         <button
           onClick={() => { newChat(); setMobileHistory(false); }}
-          className="flex w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm font-medium transition hover:bg-white/[0.09]"
+          className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]"
         >
           <Plus className="h-4 w-4" /> Nuevo chat
         </button>
       </div>
       <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
         {conversations.isLoading ? (
-          <p className="px-2 py-4 text-center text-xs text-white/40">Cargando…</p>
+          <p className="px-2 py-4 text-center text-xs text-slate-400 dark:text-white/40">Cargando…</p>
         ) : !conversations.data?.length ? (
-          <p className="px-2 py-4 text-center text-xs text-white/40">Sin conversaciones aún</p>
+          <p className="px-2 py-4 text-center text-xs text-slate-400 dark:text-white/40">Sin conversaciones aún</p>
         ) : (
           conversations.data.map((c) => (
             <div
@@ -211,8 +222,8 @@ export default function AIChat() {
               <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
               <p className="min-w-0 flex-1 truncate">{c.title}</p>
               <button
-                onClick={(e) => { e.stopPropagation(); delConvo.mutate(c.id); }}
-                className="shrink-0 rounded-md p-1 text-white/40 opacity-0 transition hover:text-danger group-hover:opacity-100"
+                onClick={(ev) => { ev.stopPropagation(); confirmDeleteConvo(c); }}
+                className="shrink-0 rounded-md p-1 text-slate-400 dark:text-white/40 opacity-0 transition hover:text-danger group-hover:opacity-100"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -227,7 +238,7 @@ export default function AIChat() {
     <div className="flex h-full overflow-hidden">
       {/* Sidebar: historial en desktop (glass) */}
       {showSidebar && (
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-white/[0.03] backdrop-blur-xl md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.03] md:flex">
           {historyContent}
         </aside>
       )}
@@ -241,7 +252,7 @@ export default function AIChat() {
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.07] bg-ink-900 transition-transform duration-200 md:hidden',
+          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-200 dark:border-white/[0.07] dark:bg-ink-900 md:hidden',
           mobileHistory ? 'translate-x-0' : '-translate-x-full',
         )}
         style={{
@@ -287,7 +298,7 @@ export default function AIChat() {
               <AiMark size={52} className="mb-4 opacity-95" />
               <p className="eyebrow mb-2">Asistente IA</p>
               <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">¿En qué puedo ayudarte?</h2>
-              <p className="mb-8 mt-2 text-sm text-white/50">
+              <p className="mb-8 mt-2 text-sm text-slate-500 dark:text-white/50">
                 Veo tus tareas, hábitos, finanzas, diario y salud en vivo.
               </p>
               <div className="grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -295,7 +306,7 @@ export default function AIChat() {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-left text-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.06]"
+                    className="rounded-2xl border border-slate-200 bg-white p-3.5 text-left text-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.06] dark:border-white/10 dark:bg-white/[0.03]"
                   >
                     {s}
                   </button>
@@ -317,7 +328,7 @@ export default function AIChat() {
                 {messages.map((m, i) =>
                   m.role === 'user' ? (
                     <div key={i} className="flex justify-end">
-                      <div className="max-w-[85%] rounded-3xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm backdrop-blur-sm">
+                      <div className="max-w-[85%] rounded-3xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
                         <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1">
                           <ReactMarkdown>{m.content}</ReactMarkdown>
                         </div>
@@ -330,7 +341,7 @@ export default function AIChat() {
                       </div>
                       <div className="min-w-0 flex-1 pt-0.5">
                         {m.content ? (
-                          <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-pre:bg-black/40">
+                          <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-pre:bg-slate-900/5 dark:prose-pre:bg-black/40">
                             <ReactMarkdown>{stripActions(m.content)}</ReactMarkdown>
                           </div>
                         ) : (
@@ -353,14 +364,14 @@ export default function AIChat() {
         <div className="px-4 pb-4 pt-2">
           <form
             onSubmit={(e) => { e.preventDefault(); send(input); }}
-            className="mx-auto flex max-w-3xl items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] py-1.5 pl-4 pr-1.5 shadow-glass backdrop-blur-xl transition focus-within:border-primary/40"
+            className="mx-auto flex max-w-3xl items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-4 pr-1.5 shadow-glass backdrop-blur-xl transition focus-within:border-primary/40 dark:border-white/10 dark:bg-white/[0.05]"
           >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Escríbele a tu asistente…"
               disabled={streaming}
-              className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-white/40"
+              className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-white/40"
             />
             <button
               type="submit"
@@ -370,7 +381,7 @@ export default function AIChat() {
               <Send className="h-4 w-4" />
             </button>
           </form>
-          <p className="mx-auto mt-2 max-w-3xl text-center text-[11px] text-white/40">
+          <p className="mx-auto mt-2 max-w-3xl text-center text-[11px] text-slate-400 dark:text-white/40">
             El asistente usa los datos en vivo de tu Life OS.
           </p>
         </div>

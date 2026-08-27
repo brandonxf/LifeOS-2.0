@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -17,7 +17,6 @@ import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { Card, Skeleton } from '../components/ui';
 import { cn, formatCurrency } from '../lib/utils';
-import { updateHomeWidget } from '../lib/widget';
 import type { FinanceSummary, Task, Habit, Goal, CalendarEvent, HealthSummary } from '../lib/types';
 
 /** Tarjeta de resumen generado por IA (semanal/mensual). Se pide bajo
@@ -46,15 +45,15 @@ function AISummaryCard() {
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
             <Sparkles className="h-4 w-4" />
           </div>
-          <h3 className="text-sm font-semibold text-white/70">Resumen con IA</h3>
+          <h3 className="text-sm font-semibold text-slate-600 dark:text-white/70">Resumen con IA</h3>
         </div>
-        <div className="flex overflow-hidden rounded-full border border-white/10">
+        <div className="flex overflow-hidden rounded-full border border-slate-200 dark:border-white/10">
           {(['week', 'month'] as const).map((p) => (
             <button
               key={p}
               onClick={() => run(p)}
               disabled={generate.isPending}
-              className={cn('px-3 py-1 text-xs font-medium transition', period === p && summary ? 'bg-primary text-ink-950' : 'text-white/60 hover:bg-white/[0.06]')}
+              className={cn('px-3 py-1 text-xs font-medium transition', period === p && summary ? 'bg-primary text-ink-950' : 'text-slate-500 hover:bg-slate-100 dark:text-white/60 dark:hover:bg-white/[0.06]')}
             >
               {p === 'week' ? 'Semana' : 'Mes'}
             </button>
@@ -62,15 +61,15 @@ function AISummaryCard() {
         </div>
       </div>
       {generate.isPending ? (
-        <div className="flex items-center gap-2 py-2 text-sm text-white/50">
+        <div className="flex items-center gap-2 py-2 text-sm text-slate-500 dark:text-white/50">
           <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" style={{ animationDelay: '0ms' }} />
           <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" style={{ animationDelay: '150ms' }} />
           <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" style={{ animationDelay: '300ms' }} />
         </div>
       ) : summary ? (
-        <p className="text-sm leading-relaxed text-white/80">{summary}</p>
+        <p className="text-sm leading-relaxed text-slate-700 dark:text-white/80">{summary}</p>
       ) : (
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-slate-500 dark:text-white/50">
           Genera un recuento de tu {period === 'week' ? 'semana' : 'mes'} con tus datos reales de tareas, hábitos, finanzas y ánimo.
           {' '}
           <button onClick={() => run(period)} className="font-semibold text-primary hover:underline">Generar ahora</button>
@@ -100,9 +99,9 @@ function Tile({
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
             <Icon className="h-4 w-4" />
           </div>
-          <h3 className="text-sm font-semibold text-white/70">{title}</h3>
+          <h3 className="text-sm font-semibold text-slate-600 dark:text-white/70">{title}</h3>
         </div>
-        <Link to={to} className="text-white/30 transition hover:text-primary">
+        <Link to={to} className="text-slate-400 dark:text-white/30 transition hover:text-primary">
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -114,6 +113,10 @@ function Tile({
 export default function Dashboard() {
   const user = useAuth((s) => s.user);
   const navigate = useNavigate();
+  const location = useLocation();
+  // Solo anima la aparición cuando venimos recién del login/registro (ver
+  // Login.tsx/Register.tsx), no en cada visita normal al Dashboard.
+  const justLoggedIn = Boolean((location.state as { justLoggedIn?: boolean } | null)?.justLoggedIn);
   const [prompt, setPrompt] = useState('');
 
   const finance = useQuery({ queryKey: ['finance', 'summary'], queryFn: () => api<FinanceSummary>('/api/finance/summary') });
@@ -153,15 +156,6 @@ export default function Dashboard() {
     [events.data],
   );
 
-  // Empuja el snapshot al widget del home screen cada vez que se refrescan
-  // tareas/hábitos (el widget nativo no puede llamar a la API él mismo).
-  useEffect(() => {
-    if (tasks.data && habits.data) {
-      updateHomeWidget(taskStats.pending, habitRing.done, habitRing.total);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks.data, habits.data]);
-
   function submitPrompt(e: React.FormEvent) {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -171,7 +165,7 @@ export default function Dashboard() {
   const ringDeg = habitRing.pct * 3.6;
 
   return (
-    <div>
+    <div className={cn(justLoggedIn && 'animate-page-in')}>
       {/* Hero */}
       <div className="mb-7 pt-2">
         <p className="eyebrow capitalize">{format(new Date(), "EEEE, d 'de' MMMM")}</p>
@@ -183,14 +177,14 @@ export default function Dashboard() {
       {/* Barra IA en píldora de vidrio */}
       <form
         onSubmit={submitPrompt}
-        className="mb-6 flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] p-2 pl-4 shadow-glass backdrop-blur-xl transition focus-within:border-primary/40"
+        className="mb-6 flex items-center gap-3 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] p-2 pl-4 shadow-glass backdrop-blur-xl transition focus-within:border-primary/40"
       >
         <AiMark size={20} />
         <input
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Pregúntale lo que sea a tu asistente de IA sobre tu vida…"
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/40"
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-white/40"
         />
         <button type="submit" className="btn-primary h-10 w-10 !px-0" aria-label="Preguntar">
           <Send className="h-4 w-4" />
@@ -208,16 +202,16 @@ export default function Dashboard() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="num text-4xl font-bold text-primary sm:text-5xl">{formatCurrency(finance.data?.balance ?? 0)}</p>
-                <p className="mt-1 text-xs text-white/40">balance de este periodo</p>
+                <p className="mt-1 text-xs text-slate-400 dark:text-white/40">balance de este periodo</p>
               </div>
               <div className="w-full space-y-1.5 sm:max-w-[52%]">
                 {(finance.data?.topCategories ?? []).slice(0, 3).map((c) => (
-                  <div key={c.category} className="flex items-center justify-between border-b border-white/[0.06] pb-1.5 text-sm last:border-0">
-                    <span className="text-white/50">{c.category}</span>
+                  <div key={c.category} className="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.06] pb-1.5 text-sm last:border-0">
+                    <span className="text-slate-500 dark:text-white/50">{c.category}</span>
                     <span className="num font-medium">{formatCurrency(c.total)}</span>
                   </div>
                 ))}
-                {!finance.data?.topCategories.length && <p className="text-sm text-white/40">Aún no hay gastos</p>}
+                {!finance.data?.topCategories.length && <p className="text-sm text-slate-400 dark:text-white/40">Aún no hay gastos</p>}
               </div>
             </div>
           )}
@@ -231,14 +225,14 @@ export default function Dashboard() {
             <div>
               <div className="flex gap-4">
                 <div>
-                  <p className={cn('num text-3xl font-bold', taskStats.overdue ? 'text-danger' : 'text-white/40')}>
+                  <p className={cn('num text-3xl font-bold', taskStats.overdue ? 'text-danger' : 'text-slate-400 dark:text-white/40')}>
                     {taskStats.overdue}
                   </p>
-                  <p className="text-xs text-white/40">vencidas</p>
+                  <p className="text-xs text-slate-400 dark:text-white/40">vencidas</p>
                 </div>
                 <div>
                   <p className="num text-3xl font-bold text-primary">{taskStats.dueToday.length}</p>
-                  <p className="text-xs text-white/40">para hoy</p>
+                  <p className="text-xs text-slate-400 dark:text-white/40">para hoy</p>
                 </div>
               </div>
               <div className="mt-3 space-y-1">
@@ -246,10 +240,10 @@ export default function Dashboard() {
                   <div key={t.id} className="flex items-center gap-2 text-sm">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                     <span className="flex-1 truncate">{t.title}</span>
-                    <span className="text-xs text-white/40">{t.dueDate && format(parseISO(t.dueDate), 'MMM d')}</span>
+                    <span className="text-xs text-slate-400 dark:text-white/40">{t.dueDate && format(parseISO(t.dueDate), 'MMM d')}</span>
                   </div>
                 ))}
-                {!taskStats.upcoming.length && <p className="text-sm text-white/40">Sin tareas próximas</p>}
+                {!taskStats.upcoming.length && <p className="text-sm text-slate-400 dark:text-white/40">Sin tareas próximas</p>}
               </div>
             </div>
           )}
@@ -265,15 +259,15 @@ export default function Dashboard() {
                 className="relative flex h-24 w-24 items-center justify-center rounded-full"
                 style={{ background: `conic-gradient(#37e779 ${ringDeg}deg, rgba(55,231,121,0.14) 0deg)` }}
               >
-                <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-ink-900">
+                <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-slate-50 dark:bg-ink-900">
                   <span className="num text-2xl font-bold">{habitRing.pct}%</span>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-white/50">
+                <p className="text-sm text-slate-500 dark:text-white/50">
                   {habitRing.done} de {habitRing.total}
                 </p>
-                <p className="text-xs text-white/40">hábitos completados hoy</p>
+                <p className="text-xs text-slate-400 dark:text-white/40">hábitos completados hoy</p>
               </div>
             </div>
           )}
@@ -291,15 +285,15 @@ export default function Dashboard() {
                   <div key={g.id}>
                     <div className="mb-1 flex justify-between text-sm">
                       <span className="truncate">{g.title}</span>
-                      <span className="text-white/40">{pct}%</span>
+                      <span className="text-slate-400 dark:text-white/40">{pct}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/[0.08]">
+                    <div className="h-2 rounded-full bg-slate-200 dark:bg-white/[0.08]">
                       <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
               })}
-              {!goals.data?.some((g) => g.status === 'active') && <p className="text-sm text-white/40">Sin metas activas</p>}
+              {!goals.data?.some((g) => g.status === 'active') && <p className="text-sm text-slate-400 dark:text-white/40">Sin metas activas</p>}
             </div>
           )}
         </Tile>
@@ -314,10 +308,10 @@ export default function Dashboard() {
                 <div key={e.id} className="flex items-center gap-2 text-sm">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: e.color }} />
                   <span className="flex-1 truncate">{e.title}</span>
-                  <span className="text-xs text-white/40">{format(parseISO(e.startTime), 'MMM d, HH:mm')}</span>
+                  <span className="text-xs text-slate-400 dark:text-white/40">{format(parseISO(e.startTime), 'MMM d, HH:mm')}</span>
                 </div>
               ))}
-              {!upcomingEvents.length && <p className="text-sm text-white/40">Sin eventos próximos</p>}
+              {!upcomingEvents.length && <p className="text-sm text-slate-400 dark:text-white/40">Sin eventos próximos</p>}
             </div>
           )}
         </Tile>
@@ -345,15 +339,15 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
           <p className="num text-2xl font-bold text-primary">{water ? water.latest.toFixed(1) : '—'}</p>
-          <p className="text-[10px] text-white/40">Agua {water?.unit}</p>
+          <p className="text-[10px] text-slate-400 dark:text-white/40">Agua {water?.unit}</p>
         </div>
         <div>
           <p className="num text-2xl font-bold text-primary">{sleep ? sleep.latest.toFixed(1) : '—'}</p>
-          <p className="text-[10px] text-white/40">Sueño h</p>
+          <p className="text-[10px] text-slate-400 dark:text-white/40">Sueño h</p>
         </div>
         <div>
           <p className="num text-2xl font-bold text-success">{workout ? Math.round(workout.total) : '—'}</p>
-          <p className="text-[10px] text-white/40">Ejercicio min</p>
+          <p className="text-[10px] text-slate-400 dark:text-white/40">Ejercicio min</p>
         </div>
       </div>
       {chartData.length > 0 && (

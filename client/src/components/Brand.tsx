@@ -135,12 +135,12 @@ export function AuthArt({ className }: { className?: string }) {
  */
 export function AuroraField({ className }: { className?: string }) {
   return (
-    <div aria-hidden className={cn('aurora-field pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
-      <div className="animate-blob absolute -left-40 -top-40 h-[42rem] w-[42rem] rounded-full bg-primary/[0.16] blur-[140px]" />
-      <div className="animate-blob absolute -right-40 top-1/4 h-[38rem] w-[38rem] rounded-full bg-emerald-500/[0.12] blur-[150px] [animation-delay:5s]" />
-      <div className="animate-blob absolute -bottom-48 left-1/3 h-[40rem] w-[40rem] rounded-full bg-lime-400/[0.08] blur-[160px] [animation-delay:9s]" />
-      <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:72px_72px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,transparent_45%,rgba(0,0,0,0.5)_100%)]" />
+    <div aria-hidden className={cn('aurora-field pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-slate-50 dark:bg-ink-950', className)}>
+      <div className="animate-blob absolute -left-40 -top-40 h-[42rem] w-[42rem] rounded-full bg-primary/[0.14] blur-[140px] dark:bg-primary/[0.16]" />
+      <div className="animate-blob absolute -right-40 top-1/4 h-[38rem] w-[38rem] rounded-full bg-emerald-500/[0.10] blur-[150px] [animation-delay:5s] dark:bg-emerald-500/[0.12]" />
+      <div className="animate-blob absolute -bottom-48 left-1/3 h-[40rem] w-[40rem] rounded-full bg-lime-400/[0.07] blur-[160px] [animation-delay:9s] dark:bg-lime-400/[0.08]" />
+      <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px)] [background-size:72px_72px] dark:[background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,transparent_45%,rgba(0,0,0,0.06)_100%)] dark:bg-[radial-gradient(circle_at_50%_-10%,transparent_45%,rgba(0,0,0,0.5)_100%)]" />
     </div>
   );
 }

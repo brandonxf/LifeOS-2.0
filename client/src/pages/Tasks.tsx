@@ -11,6 +11,7 @@ import type { Task } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { cancelTaskReminder, scheduleTaskReminder } from '../lib/notifications';
 import { useSettings } from '../store/settings';
+import { confirm } from '../store/confirm';
 
 const COLUMNS: { id: Task['status']; label: string; accent: string }[] = [
   { id: 'todo', label: 'Por hacer', accent: 'bg-slate-400' },
@@ -67,6 +68,16 @@ export default function Tasks() {
       toast.success('Tarea eliminada');
     },
   });
+
+  async function confirmDelete(task: Task) {
+    const ok = await confirm({
+      title: 'Eliminar tarea',
+      message: `¿Seguro que quieres eliminar "${task.title}"? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(task.id);
+  }
 
   const allTags = useMemo(() => {
     const s = new Set<string>();
@@ -157,7 +168,7 @@ export default function Tasks() {
                             <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
                               onClick={() => { setEditing(task); setModalOpen(true); }}
                               className={cn('cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition dark:bg-slate-900', snap.isDragging && 'rotate-1 shadow-lg')}>
-                              <TaskCard task={task} onDelete={() => del.mutate(task.id)} onMove={(status) => changeStatus(task, status)} />
+                              <TaskCard task={task} onDelete={() => confirmDelete(task)} onMove={(status) => changeStatus(task, status)} />
                             </div>
                           )}
                         </Draggable>
@@ -187,7 +198,7 @@ export default function Tasks() {
                     {task.tags.map((tag) => <span key={tag}>#{tag}</span>)}
                   </div>
                 </div>
-                <button onClick={() => del.mutate(task.id)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                <button onClick={() => confirmDelete(task)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
               </div>
             ))}
           </div>

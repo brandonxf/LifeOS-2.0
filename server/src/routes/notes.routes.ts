@@ -15,6 +15,9 @@ const noteSchema = z.object({
   color: z.string().optional(),
   tags: z.array(z.string()).default([]),
   pinned: z.boolean().default(false),
+  font: z.enum(['sans', 'serif', 'mono', 'display']).default('sans'),
+  fontSize: z.enum(['sm', 'md', 'lg']).default('md'),
+  align: z.enum(['left', 'center', 'right']).default('left'),
 });
 
 function stripEmbedding<T extends { embedding?: unknown }>(row: T) {
@@ -44,6 +47,9 @@ router.get(
         color: notes.color,
         tags: notes.tags,
         pinned: notes.pinned,
+        font: notes.font,
+        fontSize: notes.fontSize,
+        align: notes.align,
         createdAt: notes.createdAt,
         updatedAt: notes.updatedAt,
         similarity,
@@ -91,6 +97,9 @@ router.post(
         color: body.color ?? '#1f2937',
         tags: body.tags,
         pinned: body.pinned,
+        font: body.font,
+        fontSize: body.fontSize,
+        align: body.align,
         embedding,
       })
       .returning();
@@ -111,6 +120,9 @@ router.put(
     if (body.color !== undefined) patch.color = body.color;
     if (body.tags !== undefined) patch.tags = body.tags;
     if (body.pinned !== undefined) patch.pinned = body.pinned;
+    if (body.font !== undefined) patch.font = body.font;
+    if (body.fontSize !== undefined) patch.fontSize = body.fontSize;
+    if (body.align !== undefined) patch.align = body.align;
     if (body.title !== undefined || body.content !== undefined) {
       patch.embedding = embed(`${body.title ?? ''}\n${body.content ?? ''}`);
     }

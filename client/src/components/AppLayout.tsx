@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTheme } from 'next-themes';
 import {
   LayoutDashboard,
   Wallet,
@@ -17,6 +18,8 @@ import {
   CheckCircle2,
   Plus,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useUI } from '../store/ui';
@@ -24,6 +27,7 @@ import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
 import { PullToRefresh } from './PullToRefresh';
+import { confirm } from '../store/confirm';
 
 const NAV = [
   { to: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -43,6 +47,28 @@ interface Notif {
   title: string;
   message: string;
   at: string;
+}
+
+/** Interruptor de tema claro/oscuro (funciona igual en web y en el APK
+ *  nativo: ambos corren el mismo webview). Se espera a montar para leer el
+ *  tema real de localStorage y evitar un parpadeo de ícono equivocado. */
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const isDark = !mounted || resolvedTheme !== 'light';
+
+  return (
+    <button
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      title={isDark ? 'Modo claro' : 'Modo oscuro'}
+      className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.06]"
+    >
+      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
+  );
 }
 
 function NotificationsBell() {
@@ -273,6 +299,13 @@ export function AppLayout() {
   const fullBleed = pathname === '/ai';
 
   async function handleLogout() {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      message: '¿Seguro que quieres cerrar tu sesión?',
+      confirmLabel: 'Cerrar sesión',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       if (refreshToken) await api('/api/auth/logout', { method: 'POST', body: { refreshToken } });
     } catch {
@@ -288,7 +321,7 @@ export function AppLayout() {
       {/* Rail flotante de navegación */}
       <aside
         className={cn(
-          'app-rail hidden flex-col border-r border-white/[0.07] bg-white/[0.045] backdrop-blur-2xl transition-all duration-200 lg:static lg:m-3 lg:flex lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
+          'app-rail hidden flex-col border-r border-slate-200 bg-white/80 backdrop-blur-2xl transition-all duration-200 dark:border-white/[0.07] dark:bg-white/[0.045] lg:static lg:m-3 lg:flex lg:h-[calc(100vh-1.5rem)] lg:rounded-[26px] lg:border lg:shadow-glass',
           sidebarCollapsed ? 'w-[68px]' : 'w-64',
         )}
       >
@@ -325,7 +358,7 @@ export function AppLayout() {
           ))}
         </nav>
 
-        <div className="space-y-1 border-t border-white/[0.07] p-3">
+        <div className="space-y-1 border-t border-slate-200 p-3 dark:border-white/[0.07]">
           <NavLink
             to="/settings"
             className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
@@ -362,6 +395,7 @@ export function AppLayout() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            <ThemeToggle />
             <NotificationsBell />
             <UserMenu onLogout={handleLogout} />
           </div>

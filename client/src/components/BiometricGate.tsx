@@ -16,13 +16,21 @@ export function BiometricGate({ children }: { children: React.ReactNode }) {
   const enabled = useSettings((s) => s.biometricLockEnabled);
   const [locked, setLocked] = useState(enabled && native);
   const checking = useRef(false);
+  // El propio diálogo nativo de huella pausa y reanuda la Activity al
+  // abrirse/cerrarse, lo que dispara "appStateChange" como si el usuario
+  // hubiera salido y vuelto a la app. Mientras el diálogo está abierto (y un
+  // margen después de que se cierra) ignoramos esos eventos para no volver
+  // a pedir la huella en bucle justo después de verificarla con éxito.
+  const promptOpen = useRef(false);
 
   async function tryUnlock() {
     if (checking.current) return;
     checking.current = true;
+    promptOpen.current = true;
     const ok = await verifyBiometric();
     checking.current = false;
     setLocked(!ok);
+    setTimeout(() => { promptOpen.current = false; }, 500);
   }
 
   useEffect(() => {
@@ -34,7 +42,7 @@ export function BiometricGate({ children }: { children: React.ReactNode }) {
     tryUnlock();
 
     const sub = App.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) {
+      if (isActive && !promptOpen.current) {
         setLocked(true);
         tryUnlock();
       }

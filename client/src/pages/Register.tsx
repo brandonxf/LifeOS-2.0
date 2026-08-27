@@ -35,7 +35,7 @@ export default function Register() {
       );
       setSession(res);
       toast.success('¡Cuenta creada! Bienvenido a Life OS.');
-      navigate('/dashboard');
+      navigate('/dashboard', { state: { justLoggedIn: true } });
     } catch (err: any) {
       toast.error(err.message ?? 'Error al registrarse');
     } finally {

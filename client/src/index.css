@@ -246,11 +246,12 @@
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
-  /* Superficies de vidrio necesitan opacidad al perder el blur. */
-  .card {
+  /* Superficies de vidrio necesitan opacidad al perder el blur (solo en
+     oscuro: en claro las superficies ya son sólidas de por sí). */
+  .dark .card {
     background-color: rgba(18, 22, 18, 0.82) !important;
   }
-  .app-rail {
+  .dark .app-rail {
     background-color: rgba(11, 14, 11, 0.98) !important;
   }
   /* Popovers, menús y modales (notificaciones, avatar, formularios): al

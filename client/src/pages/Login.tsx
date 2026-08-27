@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Logo, AuthBackdrop, AppLoader } from '../components/Brand';
+import { Logo, AuthBackdrop } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, Spinner } from '../components/ui';
@@ -19,7 +19,6 @@ export default function Login() {
   const navigate = useNavigate();
   const setSession = useAuth((s) => s.setSession);
   const [loading, setLoading] = useState(false);
-  const [entering, setEntering] = useState(false);
   const {
     register,
     handleSubmit,
@@ -34,17 +33,13 @@ export default function Login() {
         '/api/auth/login',
         data,
       );
-      // Muestra el loader ANTES de setear la sesión: si seteáramos la sesión
-      // primero, el guard PublicOnly redirigiría a /dashboard y el login se
-      // desmontaría sin que el loader llegue a pintarse.
-      setEntering(true);
-      await new Promise((r) => setTimeout(r, 3200));
-      setSession(res); // ahora el usuario queda autenticado → entra a la app
-      navigate('/dashboard');
+      setSession(res);
+      // Marca la navegación como "recién logueado" para que el Dashboard
+      // dispare su animación de aparición solo esta vez.
+      navigate('/dashboard', { state: { justLoggedIn: true } });
     } catch (err: any) {
       toast.error(err.message ?? 'Error al iniciar sesión');
       setLoading(false);
-      setEntering(false);
     }
   }
 
@@ -52,8 +47,6 @@ export default function Login() {
     setValue('email', 'demo@lifeos.app');
     setValue('password', 'demo1234');
   }
-
-  if (entering) return <AppLoader label="Entrando a tu Life OS…" />;
 
   return (
     <AuthShell mode="login" title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">

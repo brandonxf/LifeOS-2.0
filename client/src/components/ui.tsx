@@ -43,7 +43,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 py-16 text-center dark:border-white/10">
       <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
         <Icon className="h-6 w-6" />
       </div>
@@ -97,7 +97,7 @@ export function Modal({
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-md" onClick={onClose} />
       <div
         className={cn(
-          'glass-menu relative z-10 max-h-[85vh] w-full overflow-y-auto animate-fade-in rounded-3xl border border-white/10 bg-white p-6 shadow-glass-lg dark:bg-ink-900/85 dark:backdrop-blur-2xl',
+          'glass-menu relative z-10 max-h-[85vh] w-full overflow-y-auto animate-fade-in rounded-3xl border border-slate-200 bg-white p-6 shadow-glass-lg dark:border-white/10 dark:bg-ink-900/85 dark:backdrop-blur-2xl',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
       >

@@ -19,6 +19,7 @@ import {
   scheduleDailyHabitReminder,
 } from '../lib/notifications';
 import { isBiometricAvailable, verifyBiometric } from '../lib/biometric';
+import { confirm } from '../store/confirm';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(120),
@@ -67,14 +68,14 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
-        'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+        'relative h-6 w-11 shrink-0 rounded-full p-0 transition-colors',
         checked ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700',
       )}
     >
       <span
         className={cn(
-          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5',
+          'absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
+          checked ? 'translate-x-[20px]' : 'translate-x-0',
         )}
       />
     </button>
@@ -197,6 +198,13 @@ export default function Settings() {
   });
 
   async function logout() {
+    const ok = await confirm({
+      title: 'Cerrar sesión',
+      message: '¿Seguro que quieres cerrar tu sesión?',
+      confirmLabel: 'Cerrar sesión',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       if (refreshToken) await api('/api/auth/logout', { method: 'POST', body: { refreshToken } });
     } catch { /* ignore */ }

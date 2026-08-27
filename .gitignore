@@ -8,6 +8,7 @@ build/
 drizzle/meta/
 coverage/
 .vite/
+.idea/
 
 # PWA dev build output
 dev-dist/
@@ -21,3 +22,9 @@ client/android/local.properties
 client/android/app/src/main/assets/public/
 client/android/*.iml
 client/android/.idea/
+
+# Firma de release: NUNCA subir esto al repo. Perder este archivo o sus
+# contraseñas significa no poder volver a firmar actualizaciones de la app
+# con la misma identidad (Android rechaza updates con firma distinta).
+client/android/keystore/
+client/android/keystore.properties

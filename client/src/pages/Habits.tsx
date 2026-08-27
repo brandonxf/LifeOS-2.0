@@ -9,6 +9,7 @@ import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
 import { cn } from '../lib/utils';
 import type { Habit, Goal, GoalMilestone } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
+import { confirm } from '../store/confirm';
 
 // Hitos de racha: al cruzarlos se celebra con un toast + haptic extra.
 const STREAK_MILESTONES = [7, 14, 30, 60, 100, 365];
@@ -175,6 +176,26 @@ export default function Habits() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); toast.success('Meta eliminada'); },
   });
 
+  async function confirmDeleteHabit(h: Habit) {
+    const ok = await confirm({
+      title: 'Eliminar hábito',
+      message: `¿Seguro que quieres eliminar "${h.name}"? Perderás su historial de rachas.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) delHabit.mutate(h.id);
+  }
+
+  async function confirmDeleteGoal(g: Goal) {
+    const ok = await confirm({
+      title: 'Eliminar meta',
+      message: `¿Seguro que quieres eliminar "${g.title}"? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) delGoal.mutate(g.id);
+  }
+
   return (
     <div className="space-y-8">
       {/* Today's checklist */}
@@ -238,7 +259,7 @@ export default function Habits() {
                         <div className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                           <Flame className="h-4 w-4" /> {streak(h.logs)}
                         </div>
-                        <button onClick={() => delHabit.mutate(h.id)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                        <button onClick={() => confirmDeleteHabit(h)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </div>
                     {badge && (
@@ -278,7 +299,7 @@ export default function Habits() {
                       {completed ? <Trophy className="h-5 w-5 text-amber-500" /> : <Target className="h-5 w-5 text-primary" />}
                       <h3 className="font-semibold leading-tight">{g.title}</h3>
                     </div>
-                    <button onClick={() => delGoal.mutate(g.id)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => confirmDeleteGoal(g)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                   </div>
                   <span className="mb-3 inline-block w-fit rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{GOAL_CATEGORY_LABELS[g.category] ?? g.category}</span>
                   <div className="mb-1 flex justify-between text-sm">

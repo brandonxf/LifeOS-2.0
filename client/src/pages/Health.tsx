@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { cn } from '../lib/utils';
+import { confirm } from '../store/confirm';
 import type { HealthLog, HealthSummary } from '../lib/types';
 
 const METRICS = {
@@ -30,6 +31,16 @@ export default function Health() {
     mutationFn: (id: string) => api(`/api/health/logs/${id}`, { method: 'DELETE' }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['health'] }); toast.success('Registro eliminado'); },
   });
+
+  async function confirmDeleteLog(l: HealthLog) {
+    const ok = await confirm({
+      title: 'Eliminar registro',
+      message: `¿Seguro que quieres eliminar este registro de ${METRICS[l.type].label.toLowerCase()}?`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+    if (ok) del.mutate(l.id);
+  }
 
   function openLog(type: MetricType) { setPresetType(type); setModalOpen(true); }
 
@@ -116,7 +127,7 @@ export default function Health() {
                   <span className="flex-1 text-sm">{m.label}</span>
                   <span className="text-sm font-semibold">{Number(l.value)} {l.unit}</span>
                   <span className="text-xs text-slate-400">{format(parseISO(l.date), 'MMM d')}</span>
-                  <button onClick={() => del.mutate(l.id)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => confirmDeleteLog(l)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                 </div>
               );
             })}
