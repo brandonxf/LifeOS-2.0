@@ -19,7 +19,7 @@ export const env = {
   // NVIDIA NIM (OpenAI-compatible, free models). https://build.nvidia.com
   NVIDIA_API_KEY: process.env.NVIDIA_API_KEY ?? '',
   NVIDIA_BASE_URL: process.env.NVIDIA_BASE_URL ?? 'https://integrate.api.nvidia.com/v1',
-  AI_MODEL: process.env.AI_MODEL ?? 'meta/llama-3.1-8b-instruct',
+  AI_MODEL: process.env.AI_MODEL ?? 'meta/llama-3.2-11b-vision-instruct',
   // Uno o varios orígenes permitidos por CORS, separados por comas.
   // Ej: "https://lifeos.vercel.app,https://lifeos-git-main-tu.vercel.app"
   CLIENT_URL: process.env.CLIENT_URL ?? 'http://localhost:5173',
