@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Logo, AuthBackdrop } from '../components/Brand';
+import { LogoLockup, AuthBackdrop } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, Spinner } from '../components/ui';
@@ -96,10 +96,7 @@ export function AuthShell({
       <div className="relative z-10 w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10">
         {/* Marca */}
         <div className="flex flex-col items-center">
-          <Logo size={88} />
-          <span className="mt-3 font-display text-sm font-bold tracking-[0.35em] text-white/85">
-            LIFE&nbsp;OS
-          </span>
+          <LogoLockup width={200} />
         </div>
 
         <div className="mb-8 mt-6 text-center">

@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { cn } from '../lib/utils';
 import logoMark from '../assets/logo-mark.webp';
+import logoLockup from '../assets/logo-lockup.webp';
 
 /** Marca de la app "Life OS": el isotipo oficial (mismo mark en toda la app
  *  y en los recursos nativos de Android). Trabaja igual en claro y oscuro
@@ -16,6 +17,13 @@ export function Logo({ size = 36, className }: { size?: number; className?: stri
       style={{ width: size, height: size, objectFit: 'contain' }}
     />
   );
+}
+
+/** Isotipo + "Life OS" en un solo lockup a color (imagenes/logoynombre.webp).
+ *  El "Life" viene en blanco opaco: solo úsalo sobre fondos oscuros fijos
+ *  (paneles de auth), nunca donde pueda caer sobre un fondo claro. */
+export function LogoLockup({ width = 220, className }: { width?: number; className?: string }) {
+  return <img src={logoLockup} width={width} alt="Life OS" className={cn('h-auto', className)} />;
 }
 
 /** Logo + wordmark en Sora. `light` para fondos oscuros. */
