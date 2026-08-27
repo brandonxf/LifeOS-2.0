@@ -13,7 +13,7 @@ export function Logo({ size = 36, className }: { size?: number; className?: stri
       height={size}
       alt=""
       className={cn('shrink-0', className)}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, objectFit: 'contain' }}
     />
   );
 }
