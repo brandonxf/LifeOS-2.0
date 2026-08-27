@@ -20,37 +20,25 @@
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name=".LifeOsWidgetProvider"
-            android:exported="false">
+        <receiver android:name=".LifeOsWidgetProvider" android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_life_os_info" />
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_life_os_info" />
         </receiver>
 
-        <receiver
-            android:name=".LifeOsStreakWidgetProvider"
-            android:exported="false">
+        <receiver android:name=".LifeOsStreakWidgetProvider" android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_life_os_streak_info" />
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_life_os_streak_info" />
         </receiver>
 
-        <receiver
-            android:name=".LifeOsNotesWidgetProvider"
-            android:exported="false">
+        <receiver android:name=".LifeOsNotesWidgetProvider" android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_life_os_notes_info" />
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_life_os_notes_info" />
         </receiver>
 
         <provider

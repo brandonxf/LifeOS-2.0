@@ -1,46 +1,20 @@
 import { useId } from 'react';
 import { cn } from '../lib/utils';
+import logoMark from '../assets/logo-mark.webp';
 
-/**
- * Marca de la app "Life OS": un núcleo con una órbita — tu vida (los módulos)
- * girando alrededor de un centro personal. Tile con gradiente de marca.
- */
+/** Marca de la app "Life OS": el isotipo oficial (mismo mark en toda la app
+ *  y en los recursos nativos de Android). Trabaja igual en claro y oscuro
+ *  porque es una figura a color plena, sin fondo. */
 export function Logo({ size = 36, className }: { size?: number; className?: string }) {
-  const id = useId();
   return (
-    <svg
+    <img
+      src={logoMark}
       width={size}
       height={size}
-      viewBox="0 0 64 64"
-      fill="none"
+      alt=""
       className={cn('shrink-0', className)}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={`${id}-tile`} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#dcff85" />
-          <stop offset="0.55" stopColor="#37e779" />
-          <stop offset="1" stopColor="#15b657" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="16" fill={`url(#${id}-tile)`} />
-      {/* Órbita */}
-      <ellipse
-        cx="32"
-        cy="32"
-        rx="19"
-        ry="8.5"
-        transform="rotate(-28 32 32)"
-        stroke="#080a08"
-        strokeOpacity="0.9"
-        strokeWidth="2.75"
-        fill="none"
-      />
-      {/* Núcleo */}
-      <circle cx="32" cy="32" r="6.5" fill="#080a08" />
-      {/* Satélite sobre la órbita */}
-      <circle cx="47.5" cy="20.5" r="3.4" fill="#080a08" />
-    </svg>
+      style={{ width: size, height: size }}
+    />
   );
 }
 
