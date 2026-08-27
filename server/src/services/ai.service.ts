@@ -326,6 +326,18 @@ export interface ActionResult {
 
 const ACTION_RE = /```action\s*([\s\S]*?)```/g;
 
+// Salvaguarda de servidor: incluso si el modelo genera un bloque ```action
+// sin que se lo hayan pedido (pasa a veces con el modelo gratuito de NVIDIA),
+// nunca lo ejecutamos a menos que el propio mensaje del usuario contenga
+// intención explícita de crear/agregar algo.
+const CREATION_INTENT_RE =
+  /\b(agrega|agregar|agrégame|añad|crea|crear|créa|créame|registra|registrar|anota|anotar|apunta|apuntar|apúntame|guarda|guardar|guárdame|programa|programar|recuérdame|recordar|hazme|haz una|has una|súmame|ponme|pon una)\b/i;
+
+/** true si el mensaje del usuario (no la respuesta del modelo) pide crear algo. */
+export function hasCreationIntent(userMessage: string): boolean {
+  return CREATION_INTENT_RE.test(userMessage);
+}
+
 /** Quita los bloques de acción del texto (para no mostrarlos ni guardarlos). */
 export function stripActionBlocks(text: string): string {
   return text

@@ -12,6 +12,7 @@ import {
   contextBadge,
   streamChat,
   runAssistantActions,
+  hasCreationIntent,
   stripActionBlocks,
   type ChatMessage,
 } from '../services/ai.service.js';
@@ -180,12 +181,16 @@ router.post(
       onDone: async () => {
         // Save the assistant reply and bump the conversation's timestamp.
         if (assistantText.trim()) {
-          // Ejecuta cualquier acción que el asistente haya solicitado.
+          // Ejecuta cualquier acción que el asistente haya solicitado, pero
+          // solo si el propio mensaje del usuario pedía crear algo -- si el
+          // modelo metió un bloque ```action sin que se lo pidieran, se ignora.
           let results: Awaited<ReturnType<typeof runAssistantActions>> = [];
-          try {
-            results = await runAssistantActions(user.id, assistantText);
-          } catch {
-            /* si falla la ejecución, no rompemos el chat */
+          if (hasCreationIntent(body.message)) {
+            try {
+              results = await runAssistantActions(user.id, assistantText);
+            } catch {
+              /* si falla la ejecución, no rompemos el chat */
+            }
           }
           if (results.length) send('action', { results });
 
