@@ -316,7 +316,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className="relative flex h-screen overflow-hidden text-slate-100">
+    <div className="relative flex h-screen overflow-hidden text-slate-900 dark:text-slate-100">
       <AuroraField />
       {/* Rail flotante de navegación */}
       <aside
