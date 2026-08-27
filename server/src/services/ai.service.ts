@@ -16,7 +16,7 @@ import {
 import { embed } from './embedding.service.js';
 import { env } from '../config/env.js';
 
-export const CLAUDE_MODEL = 'claude-sonnet-4-6';
+export const CLAUDE_MODEL = 'claude-sonnet-5';
 
 // Provider selection: NVIDIA (free, OpenAI-compatible) takes priority, then Anthropic.
 type Provider = 'nvidia' | 'anthropic' | 'none';
