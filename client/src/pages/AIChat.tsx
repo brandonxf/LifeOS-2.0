@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { Send, Database, Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { AiMark } from '../components/Brand';
@@ -330,7 +331,7 @@ export default function AIChat() {
                     <div key={i} className="flex justify-end">
                       <div className="max-w-[85%] rounded-3xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
                         <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1">
-                          <ReactMarkdown>{m.content}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                         </div>
                       </div>
                     </div>
@@ -341,8 +342,8 @@ export default function AIChat() {
                       </div>
                       <div className="min-w-0 flex-1 pt-0.5">
                         {m.content ? (
-                          <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-pre:bg-slate-900/5 dark:prose-pre:bg-black/40">
-                            <ReactMarkdown>{stripActions(m.content)}</ReactMarkdown>
+                          <div className="prose prose-sm max-w-none overflow-x-auto dark:prose-invert prose-p:my-1.5 prose-headings:my-3 prose-headings:font-display prose-table:my-3 prose-th:text-left prose-pre:bg-slate-900/5 dark:prose-pre:bg-black/40">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripActions(m.content)}</ReactMarkdown>
                           </div>
                         ) : (
                           <span className="inline-flex gap-1 pt-1.5">

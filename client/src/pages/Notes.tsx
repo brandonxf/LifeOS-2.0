@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
+import remarkGfm from 'remark-gfm';
 import { Plus, Trash2, Pin, PinOff, StickyNote, Search, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { AiMark } from '../components/Brand';
 import toast from 'react-hot-toast';
@@ -144,7 +145,7 @@ export default function Notes() {
                 )}
                 onClick={() => { setEditing(n); setModalOpen(true); }}
               >
-                <ReactMarkdown remarkPlugins={[remarkBreaks]}>{n.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>{n.content}</ReactMarkdown>
               </div>
               {n.similarity !== undefined && (
                 <p className="mt-2 text-xs text-white/50">{Math.round(n.similarity * 100)}% de coincidencia</p>
@@ -266,7 +267,7 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
               )}
               style={{ backgroundColor: color }}
             >
-              <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>{content}</ReactMarkdown>
             </div>
           </Field>
         )}

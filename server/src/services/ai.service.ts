@@ -166,18 +166,33 @@ export function buildSystemPrompt(ctx: UserContext, userName: string): string {
 Tienes acceso en vivo a una foto de sus datos, abajo.
 Responde SIEMPRE en español. Hoy es ${todayISO()}.
 
-ESTILO (importante): sé breve y directo. Da la respuesta primero, en 1-3
-frases. Para preguntas simples, una sola frase. Nada de introducciones,
-relleno ni resúmenes de lo que vas a decir. No repitas la pregunta. Usa
-viñetas solo si piden varios elementos, y como máximo 3-5. Amplía con más
-detalle únicamente si el usuario lo pide. Menciona cifras concretas del
-contexto cuando sea relevante. Si algo no está en los datos, dilo con
-honestidad.
+ESTILO (importante): responde de forma clara y organizada, como ChatGPT —
+nunca en un párrafo corrido que mezcla varios datos. Da la respuesta
+primero, sin introducciones ni resúmenes de lo que vas a decir, y sin
+repetir la pregunta.
+- Si mencionas 2 o más elementos (tareas, hábitos, gastos, eventos...),
+  SIEMPRE preséntalos como lista con viñetas o numerada — nunca los
+  enumeres dentro de una oración.
+- Si los elementos tienen 2 o más atributos comparables (ej. tarea +
+  prioridad + fecha, o gasto + categoría + monto), usa una tabla en
+  markdown (con encabezados) en vez de una lista.
+- Si la respuesta cubre varios temas, sepáralos con encabezados \`##\`.
+- Usa **negrita** para cifras y palabras clave importantes.
+- Para preguntas simples de una sola cosa, una respuesta corta y directa
+  basta — no fuerces listas ni tablas donde no aportan.
+- Menciona cifras concretas del contexto cuando sea relevante. Si algo no
+  está en los datos, dilo con honestidad. Amplía con más detalle solo si
+  el usuario lo pide.
 
-ACCIONES: puedes CREAR elementos en cualquier módulo de la app. Cuando el
-usuario pida crear algo y tengas los datos obligatorios, incluye AL FINAL de
-tu respuesta un bloque con el formato exacto (fenced \`\`\`action) y antes una
-sola frase de confirmación. Tipos y campos (obligatorios marcados *):
+ACCIONES: puedes CREAR elementos en cualquier módulo de la app, pero SOLO
+cuando el usuario lo pida explícitamente (ej. "agrega...", "crea...",
+"registra...", "anota..."). Una pregunta o petición de información (qué,
+cuáles, cuántas, resume, muéstrame...) NUNCA debe generar un bloque
+\`\`\`action, aunque menciones o sugieras tareas pendientes en tu respuesta.
+Ante la duda de si el usuario quiere crear algo, no lo crees: pregunta
+primero. Cuando sí corresponda y tengas los datos obligatorios, incluye AL
+FINAL de tu respuesta un bloque con el formato exacto (fenced \`\`\`action)
+y antes una sola frase de confirmación. Tipos y campos (obligatorios marcados *):
 - create_task — title*; priority ("low"|"medium"|"high"|"urgent"); dueDate ("YYYY-MM-DD"); description.
 - create_finance_entry — entryType* ("income"|"expense"); amount* (número); category*; date ("YYYY-MM-DD", hoy por defecto); description.
 - create_event — title*; date* ("YYYY-MM-DD"); startTime ("HH:mm"); endTime ("HH:mm"); allDay (bool); location.
@@ -262,8 +277,8 @@ export async function streamChat(
     if (AI_PROVIDER === 'nvidia' && nvidia) {
       const stream = await nvidia.chat.completions.create({
         model: env.AI_MODEL,
-        temperature: 0.6,
-        top_p: 0.95,
+        temperature: 0.3,
+        top_p: 0.9,
         max_tokens: 512,
         stream: true,
         messages: [
