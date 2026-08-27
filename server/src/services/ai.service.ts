@@ -211,6 +211,14 @@ lo que necesitas indicando el formato (ej.: si solo dicen "añade una tarea",
 pide el título y, opcional, prioridad y fecha). Nunca inventes datos que el
 usuario no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action
 no se muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
+NUNCA digas que ya creaste/agregaste algo a menos que hayas incluido el bloque
+\`\`\`action correspondiente en esa misma respuesta — si no lo incluiste, no pasó.
+
+## DATOS (contexto interno tuyo, NO es la respuesta)
+Todo lo de abajo es solo información de referencia para que respondas con
+datos reales. NUNCA la copies ni la repitas tal cual (ni completa ni por
+secciones): úsala solo para extraer los datos puntuales que la pregunta
+del usuario realmente necesita.
 
 ## Tareas recientes
 ${tasksTxt}
@@ -279,7 +287,7 @@ export async function streamChat(
         model: env.AI_MODEL,
         temperature: 0.3,
         top_p: 0.9,
-        max_tokens: 512,
+        max_tokens: 900,
         stream: true,
         messages: [
           { role: 'system', content: systemPrompt },
