@@ -119,8 +119,8 @@ export function AuroraField({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn('aurora-field pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-slate-50 dark:bg-ink-950', className)}>
       <div className="animate-blob absolute -left-40 -top-40 h-[42rem] w-[42rem] rounded-full bg-primary/[0.14] blur-[140px] dark:bg-primary/[0.16]" />
-      <div className="animate-blob absolute -right-40 top-1/4 h-[38rem] w-[38rem] rounded-full bg-emerald-500/[0.10] blur-[150px] [animation-delay:5s] dark:bg-emerald-500/[0.12]" />
-      <div className="animate-blob absolute -bottom-48 left-1/3 h-[40rem] w-[40rem] rounded-full bg-lime-400/[0.07] blur-[160px] [animation-delay:9s] dark:bg-lime-400/[0.08]" />
+      <div className="animate-blob absolute -right-40 top-1/4 h-[38rem] w-[38rem] rounded-full bg-primary/[0.10] blur-[150px] [animation-delay:5s] dark:bg-primary/[0.12]" />
+      <div className="animate-blob absolute -bottom-48 left-1/3 h-[40rem] w-[40rem] rounded-full bg-primary/[0.07] blur-[160px] [animation-delay:9s] dark:bg-primary/[0.08]" />
       <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px)] [background-size:72px_72px] dark:[background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,transparent_45%,rgba(0,0,0,0.06)_100%)] dark:bg-[radial-gradient(circle_at_50%_-10%,transparent_45%,rgba(0,0,0,0.5)_100%)]" />
     </div>
@@ -132,8 +132,8 @@ export function Ambient({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden', className)}>
       <div className="animate-blob absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-      <div className="animate-blob absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-emerald-500/15 blur-3xl [animation-delay:3s]" />
-      <div className="animate-blob absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-lime-400/10 blur-3xl [animation-delay:6s]" />
+      <div className="animate-blob absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-primary/15 blur-3xl [animation-delay:3s]" />
+      <div className="animate-blob absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-primary/10 blur-3xl [animation-delay:6s]" />
     </div>
   );
 }
@@ -148,8 +148,8 @@ export function AuthBackdrop({ className }: { className?: string }) {
     <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
       {/* Brillos que flotan */}
       <div className="animate-blob absolute -left-32 -top-24 h-[38rem] w-[38rem] rounded-full bg-primary/20 blur-[120px]" />
-      <div className="animate-blob absolute -right-28 top-1/4 h-[34rem] w-[34rem] rounded-full bg-emerald-500/15 blur-[120px] [animation-delay:4s]" />
-      <div className="animate-blob absolute -bottom-32 left-1/3 h-[36rem] w-[36rem] rounded-full bg-lime-400/[0.12] blur-[130px] [animation-delay:8s]" />
+      <div className="animate-blob absolute -right-28 top-1/4 h-[34rem] w-[34rem] rounded-full bg-primary/15 blur-[120px] [animation-delay:4s]" />
+      <div className="animate-blob absolute -bottom-32 left-1/3 h-[36rem] w-[36rem] rounded-full bg-primary/[0.12] blur-[130px] [animation-delay:8s]" />
       {/* Cintas de seda */}
       <svg
         className="absolute inset-0 h-full w-full opacity-70 [filter:blur(8px)]"
@@ -158,14 +158,14 @@ export function AuthBackdrop({ className }: { className?: string }) {
       >
         <defs>
           <linearGradient id={`${id}-a`} x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#37e779" stopOpacity="0" />
-            <stop offset="0.5" stopColor="#37e779" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+            <stop stopColor="rgb(var(--primary))" stopOpacity="0" />
+            <stop offset="0.5" stopColor="rgb(var(--primary))" stopOpacity="0.55" />
+            <stop offset="1" stopColor="rgb(var(--primary-400))" stopOpacity="0" />
           </linearGradient>
           <linearGradient id={`${id}-b`} x1="1200" y1="0" x2="0" y2="1200" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#34d399" stopOpacity="0" />
-            <stop offset="0.5" stopColor="#a8e60a" stopOpacity="0.4" />
-            <stop offset="1" stopColor="#37e779" stopOpacity="0" />
+            <stop stopColor="rgb(var(--primary-200))" stopOpacity="0" />
+            <stop offset="0.5" stopColor="rgb(var(--primary))" stopOpacity="0.4" />
+            <stop offset="1" stopColor="rgb(var(--primary))" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d="M-120 340 C 220 140 420 560 700 400 S 1160 240 1320 540" fill="none" stroke={`url(#${id}-a)`} strokeWidth="150" strokeLinecap="round" />
@@ -210,8 +210,8 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
 }
 
 /**
- * Marca de la IA: una chispa-aurora en gradiente cian→iris→magenta.
- * Distinta del logo de la app a propósito. Transparente, va inline.
+ * Marca de la IA: una chispa-aurora en gradiente con el acento elegido.
+ * Transparente, va inline.
  */
 export function AiMark({ size = 20, className }: { size?: number; className?: string }) {
   const id = useId();
@@ -226,9 +226,9 @@ export function AiMark({ size = 20, className }: { size?: number; className?: st
     >
       <defs>
         <linearGradient id={`${id}-ai`} x1="6" y1="8" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#37e779" />
-          <stop offset="0.5" stopColor="#34d399" />
-          <stop offset="1" stopColor="#14b8a6" />
+          <stop stopColor="rgb(var(--primary-200))" />
+          <stop offset="0.5" stopColor="rgb(var(--primary))" />
+          <stop offset="1" stopColor="rgb(var(--primary-600))" />
         </linearGradient>
       </defs>
       {/* Chispa principal (estrella cóncava de 4 puntas) */}
