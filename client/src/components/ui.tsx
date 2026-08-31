@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
@@ -109,6 +109,79 @@ export function Modal({
         </div>
         {children}
       </div>
+    </div>,
+    document.body,
+  );
+}
+
+/** Visor de imagen a pantalla completa: toca una miniatura y se abre para
+ *  verla bien, con flechas para pasar a la siguiente/anterior si hay más
+ *  de una. Cierra con Escape, con el fondo, o con la X. */
+export function Lightbox({
+  images,
+  index,
+  onClose,
+  onIndexChange,
+}: {
+  images: string[];
+  index: number;
+  onClose: () => void;
+  onIndexChange: (index: number) => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') onIndexChange((index + 1) % images.length);
+      if (e.key === 'ArrowLeft') onIndexChange((index - 1 + images.length) % images.length);
+    }
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [index, images.length, onClose, onIndexChange]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex animate-fade-in items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} />
+      <button
+        onClick={onClose}
+        aria-label="Cerrar"
+        className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
+      >
+        <X className="h-5 w-5" />
+      </button>
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={() => onIndexChange((index - 1 + images.length) % images.length)}
+            aria-label="Foto anterior"
+            className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:left-4"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={() => onIndexChange((index + 1) % images.length)}
+            aria-label="Foto siguiente"
+            className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:right-4"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
+      <img
+        src={images[index]}
+        alt=""
+        className="relative z-0 max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+      {images.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white">
+          {index + 1} / {images.length}
+        </div>
+      )}
     </div>,
     document.body,
   );

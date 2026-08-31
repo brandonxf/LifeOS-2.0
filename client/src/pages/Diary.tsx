@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText, Lightbox } from '../components/ui';
 import { MoodFace, MOOD_LABELS } from '../components/icons';
 import { cn, MOOD_COLORS } from '../lib/utils';
 import { confirm } from '../store/confirm';
@@ -19,6 +19,7 @@ export default function Diary() {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<DiaryEntry | null>(null);
+  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null);
 
   const entries = useQuery({ queryKey: ['diary'], queryFn: () => api<DiaryEntry[]>('/api/diary') });
 
@@ -95,7 +96,14 @@ export default function Diary() {
                 {e.photos?.length > 0 && (
                   <div className="mt-2 flex gap-2 overflow-x-auto">
                     {e.photos.map((src, i) => (
-                      <img key={i} src={src} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setLightbox({ photos: e.photos, index: i })}
+                        className="shrink-0"
+                      >
+                        <img src={src} alt="" className="h-16 w-16 rounded-lg object-cover transition hover:opacity-80" />
+                      </button>
                     ))}
                   </div>
                 )}
@@ -111,6 +119,15 @@ export default function Diary() {
       )}
 
       <DiaryModal open={modalOpen} onClose={() => setModalOpen(false)} editing={editing} />
+
+      {lightbox && (
+        <Lightbox
+          images={lightbox.photos}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onIndexChange={(index) => setLightbox((l) => (l ? { ...l, index } : l))}
+        />
+      )}
     </div>
   );
 }
