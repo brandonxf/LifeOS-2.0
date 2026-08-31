@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -128,6 +128,65 @@ export function Field({
       <label className="label">{label}</label>
       {children}
       {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+    </div>
+  );
+}
+
+/** Bloque de texto (o HTML) que se recorta a N líneas y, solo si de verdad
+ *  no cabe, muestra un botón "Ver más" para expandirlo (y "Ver menos" para
+ *  volver a recortarlo). Se remide con ResizeObserver porque el mismo
+ *  contenido puede desbordar o no según el ancho disponible. */
+export function ExpandableText({
+  children,
+  html,
+  lines = 3,
+  className,
+  textClassName,
+}: {
+  children?: ReactNode;
+  html?: string;
+  lines?: number;
+  className?: string;
+  textClassName?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    function measure() {
+      if (expanded) return;
+      setOverflowing(node!.scrollHeight - node!.clientHeight > 1);
+    }
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [children, html, expanded, lines]);
+
+  const clampStyle = expanded
+    ? undefined
+    : { display: '-webkit-box', WebkitLineClamp: lines, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' };
+
+  return (
+    <div className={className}>
+      <div
+        ref={ref}
+        style={clampStyle}
+        className={textClassName}
+        {...(html !== undefined ? { dangerouslySetInnerHTML: { __html: html } } : { children })}
+      />
+      {overflowing && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+          className="mt-1 text-xs font-semibold text-primary hover:underline"
+        >
+          {expanded ? 'Ver menos' : 'Ver más'}
+        </button>
+      )}
     </div>
   );
 }

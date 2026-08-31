@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText } from '../components/ui';
 import { MoodFace, MOOD_LABELS } from '../components/icons';
 import { cn, MOOD_COLORS } from '../lib/utils';
 import { confirm } from '../store/confirm';
@@ -86,7 +86,12 @@ export default function Diary() {
                     <button onClick={() => confirmDeleteEntry(e)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
-                <div className="prose-sm mt-2 line-clamp-3 text-sm text-slate-600 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: e.content }} />
+                <ExpandableText
+                  lines={3}
+                  className="mt-2"
+                  textClassName="prose-sm text-sm text-slate-600 dark:text-slate-300"
+                  html={e.content}
+                />
                 {e.photos?.length > 0 && (
                   <div className="mt-2 flex gap-2 overflow-x-auto">
                     {e.photos.map((src, i) => (

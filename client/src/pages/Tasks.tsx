@@ -5,7 +5,7 @@ import { format, parseISO, isPast, isToday } from 'date-fns';
 import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText } from '../components/ui';
 import { cn, PRIORITY_STYLES } from '../lib/utils';
 import type { Task } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
@@ -218,7 +218,11 @@ function TaskCard({ task, onDelete, onMove }: { task: Task; onDelete: () => void
         <p className="text-sm font-medium leading-snug">{task.title}</p>
         <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="shrink-0 text-slate-300 hover:text-danger"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
-      {task.description && <p className="mt-1 line-clamp-2 text-xs text-slate-400">{task.description}</p>}
+      {task.description && (
+        <ExpandableText lines={2} className="mt-1" textClassName="text-xs text-slate-400">
+          {task.description}
+        </ExpandableText>
+      )}
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <span className={cn('chip', PRIORITY_STYLES[task.priority])}>
           <Flag className="h-3 w-3" /> {PRIORITY_LABELS[task.priority]}
