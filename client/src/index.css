@@ -318,22 +318,25 @@
     backdrop-filter: none !important;
   }
   /* Superficies de vidrio necesitan opacidad al perder el blur (solo en
-     oscuro: en claro las superficies ya son sólidas de por sí). */
+     oscuro: en claro las superficies ya son sólidas de por sí). Un gris
+     neutro (sin sesgo de tono) para que nunca "se quede" en un color
+     cuando cambia el acento. */
   .dark .card {
-    background-color: rgba(18, 22, 18, 0.82) !important;
+    background-color: rgba(19, 19, 19, 0.82) !important;
   }
   .dark .app-rail {
-    background-color: rgba(11, 14, 11, 0.98) !important;
+    background-color: rgba(12, 12, 12, 0.98) !important;
   }
   /* Popovers, menús y modales (notificaciones, avatar, formularios): al
      perder el blur en móvil, su fondo al 85% se transparentaba. Los
      volvemos casi opacos. */
   .dark .glass-menu {
-    background-color: rgba(14, 17, 14, 0.98) !important;
+    background-color: rgba(15, 15, 15, 0.98) !important;
   }
-  /* Ambiance lima estática (barata) que reemplaza a la aura animada. */
+  /* Ambiance estática (barata) del acento elegido, que reemplaza a la aura
+     animada. */
   body {
-    background-image: radial-gradient(120% 55% at 50% -8%, rgba(55, 231, 121, 0.07), transparent 60%);
+    background-image: radial-gradient(120% 55% at 50% -8%, rgb(var(--primary) / 0.07), transparent 60%);
   }
 }
 
