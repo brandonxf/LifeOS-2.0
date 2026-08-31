@@ -267,22 +267,6 @@
   animation: burst-dot 460ms ease-out forwards;
 }
 
-/* Cara de ánimo del diario: "squish" al elegirla. */
-@keyframes mood-face-pop {
-  0% {
-    transform: scale(0.6) rotate(-8deg);
-  }
-  55% {
-    transform: scale(1.18) rotate(4deg);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
-}
-.mood-face-pop {
-  animation: mood-face-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 /* Oculta la barra de scroll pero mantiene el scroll (táctil). Se usa en el
    menú flotante: al animar la entrada, el transform amplía momentáneamente
    el área de scroll del contenedor y asomaba una barra. */
@@ -311,8 +295,7 @@
     transition-duration: 0.001ms !important;
   }
   .draw-check,
-  .burst-dot,
-  .mood-face-pop {
+  .burst-dot {
     animation-duration: 0.001ms !important;
   }
 }

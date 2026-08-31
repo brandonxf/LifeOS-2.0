@@ -10,9 +10,9 @@ import {
   Tooltip,
 } from 'recharts';
 import { format, isToday, isPast, parseISO } from 'date-fns';
-import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, ArrowRight, Send, Sparkles, Sun, Sunrise, Moon } from 'lucide-react';
+import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, ArrowRight, Send, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { AiMark, Ambient } from '../components/Brand';
+import { AiMark } from '../components/Brand';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { Card, Skeleton } from '../components/ui';
@@ -118,7 +118,6 @@ export default function Dashboard() {
   // Login.tsx/Register.tsx), no en cada visita normal al Dashboard.
   const justLoggedIn = Boolean((location.state as { justLoggedIn?: boolean } | null)?.justLoggedIn);
   const [prompt, setPrompt] = useState('');
-  const { text: greetingText, Icon: GreetingIcon } = greeting();
 
   const finance = useQuery({ queryKey: ['finance', 'summary'], queryFn: () => api<FinanceSummary>('/api/finance/summary') });
   const tasks = useQuery({ queryKey: ['tasks'], queryFn: () => api<Task[]>('/api/tasks') });
@@ -168,19 +167,11 @@ export default function Dashboard() {
   return (
     <div className={cn(justLoggedIn && 'animate-page-in')}>
       {/* Hero */}
-      <div className="relative -mx-4 mb-7 overflow-hidden px-4 pt-4 sm:-mx-6 sm:px-6">
-        <Ambient className="opacity-70" />
-        <div className="relative flex items-center gap-4">
-          <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20 sm:flex">
-            <GreetingIcon className="h-7 w-7" />
-          </div>
-          <div className="min-w-0">
-            <p className="eyebrow capitalize">{format(new Date(), "EEEE, d 'de' MMMM")}</p>
-            <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight sm:text-6xl">
-              {greetingText}, <span className="text-primary">{user?.name?.split(' ')[0]}</span>
-            </h1>
-          </div>
-        </div>
+      <div className="mb-7 pt-2">
+        <p className="eyebrow capitalize">{format(new Date(), "EEEE, d 'de' MMMM")}</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight sm:text-6xl">
+          {greeting()}, <span className="text-primary">{user?.name?.split(' ')[0]}</span>
+        </h1>
       </div>
 
       {/* Barra IA en píldora de vidrio */}
@@ -376,9 +367,9 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
   );
 }
 
-function greeting(): { text: string; Icon: typeof Sun } {
+function greeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return { text: 'Buenos días', Icon: Sunrise };
-  if (h < 18) return { text: 'Buenas tardes', Icon: Sun };
-  return { text: 'Buenas noches', Icon: Moon };
+  if (h < 12) return 'Buenos días';
+  if (h < 18) return 'Buenas tardes';
+  return 'Buenas noches';
 }
