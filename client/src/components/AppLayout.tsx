@@ -342,12 +342,18 @@ export function AppLayout() {
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
+              className={({ isActive }) =>
+                cn(
+                  'nav-item',
+                  sidebarCollapsed ? 'mx-auto w-11 justify-center px-0' : 'justify-start',
+                  isActive ? 'nav-item-active' : 'nav-item-idle',
+                )
+              }
               title={sidebarCollapsed ? label : undefined}
             >
               {({ isActive }) => (
                 <>
-                  {isActive && (
+                  {isActive && !sidebarCollapsed && (
                     <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600" />
                   )}
                   <Icon className="h-5 w-5 shrink-0" />
@@ -361,12 +367,23 @@ export function AppLayout() {
         <div className="space-y-1 border-t border-slate-200 p-3 dark:border-white/[0.07]">
           <NavLink
             to="/settings"
-            className={({ isActive }) => cn('nav-item', isActive ? 'nav-item-active' : 'nav-item-idle')}
+            className={({ isActive }) =>
+              cn(
+                'nav-item',
+                sidebarCollapsed ? 'mx-auto w-11 justify-center px-0' : 'justify-start',
+                isActive ? 'nav-item-active' : 'nav-item-idle',
+              )
+            }
+            title={sidebarCollapsed ? 'Ajustes' : undefined}
           >
             <Settings className="h-5 w-5 shrink-0" />
             {!sidebarCollapsed && <span>Ajustes</span>}
           </NavLink>
-          <button onClick={handleLogout} className="nav-item nav-item-idle w-full">
+          <button
+            onClick={handleLogout}
+            className={cn('nav-item nav-item-idle', sidebarCollapsed ? 'mx-auto w-11 justify-center px-0' : 'w-full justify-start')}
+            title={sidebarCollapsed ? 'Cerrar sesión' : undefined}
+          >
             <LogOut className="h-5 w-5 shrink-0" />
             {!sidebarCollapsed && <span>Cerrar sesión</span>}
           </button>
