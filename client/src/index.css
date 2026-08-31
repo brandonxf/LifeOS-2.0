@@ -333,10 +333,15 @@
   .dark .glass-menu {
     background-color: rgba(15, 15, 15, 0.98) !important;
   }
-  /* Ambiance estática (barata) del acento elegido, que reemplaza a la aura
-     animada. */
+  /* Aurora estática (barata, sin animación) del acento elegido: imita los
+     tres "blobs" del fondo de escritorio pero congelados en un solo
+     fondo, así se nota bien el color sin el costo de animarlo. */
   body {
-    background-image: radial-gradient(120% 55% at 50% -8%, rgb(var(--primary) / 0.07), transparent 60%);
+    background-image:
+      radial-gradient(60% 46% at 12% 8%, rgb(var(--primary) / 0.26), transparent 72%),
+      radial-gradient(55% 42% at 92% 28%, rgb(var(--primary) / 0.20), transparent 72%),
+      radial-gradient(62% 46% at 30% 96%, rgb(var(--primary) / 0.16), transparent 72%);
+    background-attachment: fixed;
   }
 }
 
