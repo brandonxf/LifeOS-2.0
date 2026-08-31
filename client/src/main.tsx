@@ -10,6 +10,7 @@ import App from './App';
 import { BiometricGate } from './components/BiometricGate';
 import { ConfirmDialogHost } from './components/ConfirmDialogHost';
 import { SplashGate } from './components/SplashGate';
+import { ToastBubble } from './components/ToastBubble';
 
 // Localiza todas las fechas (date-fns) a español.
 setDefaultOptions({ locale: es });
@@ -31,12 +32,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           </SplashGate>
           <ConfirmDialogHost />
           <Toaster
-            position="bottom-right"
-            toastOptions={{
-              className:
-                '!bg-ink-850 !text-slate-100 !border !border-white/10 !rounded-xl !text-sm',
-            }}
-          />
+            position="top-center"
+            containerStyle={{ top: 'calc(env(safe-area-inset-top) + 14px)' }}
+          >
+            {(t) => <ToastBubble t={t} />}
+          </Toaster>
         </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>

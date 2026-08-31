@@ -227,6 +227,9 @@
   .loader-letter {
     opacity: 1;
   }
+  .toast-bubble {
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* ── Rendimiento en móvil ──────────────────────────────────────────
