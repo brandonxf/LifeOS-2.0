@@ -345,7 +345,7 @@ export function AppLayout() {
               className={({ isActive }) =>
                 cn(
                   'nav-item',
-                  sidebarCollapsed ? 'mx-auto w-11 justify-center px-0' : 'justify-start',
+                  sidebarCollapsed ? 'w-full justify-center px-0' : 'justify-start',
                   isActive ? 'nav-item-active' : 'nav-item-idle',
                 )
               }
@@ -381,7 +381,7 @@ export function AppLayout() {
           </NavLink>
           <button
             onClick={handleLogout}
-            className={cn('nav-item nav-item-idle', sidebarCollapsed ? 'mx-auto w-11 justify-center px-0' : 'w-full justify-start')}
+            className={cn('nav-item nav-item-idle w-full', sidebarCollapsed ? 'justify-center px-0' : 'justify-start')}
             title={sidebarCollapsed ? 'Cerrar sesión' : undefined}
           >
             <LogOut className="h-5 w-5 shrink-0" />
