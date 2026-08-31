@@ -28,3 +28,6 @@ client/android/.idea/
 # con la misma identidad (Android rechaza updates con firma distinta).
 client/android/keystore/
 client/android/keystore.properties
+
+# APKs generados para compartir, no son código fuente
+releases/
