@@ -11,6 +11,7 @@ import { BiometricGate } from './components/BiometricGate';
 import { ConfirmDialogHost } from './components/ConfirmDialogHost';
 import { SplashGate } from './components/SplashGate';
 import { ToastBubble } from './components/ToastBubble';
+import { AccentSync } from './components/AccentSync';
 
 // Localiza todas las fechas (date-fns) a español.
 setDefaultOptions({ locale: es });
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="life-os-theme">
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <AccentSync />
           <SplashGate>
             <BiometricGate>
               <App />

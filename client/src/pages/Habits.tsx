@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInCalendarDays, format, parseISO, subDays } from 'date-fns';
-import { Plus, Trash2, Flame, Target, Check, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
+import { useCompletionPulse, CompletionBurst, DrawnCheck } from '../components/AnimatedCheck';
 import { cn } from '../lib/utils';
 import type { Habit, Goal, GoalMilestone } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
@@ -65,6 +66,37 @@ function streak(logs: string[]): number {
   return count;
 }
 
+function MilestoneRow({
+  milestone,
+  onToggle,
+  onDelete,
+}: {
+  milestone: GoalMilestone;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
+  const pulse = useCompletionPulse(milestone.done);
+  return (
+    <div className="group flex items-center gap-2 text-sm">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          'relative flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+          milestone.done ? 'border-primary bg-primary text-ink-950' : 'border-slate-300 dark:border-slate-600',
+        )}
+      >
+        <CompletionBurst show={pulse} />
+        {milestone.done && <DrawnCheck className="h-3 w-3" />}
+      </button>
+      <span className={cn('min-w-0 flex-1 truncate', milestone.done && 'text-slate-400 line-through')}>{milestone.title}</span>
+      <button onClick={onDelete} className="shrink-0 text-slate-300 opacity-0 hover:text-danger group-hover:opacity-100">
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 /** Checklist de hitos dentro de una tarjeta de meta: se puede expandir para
  *  ver/editar; colapsada solo muestra "2/5 hitos" para no saturar la vista. */
 function GoalMilestones({ goalId }: { goalId: string }) {
@@ -106,22 +138,7 @@ function GoalMilestones({ goalId }: { goalId: string }) {
       {open && (
         <div className="mt-2 space-y-1.5">
           {milestones.data?.map((m) => (
-            <div key={m.id} className="group flex items-center gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() => toggle.mutate(m.id)}
-                className={cn(
-                  'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
-                  m.done ? 'border-primary bg-primary text-ink-950' : 'border-slate-300 dark:border-slate-600',
-                )}
-              >
-                {m.done && <Check className="h-3 w-3" />}
-              </button>
-              <span className={cn('min-w-0 flex-1 truncate', m.done && 'text-slate-400 line-through')}>{m.title}</span>
-              <button onClick={() => del.mutate(m.id)} className="shrink-0 text-slate-300 opacity-0 hover:text-danger group-hover:opacity-100">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <MilestoneRow key={m.id} milestone={m} onToggle={() => toggle.mutate(m.id)} onDelete={() => del.mutate(m.id)} />
           ))}
           <form
             onSubmit={(e) => { e.preventDefault(); if (title.trim()) add.mutate(title.trim()); }}
@@ -138,6 +155,25 @@ function GoalMilestones({ goalId }: { goalId: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+function HabitChecklistButton({ habit, done, onToggle }: { habit: Habit; done: boolean; onToggle: () => void }) {
+  const pulse = useCompletionPulse(done);
+  return (
+    <button
+      onClick={onToggle}
+      className={cn(
+        'relative flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition',
+        done ? 'border-transparent text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800',
+      )}
+      style={done ? { backgroundColor: habit.color } : {}}
+    >
+      <CompletionBurst show={pulse} color={habit.color} />
+      <HabitIcon name={habit.icon} className="h-4 w-4" style={done ? undefined : { color: habit.color }} />
+      <span>{habit.name}</span>
+      {done && <DrawnCheck className="h-4 w-4" />}
+    </button>
   );
 }
 
@@ -227,15 +263,7 @@ export default function Habits() {
                     }
                     toggle.mutate(h.id);
                   }
-                  return (
-                    <button key={h.id} onClick={onToggle}
-                      className={cn('flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition', done ? 'border-transparent text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800')}
-                      style={done ? { backgroundColor: h.color } : {}}>
-                      <HabitIcon name={h.icon} className="h-4 w-4" style={done ? undefined : { color: h.color }} />
-                      <span>{h.name}</span>
-                      {done && <Check className="h-4 w-4" />}
-                    </button>
-                  );
+                  return <HabitChecklistButton key={h.id} habit={h} done={done} onToggle={onToggle} />;
                 })}
               </div>
             </Card>

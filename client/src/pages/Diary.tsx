@@ -57,7 +57,7 @@ export default function Diary() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13 }} formatter={(v: number) => [`${MOOD_LABELS[v]} (${v}/5)`, 'Ánimo']} />
-              <Line type="monotone" dataKey="mood" stroke="#37e779" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="mood" stroke="rgb(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -136,10 +136,17 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
   const qc = useQueryClient();
   const [title, setTitle] = useState('');
   const [mood, setMood] = useState(3);
+  const [justPicked, setJustPicked] = useState<number | null>(null);
   const [tags, setTags] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [photos, setPhotos] = useState<string[]>([]);
   const nativeCamera = Capacitor.isNativePlatform();
+
+  function pickMood(m: number) {
+    setMood(m);
+    setJustPicked(m);
+    window.setTimeout(() => setJustPicked(null), 400);
+  }
 
   async function addPhoto() {
     try {
@@ -206,10 +213,10 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
         <Field label="Ánimo">
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((m) => (
-              <button key={m} type="button" onClick={() => setMood(m)}
+              <button key={m} type="button" onClick={() => pickMood(m)}
                 className={cn('flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border transition', mood === m ? 'border-primary bg-primary/10 scale-105' : 'opacity-50 hover:opacity-100')}
                 style={{ color: MOOD_COLORS[m] }}>
-                <MoodFace mood={m} className="h-6 w-6" />
+                <MoodFace mood={m} className="h-6 w-6" animate={justPicked === m} />
               </button>
             ))}
           </div>

@@ -6,6 +6,7 @@ import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag } from 'luc
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText } from '../components/ui';
+import { AnimatedCheckbox } from '../components/AnimatedCheck';
 import { cn, PRIORITY_STYLES } from '../lib/utils';
 import type { Task } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
@@ -187,9 +188,11 @@ export default function Tasks() {
           <div className="divide-y">
             {filtered.map((task) => (
               <div key={task.id} className="flex items-center gap-3 py-3">
-                <input type="checkbox" checked={task.status === 'done'}
+                <AnimatedCheckbox
+                  checked={task.status === 'done'}
                   onChange={() => changeStatus(task, task.status === 'done' ? 'todo' : 'done')}
-                  className="h-4 w-4 accent-primary" />
+                  size={18}
+                />
                 <div className="min-w-0 flex-1 cursor-pointer" onClick={() => { setEditing(task); setModalOpen(true); }}>
                   <p className={cn('truncate text-sm font-medium', task.status === 'done' && 'text-slate-400 line-through')}>{task.title}</p>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">

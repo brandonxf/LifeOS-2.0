@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
@@ -13,6 +13,7 @@ import { cn } from '../lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
 import { useSettings } from '../store/settings';
+import { ACCENTS } from '../lib/accents';
 import {
   cancelDailyHabitReminder,
   ensureNotificationPermission,
@@ -79,6 +80,33 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
         )}
       />
     </button>
+  );
+}
+
+function AppearanceCard() {
+  const { accent, setAccent } = useSettings();
+  return (
+    <Card>
+      <h3 className="mb-1 flex items-center gap-2 font-semibold"><Palette className="h-4 w-4" /> Apariencia</h3>
+      <p className="mb-4 text-sm text-slate-400">Elige el color de acento de la app.</p>
+      <div className="flex gap-3">
+        {ACCENTS.map((a) => (
+          <button
+            key={a.key}
+            type="button"
+            onClick={() => setAccent(a.key)}
+            aria-label={a.label}
+            aria-pressed={accent === a.key}
+            title={a.label}
+            className={cn(
+              'h-10 w-10 rounded-full ring-offset-2 ring-offset-white transition dark:ring-offset-ink-900',
+              accent === a.key && 'ring-2 ring-slate-900 dark:ring-white',
+            )}
+            style={{ backgroundColor: a.swatch }}
+          />
+        ))}
+      </div>
+    </Card>
   );
 }
 
@@ -270,6 +298,8 @@ export default function Settings() {
           </div>
         )}
       </Card>
+
+      <AppearanceCard />
 
       {/* Plan */}
       <Card>

@@ -5,16 +5,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Marca: lima neón / chartreuse — acento eléctrico sobre fondo casi-negro.
+        // Marca: acento personalizable (lima por defecto) — ver [data-accent]
+        // en index.css. DEFAULT/200/400/600 leen variables CSS; el resto de
+        // paradas se usa poco y se deja fija.
         primary: {
-          DEFAULT: '#37e779',
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
           50: '#e7fdf0',
           100: '#c6fadb',
-          200: '#8ff3b8',
+          200: 'rgb(var(--primary-200) / <alpha-value>)',
           300: '#37e779',
-          400: '#1fd268',
+          400: 'rgb(var(--primary-400) / <alpha-value>)',
           500: '#15b657',
-          600: '#0f9448',
+          600: 'rgb(var(--primary-600) / <alpha-value>)',
           700: '#11753d',
           800: '#135c33',
           900: '#124c2c',
@@ -36,7 +38,7 @@ export default {
         display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(55,231,121,0.20), 0 8px 30px -6px rgba(55,231,121,0.35)',
+        glow: '0 0 0 1px rgb(var(--primary) / 0.20), 0 8px 30px -6px rgb(var(--primary) / 0.35)',
         glass:
           'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 50px -28px rgba(0,0,0,0.75)',
         'glass-lg':
