@@ -340,7 +340,7 @@
     background-image:
       radial-gradient(60% 46% at 12% 8%, rgb(var(--primary) / 0.26), transparent 72%),
       radial-gradient(55% 42% at 92% 28%, rgb(var(--primary) / 0.20), transparent 72%),
-      radial-gradient(62% 46% at 30% 96%, rgb(var(--primary) / 0.16), transparent 72%);
+      radial-gradient(62% 46% at 40% 78%, rgb(var(--primary) / 0.18), transparent 72%);
     background-attachment: fixed;
   }
 }
