@@ -13,6 +13,7 @@ import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText,
 import { MoodFace, MOOD_LABELS } from '../components/icons';
 import { cn, MOOD_COLORS } from '../lib/utils';
 import { confirm } from '../store/confirm';
+import { externalPickerOpen } from '../components/BiometricGate';
 import type { DiaryEntry } from '../lib/types';
 
 export default function Diary() {
@@ -142,6 +143,10 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
   const nativeCamera = Capacitor.isNativePlatform();
 
   async function addPhoto() {
+    // Abrir la cámara/galería manda la app a segundo plano igual que el
+    // diálogo de huella, así que suprimimos el bloqueo biométrico mientras
+    // dura para que no tape la app justo cuando la foto vuelve.
+    externalPickerOpen.current = true;
     try {
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Base64,
@@ -157,6 +162,8 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
       }
     } catch {
       /* usuario canceló */
+    } finally {
+      setTimeout(() => { externalPickerOpen.current = false; }, 500);
     }
   }
 

@@ -8,6 +8,13 @@ import { Logo } from './Brand';
 
 const native = Capacitor.isNativePlatform();
 
+/** Otras partes de la app (ej. el selector de fotos del diario) abren un
+ *  Activity nativo que también pausa y reanuda la app, como el diálogo de
+ *  huella. Antes de lanzar ese tipo de flujo, márcalo con
+ *  `externalPickerOpen.current = true` y vuelve a ponerlo en `false` (con un
+ *  pequeño margen) cuando termine, para que no dispare el bloqueo. */
+export const externalPickerOpen = { current: false };
+
 /** Bloquea toda la app detrás de huella/rostro cuando el usuario activó
  *  "Bloqueo biométrico" en Ajustes. Se dispara al abrir la app y cada vez
  *  que vuelve de segundo plano (no solo en el primer render), para que no
@@ -42,7 +49,7 @@ export function BiometricGate({ children }: { children: React.ReactNode }) {
     tryUnlock();
 
     const sub = App.addListener('appStateChange', ({ isActive }) => {
-      if (isActive && !promptOpen.current) {
+      if (isActive && !promptOpen.current && !externalPickerOpen.current) {
         setLocked(true);
         tryUnlock();
       }
