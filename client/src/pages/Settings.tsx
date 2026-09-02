@@ -4,11 +4,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
+import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
@@ -84,28 +85,51 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 }
 
 function AppearanceCard() {
-  const { accent, setAccent } = useSettings();
+  const { accent, customAccentHex, setAccent, setCustomAccent } = useSettings();
+  const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <Card>
       <h3 className="mb-1 flex items-center gap-2 font-semibold"><Palette className="h-4 w-4" /> Apariencia</h3>
-      <p className="mb-4 text-sm text-slate-400">Elige el color de acento de la app.</p>
-      <div className="flex gap-3">
+      <p className="mb-4 text-sm text-slate-400">Elige el color de acento de la app, o crea el tuyo con la rueda de color.</p>
+      <div className="flex flex-wrap gap-3">
         {ACCENTS.map((a) => (
           <button
             key={a.key}
             type="button"
             onClick={() => setAccent(a.key)}
             aria-label={a.label}
-            aria-pressed={accent === a.key}
+            aria-pressed={!customAccentHex && accent === a.key}
             title={a.label}
             className={cn(
               'h-10 w-10 rounded-full ring-offset-2 ring-offset-white transition dark:ring-offset-ink-900',
-              accent === a.key && 'ring-2 ring-slate-900 dark:ring-white',
+              !customAccentHex && accent === a.key && 'ring-2 ring-slate-900 dark:ring-white',
             )}
             style={{ backgroundColor: a.swatch }}
           />
         ))}
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          aria-label="Color personalizado"
+          aria-pressed={!!customAccentHex}
+          title="Color personalizado"
+          className={cn(
+            'flex h-10 w-10 items-center justify-center rounded-full ring-offset-2 ring-offset-white transition dark:ring-offset-ink-900',
+            customAccentHex ? 'ring-2 ring-slate-900 dark:ring-white' : 'border-2 border-dashed border-slate-300 dark:border-white/20',
+          )}
+          style={
+            customAccentHex
+              ? { backgroundColor: customAccentHex }
+              : { background: 'conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }
+          }
+        >
+          {!customAccentHex && <Plus className="h-4 w-4 text-white drop-shadow" />}
+        </button>
       </div>
+
+      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Color personalizado">
+        <ColorWheel initialValue={customAccentHex ?? '#37e779'} onChange={setCustomAccent} />
+      </Modal>
     </Card>
   );
 }

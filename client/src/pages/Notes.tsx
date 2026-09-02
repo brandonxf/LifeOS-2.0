@@ -8,6 +8,7 @@ import { AiMark } from '../components/Brand';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState } from '../components/ui';
+import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
 import { confirm } from '../store/confirm';
 import type { Note, NoteFont, NoteFontSize, NoteAlign } from '../lib/types';
@@ -175,6 +176,7 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
   const [font, setFont] = useState<NoteFont>('sans');
   const [fontSize, setFontSize] = useState<NoteFontSize>('md');
   const [align, setAlign] = useState<NoteAlign>('left');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -222,8 +224,28 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
             {NOTE_COLORS.map((c) => (
               <button key={c} type="button" onClick={() => setColor(c)} className={cn('h-8 w-8 rounded-full ring-offset-2 dark:ring-offset-slate-900', color === c && 'ring-2 ring-primary')} style={{ backgroundColor: c }} />
             ))}
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              aria-label="Color personalizado"
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-full ring-offset-2 dark:ring-offset-slate-900',
+                !NOTE_COLORS.includes(color) ? 'ring-2 ring-primary' : 'border-2 border-dashed border-slate-300 dark:border-white/20',
+              )}
+              style={
+                !NOTE_COLORS.includes(color)
+                  ? { backgroundColor: color }
+                  : { background: 'conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }
+              }
+            >
+              {NOTE_COLORS.includes(color) && <Plus className="h-3.5 w-3.5 text-white drop-shadow" />}
+            </button>
           </div>
         </Field>
+
+        <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Color personalizado">
+          <ColorWheel initialValue={color} onChange={setColor} />
+        </Modal>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Tipografía">
