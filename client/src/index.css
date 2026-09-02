@@ -43,10 +43,15 @@
   }
   html {
     -webkit-font-smoothing: antialiased;
+    /* Sin el pull-to-refresh propio (PullToRefresh.tsx, quitado), esto
+       evita que el navegador/WebView muestre su propio gesto nativo de
+       "arrastrar para recargar" al llegar al tope del scroll. */
+    overscroll-behavior-y: contain;
   }
   body {
     @apply bg-slate-50 text-slate-900 dark:bg-ink-950 dark:text-slate-100;
     font-feature-settings: 'cv11', 'ss01';
+    overscroll-behavior-y: contain;
   }
   * {
     @apply border-slate-200 dark:border-white/[0.07];

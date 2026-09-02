@@ -26,7 +26,6 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
-import { PullToRefresh } from './PullToRefresh';
 import { confirm } from '../store/confirm';
 
 const NAV = [
@@ -422,11 +421,11 @@ export function AppLayout() {
           {fullBleed ? (
             <Outlet />
           ) : (
-            <PullToRefresh className="h-full overflow-y-auto">
+            <div className="h-full overflow-y-auto">
               <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
                 <Outlet />
               </div>
-            </PullToRefresh>
+            </div>
           )}
         </main>
       </div>
