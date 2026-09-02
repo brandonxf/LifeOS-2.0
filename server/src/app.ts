@@ -20,23 +20,30 @@ import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 
-// Lista blanca de orígenes (defensa en profundidad: en el despliegue unificado
-// de Vercel, cliente y API viven en el mismo dominio, así que el navegador ni
-// siquiera dispara CORS; esto solo importa para la app Android nativa, que no
-// manda `Origin`, y para quien pegue el backend a otro frontend).
-const allowedOrigins = env.CLIENT_URL.split(',')
-  .map((o) => o.trim())
-  .filter(Boolean);
+// Lista blanca de orígenes. OJO: aunque cliente y API vivan en el mismo
+// dominio en el despliegue unificado de Vercel, el navegador SÍ manda el
+// header `Origin` en peticiones same-origin (POST/fetch no-GET), así que
+// esto se evalúa siempre — no es solo para casos cross-origin.
+// Se agrega automáticamente el dominio de Vercel vía las env vars que la
+// plataforma ya inyecta, para no depender de mantener `CLIENT_URL` al día a
+// mano en cada deploy/preview (eso fue justo lo que rompió el login: la
+// variable no incluía el dominio nuevo tras migrar de Render).
+const vercelOrigins = [process.env.VERCEL_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL]
+  .filter(Boolean)
+  .map((host) => `https://${host}`);
+
+const allowedOrigins = [
+  ...env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean),
+  ...vercelOrigins,
+];
 
 app.use(
   cors({
     origin(origin, callback) {
       // Sin origin (curl, health checks, apps móviles) o en la lista blanca.
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin no permitido por CORS: ${origin}`));
-      }
+      // Si no está permitido, se deniega el CORS sin lanzar excepción: que
+      // el navegador lo bloquee como error de CORS normal, no un 500 nuestro.
+      callback(null, !origin || allowedOrigins.includes(origin));
     },
     credentials: true,
   }),
