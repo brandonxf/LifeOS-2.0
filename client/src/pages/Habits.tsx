@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { differenceInCalendarDays, format, parseISO, subDays } from 'date-fns';
+import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
@@ -11,6 +11,8 @@ import { cn } from '../lib/utils';
 import type { Habit, Goal, GoalMilestone } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { confirm } from '../store/confirm';
+import { bogotaISODate, shiftIsoDate } from '../lib/date';
+import { currentStreak as streak } from '../lib/streak';
 
 // Hitos de racha: al cruzarlos se celebra con un toast + haptic extra.
 const STREAK_MILESTONES = [7, 14, 30, 60, 100, 365];
@@ -33,11 +35,10 @@ const GOAL_CATEGORY_LABELS: Record<string, string> = {
 
 function Heatmap({ logs, color }: { logs: string[]; color: string }) {
   const set = new Set(logs);
-  const today = new Date();
+  const todayIso = bogotaISODate();
   const cells: { date: string; done: boolean }[] = [];
   for (let i = HEATMAP_DAYS - 1; i >= 0; i--) {
-    const d = subDays(today, i);
-    const iso = d.toISOString().slice(0, 10);
+    const iso = shiftIsoDate(todayIso, -i);
     cells.push({ date: iso, done: set.has(iso) });
   }
   return (
@@ -52,18 +53,6 @@ function Heatmap({ logs, color }: { logs: string[]; color: string }) {
       ))}
     </div>
   );
-}
-
-function streak(logs: string[]): number {
-  const set = new Set(logs);
-  let count = 0;
-  let cursor = new Date();
-  if (!set.has(cursor.toISOString().slice(0, 10))) cursor = subDays(cursor, 1);
-  while (set.has(cursor.toISOString().slice(0, 10))) {
-    count++;
-    cursor = subDays(cursor, 1);
-  }
-  return count;
 }
 
 function MilestoneRow({
@@ -182,7 +171,7 @@ export default function Habits() {
   const [habitModal, setHabitModal] = useState(false);
   const [goalModal, setGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = bogotaISODate();
 
   const habits = useQuery({ queryKey: ['habits'], queryFn: () => api<Habit[]>('/api/habits') });
   const goals = useQuery({ queryKey: ['goals'], queryFn: () => api<Goal[]>('/api/goals') });

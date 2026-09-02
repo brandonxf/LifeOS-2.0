@@ -5,6 +5,7 @@ import { db } from '../db/index.js';
 import { habits, habitLogs } from '../db/schema/index.js';
 import { asyncHandler, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
+import { bogotaISODate, shiftIsoDate } from '../lib/date.js';
 
 const router = Router();
 
@@ -95,7 +96,7 @@ router.post(
       z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }),
       req.body ?? {},
     );
-    const day = date ?? new Date().toISOString().slice(0, 10);
+    const day = date ?? bogotaISODate();
 
     const [habit] = await db
       .select({ id: habits.id })
@@ -140,15 +141,16 @@ router.get(
 
     const dates = new Set(logs.map((l) => l.date));
 
-    // Current streak (consecutive days ending today or yesterday).
+    // Current streak (consecutive days ending today or yesterday), anclado
+    // a la fecha de hoy en hora de Colombia.
     let current = 0;
-    const cursor = new Date();
-    if (!dates.has(cursor.toISOString().slice(0, 10))) {
-      cursor.setDate(cursor.getDate() - 1); // allow "yesterday" to keep streak
+    let cursor = bogotaISODate();
+    if (!dates.has(cursor)) {
+      cursor = shiftIsoDate(cursor, -1); // allow "yesterday" to keep streak
     }
-    while (dates.has(cursor.toISOString().slice(0, 10))) {
+    while (dates.has(cursor)) {
       current++;
-      cursor.setDate(cursor.getDate() - 1);
+      cursor = shiftIsoDate(cursor, -1);
     }
 
     // Longest streak.
@@ -164,14 +166,11 @@ router.get(
       prev = cur;
     }
 
-    // Last-30-day completion rate.
-    const last30 = new Date();
-    last30.setDate(last30.getDate() - 29);
+    // Last-30-day completion rate (los 30 días terminan hoy, hora Colombia).
+    const todayIso = bogotaISODate();
     let completed30 = 0;
     for (let i = 0; i < 30; i++) {
-      const d = new Date(last30);
-      d.setDate(d.getDate() + i);
-      if (dates.has(d.toISOString().slice(0, 10))) completed30++;
+      if (dates.has(shiftIsoDate(todayIso, -i))) completed30++;
     }
 
     res.json({

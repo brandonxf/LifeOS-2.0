@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { updateHomeWidget, consumeWidgetRefreshFlag, finishWidgetRefresh } from './widget';
 import { currentStreak } from './streak';
+import { bogotaISODate } from './date';
 import { formatCurrency } from './utils';
 import type { Task, Habit, FinanceSummary, Note } from './types';
 
@@ -56,7 +57,7 @@ async function pushSnapshot(queryClient: QueryClient) {
     .map((n) => ({ title: n.title || 'Sin título', snippet: noteSnippet(n.content), color: n.color }));
 
   const pendingTasks = tasks.filter((t) => t.status !== 'done').length;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = bogotaISODate();
   const habitsDone = habits.filter((h) => h.logs.includes(today)).length;
   const streaks = habits.map((h) => currentStreak(h.logs));
   const bestStreak = streaks.reduce((max, s) => Math.max(max, s), 0);
