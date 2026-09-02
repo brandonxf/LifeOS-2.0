@@ -35,6 +35,11 @@ const vercelOrigins = [process.env.VERCEL_URL, process.env.VERCEL_PROJECT_PRODUC
 const allowedOrigins = [
   ...env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean),
   ...vercelOrigins,
+  // El WebView de Capacitor en la app Android sirve el bundle desde este
+  // origen fijo (androidScheme por defecto "https", host "localhost") y sí
+  // manda `Origin` en el preflight de fetch — hay que permitirlo siempre,
+  // sin importar el dominio del deploy.
+  'https://localhost',
 ];
 
 app.use(
