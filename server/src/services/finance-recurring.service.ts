@@ -1,6 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { financeEntries, financeRecurring } from '../db/schema/index.js';
+import { bogotaISODate } from '../lib/date.js';
 
 /** Suma `n` unidades de la frecuencia dada a una fecha "YYYY-MM-DD". */
 function step(dateIso: string, frequency: 'weekly' | 'monthly' | 'yearly'): string {
@@ -15,7 +16,7 @@ function step(dateIso: string, frequency: 'weekly' | 'monthly' | 'yearly'): stri
  *  para cada plantilla recurrente activa del usuario (hasta hoy inclusive).
  *  Se llama al leer /entries o /summary: no depende de un cron. */
 export async function generateDueRecurringEntries(userId: string): Promise<void> {
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = bogotaISODate();
 
   const templates = await db
     .select()

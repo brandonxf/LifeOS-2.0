@@ -20,6 +20,7 @@ import { api } from '../lib/api';
 import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from '../components/ui';
 import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
 import { confirm } from '../store/confirm';
+import { bogotaISODate } from '../lib/date';
 import type { FinanceEntry, FinanceBudget, FinanceSummary, FinanceRecurring } from '../lib/types';
 
 const PIE_COLORS = ['#37e779', '#0d9488', '#f59e0b', '#f43f5e', '#22c55e', '#e879f9', '#a3e635', '#14b8a6'];
@@ -240,7 +241,7 @@ function EntryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Supermercado');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(bogotaISODate());
 
   useEffect(() => {
     if (open) {
@@ -248,7 +249,7 @@ function EntryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
       setAmount(editing ? String(editing.amount) : '');
       setCategory(editing?.category ?? 'Supermercado');
       setDescription(editing?.description ?? '');
-      setDate(editing?.date ?? new Date().toISOString().slice(0, 10));
+      setDate(editing?.date ?? bogotaISODate());
     }
   }, [open, editing]);
 
@@ -355,7 +356,7 @@ function RecurringModal({ open, onClose }: { open: boolean; onClose: () => void 
   const [category, setCategory] = useState('Servicios');
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(bogotaISODate());
 
   const add = useMutation({
     mutationFn: () =>

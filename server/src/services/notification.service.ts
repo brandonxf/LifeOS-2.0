@@ -1,6 +1,7 @@
 import { and, eq, gte, isNull, lte } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { tasks, calendarEvents } from '../db/schema/index.js';
+import { bogotaISODate } from '../lib/date.js';
 
 export interface Notification {
   id: string;
@@ -17,8 +18,12 @@ export interface Notification {
  */
 export async function getNotifications(userId: string): Promise<Notification[]> {
   const now = new Date();
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
+  const todayIso = bogotaISODate(now);
+  // tasks.dueDate se guarda como medianoche UTC del día previsto (ver
+  // tasks.routes.ts / ai.service.ts: `new Date("YYYY-MM-DD")`), así que
+  // comparar contra la medianoche UTC de "hoy" en Colombia selecciona
+  // exactamente "vence hoy o antes, hora Colombia".
+  const dueByUtc = new Date(`${todayIso}T00:00:00.000Z`);
   const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
   const [dueTasks, upcomingEvents] = await Promise.all([
@@ -29,7 +34,7 @@ export async function getNotifications(userId: string): Promise<Notification[]> 
         and(
           eq(tasks.userId, userId),
           isNull(tasks.deletedAt),
-          lte(tasks.dueDate, endOfDay),
+          lte(tasks.dueDate, dueByUtc),
         ),
       ),
     db
@@ -49,7 +54,11 @@ export async function getNotifications(userId: string): Promise<Notification[]> 
 
   for (const t of dueTasks) {
     if (t.status === 'done') continue;
-    const overdue = t.dueDate ? t.dueDate < now : false;
+    // Comparación por día-calendario (Colombia), no por instante: si no,
+    // una tarea que vence "hoy" ya aparecía como vencida a mitad del día
+    // hoy mismo (medianoche UTC del due date siempre es antes que "ahora").
+    const dueIso = t.dueDate ? t.dueDate.toISOString().slice(0, 10) : todayIso;
+    const overdue = dueIso < todayIso;
     notifications.push({
       id: `task-${t.id}`,
       type: 'task_due',

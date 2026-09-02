@@ -15,6 +15,7 @@ import {
 } from '../db/schema/index.js';
 import { embed } from './embedding.service.js';
 import { env } from '../config/env.js';
+import { bogotaISODate } from '../lib/date.js';
 
 export const CLAUDE_MODEL = 'claude-sonnet-5';
 
@@ -50,12 +51,11 @@ export interface UserContext {
 const MOOD_LABELS = ['', 'fatal', 'mal', 'regular', 'bien', 'genial'];
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return bogotaISODate();
 }
 
 function monthStartISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  return `${todayISO().slice(0, 7)}-01`;
 }
 
 /** Gather a compact snapshot of the user's data to ground the assistant. */

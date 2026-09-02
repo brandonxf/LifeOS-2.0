@@ -8,6 +8,7 @@ import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { cn } from '../lib/utils';
 import { confirm } from '../store/confirm';
+import { bogotaISODate } from '../lib/date';
 import type { HealthLog, HealthSummary } from '../lib/types';
 
 const METRICS = {
@@ -146,9 +147,9 @@ function LogModal({ open, onClose, presetType }: { open: boolean; onClose: () =>
   const qc = useQueryClient();
   const [type, setType] = useState<MetricType>(presetType);
   const [value, setValue] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(bogotaISODate());
 
-  useEffect(() => { if (open) { setType(presetType); setValue(''); setDate(new Date().toISOString().slice(0, 10)); } }, [open, presetType]);
+  useEffect(() => { if (open) { setType(presetType); setValue(''); setDate(bogotaISODate()); } }, [open, presetType]);
 
   const save = useMutation({
     mutationFn: () => api('/api/health/logs', { method: 'POST', body: { type, value: Number(value), unit: METRICS[type].unit, date } }),

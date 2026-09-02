@@ -14,6 +14,7 @@ import { MoodFace, MOOD_LABELS } from '../components/icons';
 import { cn, MOOD_COLORS } from '../lib/utils';
 import { confirm } from '../store/confirm';
 import { externalPickerOpen } from '../components/BiometricGate';
+import { bogotaISODate } from '../lib/date';
 import type { DiaryEntry } from '../lib/types';
 
 export default function Diary() {
@@ -138,7 +139,7 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
   const [title, setTitle] = useState('');
   const [mood, setMood] = useState(3);
   const [tags, setTags] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(bogotaISODate());
   const [photos, setPhotos] = useState<string[]>([]);
   const nativeCamera = Capacitor.isNativePlatform();
 
@@ -178,7 +179,7 @@ function DiaryModal({ open, onClose, editing }: { open: boolean; onClose: () => 
       setTitle(editing?.title ?? '');
       setMood(editing?.mood ?? 3);
       setTags(editing?.tags.join(', ') ?? '');
-      setDate(editing?.date ?? new Date().toISOString().slice(0, 10));
+      setDate(editing?.date ?? bogotaISODate());
       setPhotos(editing?.photos ?? []);
       editor?.commands.setContent(editing?.content ?? '<p></p>');
     }

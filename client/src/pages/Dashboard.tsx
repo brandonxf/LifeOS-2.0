@@ -17,6 +17,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { Card, Skeleton } from '../components/ui';
 import { cn, formatCurrency } from '../lib/utils';
+import { bogotaISODate } from '../lib/date';
 import type { FinanceSummary, Task, Habit, Goal, CalendarEvent, HealthSummary } from '../lib/types';
 
 /** Tarjeta de resumen generado por IA (semanal/mensual). Se pide bajo
@@ -126,7 +127,7 @@ export default function Dashboard() {
   const events = useQuery({ queryKey: ['events'], queryFn: () => api<CalendarEvent[]>('/api/calendar/events') });
   const health = useQuery({ queryKey: ['health', 'summary'], queryFn: () => api<HealthSummary>('/api/health/summary') });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = bogotaISODate();
 
   const taskStats = useMemo(() => {
     const list = tasks.data ?? [];

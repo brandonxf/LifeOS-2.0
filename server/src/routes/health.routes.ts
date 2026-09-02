@@ -5,6 +5,7 @@ import { db } from '../db/index.js';
 import { healthLogs } from '../db/schema/index.js';
 import { asyncHandler, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
+import { bogotaISODate, shiftIsoDate } from '../lib/date.js';
 
 const router = Router();
 
@@ -71,9 +72,7 @@ router.get(
   '/summary',
   asyncHandler(async (req, res) => {
     const user = currentUser(req);
-    const since = new Date();
-    since.setDate(since.getDate() - 6);
-    const sinceISO = since.toISOString().slice(0, 10);
+    const sinceISO = shiftIsoDate(bogotaISODate(), -6);
 
     const rows = await db
       .select()
