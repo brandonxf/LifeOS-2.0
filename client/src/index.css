@@ -322,23 +322,21 @@
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
-  /* Superficies de vidrio 100% opacas al perder el blur (solo en oscuro:
-     en claro las superficies ya son sólidas de por sí). Antes quedaban
-     "casi opacas" (82-98%) en vez de opacas del todo — una superficie
-     translúcida sigue obligando al compositor a mezclarla con lo que hay
-     detrás (los 3 blobs de fondo) en cada frame, aunque ya no tenga blur;
-     sólida de verdad es la única forma de igualar el costo del modo claro.
-     Un gris neutro (sin sesgo de tono) para que nunca "se quede" en un
-     color cuando cambia el acento. */
+  /* Superficies de vidrio necesitan opacidad al perder el blur (solo en
+     oscuro: en claro las superficies ya son sólidas de por sí). Un gris
+     neutro (sin sesgo de tono) para que nunca "se quede" en un color
+     cuando cambia el acento. */
   .dark .card {
-    background-color: rgb(19, 19, 19) !important;
+    background-color: rgba(19, 19, 19, 0.82) !important;
   }
   .dark .app-rail {
-    background-color: rgb(12, 12, 12) !important;
+    background-color: rgba(12, 12, 12, 0.98) !important;
   }
-  /* Popovers, menús y modales (notificaciones, avatar, formularios). */
+  /* Popovers, menús y modales (notificaciones, avatar, formularios): al
+     perder el blur en móvil, su fondo al 85% se transparentaba. Los
+     volvemos casi opacos. */
   .dark .glass-menu {
-    background-color: rgb(15, 15, 15) !important;
+    background-color: rgba(15, 15, 15, 0.98) !important;
   }
   /* Aurora estática (barata, sin animación) del acento elegido: imita los
      tres "blobs" del fondo de escritorio pero congelados en un solo
