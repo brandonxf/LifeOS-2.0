@@ -39,6 +39,8 @@ Plus: JWT auth with **refresh-token rotation**, soft deletes, rate limiting, dar
 
 ```
 life-os/
+├─ api/
+│  └─ index.ts             # Vercel Serverless Function entry — imports server/src/app.ts
 ├─ client/                 # React + Vite frontend
 │  └─ src/
 │     ├─ components/        # Layout, UI primitives, theme toggle
@@ -55,9 +57,11 @@ life-os/
 │  │  ├─ routes/           # Express route handlers
 │  │  ├─ middleware/       # auth, rateLimit, errorHandler
 │  │  ├─ services/         # ai, notification, embedding
-│  │  └─ index.ts          # App entry point
+│  │  ├─ app.ts            # Builds the Express app (no .listen) — used by api/index.ts
+│  │  └─ index.ts          # Local dev entry point (calls app.listen)
 │  ├─ drizzle.config.ts
-│  └─ Dockerfile
+│  └─ Dockerfile           # Optional: self-host the API outside Vercel
+├─ vercel.json              # Single deploy: static client + /api/* serverless function
 ├─ .env.example
 └─ README.md
 ```
@@ -119,28 +123,48 @@ Open **http://localhost:5173** and log in with the demo account:
 | `REDIS_URL` | server | Upstash Redis URL (optional — falls back to memory) |
 | `JWT_SECRET` | server | Secret for signing access tokens |
 | `JWT_REFRESH_SECRET` | server | Secret reserved for refresh flows |
-| `ANTHROPIC_API_KEY` | server | Claude API key (optional — enables real AI) |
-| `PORT` | server | API port (default `4000`) |
-| `CLIENT_URL` | server | Allowed CORS origin (default `http://localhost:5173`) |
-| `VITE_API_URL` | client | API base URL (default proxies `/api` to `:4000`) |
+| `NVIDIA_API_KEY` | server | NVIDIA NIM key — primary AI provider (free models) |
+| `NVIDIA_BASE_URL` | server | Defaults to `https://integrate.api.nvidia.com/v1` |
+| `AI_MODEL` | server | NVIDIA model id (see `.env.example`) |
+| `ANTHROPIC_API_KEY` | server | Claude API key — used only if `NVIDIA_API_KEY` is empty |
+| `CLIENT_URL` | server | CORS allow-list, comma-separated (defense in depth — see below) |
+| `PORT` | server | API port for local dev only (default `4000`) |
+| `VITE_API_URL` | client | Only needed for the Android build (`.env.android`) — the web build uses relative `/api` |
 
 ---
 
-## 🐳 Deploy
+## ▲ Deploy (Vercel — one project, client + API)
 
-**Server (Docker):**
+The whole app deploys as a **single Vercel project**: the client is built to static
+assets and `/api/*` is served by one Serverless Function (`api/index.ts`, which
+wraps the Express app in `server/src/app.ts`). Same domain for both, so the
+browser never does a cross-origin request — no CORS, no cold-starting a
+separate always-on server like Render.
+
+1. In the Vercel dashboard, **New Project** → import this repo → set **Root
+   Directory to the repo root** (not `client/`). `vercel.json` at the root
+   already defines the install/build commands, output directory, the
+   `/api/*` rewrite, and the function's `maxDuration`.
+2. Add the server env vars above as **Environment Variables** on the project
+   (`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `NVIDIA_API_KEY` at
+   minimum). Do **not** set `VITE_API_URL` for this project — leaving it
+   unset is what makes the client call same-origin `/api`.
+3. Deploy. `/health` and `/api/*` are handled by the function; every other
+   path falls back to `index.html` (client-side routing).
+4. `CLIENT_URL` is mostly defense-in-depth now (same-origin requests skip
+   CORS entirely), but set it to the project's `https://*.vercel.app` domain
+   anyway in case something calls the API cross-origin later.
+5. Once live, update `VITE_API_URL` in `client/.env.android` to that same
+   domain and run `npm run build:android` before regenerating the APK — the
+   native app isn't served from any origin, so it still needs an absolute URL.
+
+**Alternative: self-host the API (Docker)** — only if you deploy the backend
+somewhere other than Vercel:
 ```bash
 cd server
 docker build -t life-os-server .
 docker run -p 4000:4000 --env-file .env life-os-server
 ```
-
-**Client:** build static assets and host anywhere (Vercel, Netlify, Cloudflare Pages):
-```bash
-cd client
-npm run build      # outputs client/dist
-```
-Set `VITE_API_URL` to your deployed API origin before building.
 
 ---
 

@@ -2,6 +2,10 @@
   "name": "life-os",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "description": "Personal Life OS — multi-tenant SaaS dashboard to manage all aspects of your life",
   "workspaces": [
     "client",
