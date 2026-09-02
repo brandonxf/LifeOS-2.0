@@ -5,6 +5,7 @@ import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X } from '
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
+import { ColorWheel } from '../components/ColorWheel';
 import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
 import { useCompletionPulse, CompletionBurst, DrawnCheck } from '../components/AnimatedCheck';
 import { cn } from '../lib/utils';
@@ -356,6 +357,7 @@ function HabitModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('flame');
   const [color, setColor] = useState('#37e779');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => { if (open) { setName(''); setDescription(''); setIcon('flame'); setColor('#37e779'); } }, [open]);
 
@@ -380,14 +382,34 @@ function HabitModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           </div>
         </Field>
         <Field label="Color">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {HABIT_COLORS.map((c) => (
               <button key={c} type="button" onClick={() => setColor(c)} className={cn('h-8 w-8 rounded-full ring-offset-2 dark:ring-offset-slate-900', color === c && 'ring-2 ring-primary')} style={{ backgroundColor: c }} />
             ))}
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              aria-label="Color personalizado"
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-full ring-offset-2 dark:ring-offset-slate-900',
+                !HABIT_COLORS.includes(color) ? 'ring-2 ring-primary' : 'border-2 border-dashed border-slate-300 dark:border-white/20',
+              )}
+              style={
+                !HABIT_COLORS.includes(color)
+                  ? { backgroundColor: color }
+                  : { background: 'conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }
+              }
+            >
+              {HABIT_COLORS.includes(color) && <Plus className="h-3.5 w-3.5 text-white drop-shadow" />}
+            </button>
           </div>
         </Field>
         <button type="submit" className="btn-primary w-full" disabled={save.isPending}>Crear hábito</button>
       </form>
+
+      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Color personalizado">
+        <ColorWheel initialValue={color} onChange={setColor} />
+      </Modal>
     </Modal>
   );
 }
