@@ -12,6 +12,7 @@ import { ConfirmDialogHost } from './components/ConfirmDialogHost';
 import { SplashGate } from './components/SplashGate';
 import { ToastBubble } from './components/ToastBubble';
 import { AccentSync } from './components/AccentSync';
+import { PerfModeSync } from './components/PerfModeSync';
 
 // Localiza todas las fechas (date-fns) a español.
 setDefaultOptions({ locale: es });
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AccentSync />
+          <PerfModeSync />
           <SplashGate>
             <BiometricGate>
               <App />

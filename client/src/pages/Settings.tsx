@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
@@ -85,7 +85,10 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 }
 
 function AppearanceCard() {
-  const { accent, customAccentHex, setAccent, setCustomAccent } = useSettings();
+  const {
+    accent, customAccentHex, setAccent, setCustomAccent,
+    performanceModeEnabled, setPerformanceModeEnabled,
+  } = useSettings();
   const [pickerOpen, setPickerOpen] = useState(false);
   return (
     <Card>
@@ -133,6 +136,23 @@ function AppearanceCard() {
           onChangeEnd={setCustomAccent}
         />
       </Modal>
+
+      <div className="mt-4 flex items-center justify-between gap-4 border-t pt-4">
+        <div className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-slate-400" />
+          <div>
+            <p className="text-sm font-medium">Modo rendimiento</p>
+            <p className="text-xs text-slate-400">Desactiva desenfoques y fondos animados para que la app vaya más fluida en celulares de gama media o baja.</p>
+          </div>
+        </div>
+        <Toggle
+          checked={performanceModeEnabled}
+          onChange={(v) => {
+            setPerformanceModeEnabled(v);
+            toast.success(v ? 'Modo rendimiento activado' : 'Modo rendimiento desactivado');
+          }}
+        />
+      </div>
     </Card>
   );
 }

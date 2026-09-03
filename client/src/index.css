@@ -310,7 +310,10 @@
    GPUs de celular y provoca jank al hacer scroll. En pantallas pequeñas
    apagamos la aura animada y el desenfoque de fondo, y damos a las
    superficies un fondo sólido: se ven casi igual (quedan sobre negro)
-   pero el scroll vuelve a ser fluido. */
+   pero el scroll vuelve a ser fluido. Ver también el bloque `.perf-mode`
+   más abajo, que replica estas mismas reglas para el toggle manual de
+   "Modo rendimiento" en Ajustes (sin depender del ancho de pantalla) —
+   mantener ambos bloques sincronizados. */
 @media (max-width: 900px) {
   .aurora-field {
     display: none;
@@ -348,6 +351,58 @@
       radial-gradient(62% 46% at 40% 78%, rgb(var(--primary) / 0.18), transparent 72%);
     background-attachment: fixed;
   }
+}
+
+/* ── Modo rendimiento (manual, Ajustes → Apariencia) ─────────────────
+   Mismo recorte que el bloque de arriba, pero gateado por la clase
+   `perf-mode` (ver PerfModeSync.tsx) en vez del ancho de pantalla, para que
+   funcione también en equipos de gama baja con pantalla grande. Se
+   duplican las reglas en vez de reescribir el media query de arriba para
+   que reaccione a una clase (el proyecto no usa un preprocesador con
+   nesting) — si cambia una regla ahí arriba, replicar el cambio acá. */
+.perf-mode .aurora-field {
+  display: none;
+}
+.perf-mode .animate-blob {
+  animation: none !important;
+}
+.perf-mode [class*='backdrop-blur'] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.perf-mode.dark .card {
+  background-color: rgba(19, 19, 19, 0.82) !important;
+}
+.perf-mode.dark .app-rail {
+  background-color: rgba(12, 12, 12, 0.98) !important;
+}
+.perf-mode.dark .glass-menu {
+  background-color: rgba(15, 15, 15, 0.98) !important;
+}
+.perf-mode body {
+  background-image:
+    radial-gradient(60% 46% at 12% 8%, rgb(var(--primary) / 0.26), transparent 72%),
+    radial-gradient(55% 42% at 92% 28%, rgb(var(--primary) / 0.20), transparent 72%),
+    radial-gradient(62% 46% at 40% 78%, rgb(var(--primary) / 0.18), transparent 72%);
+  background-attachment: fixed;
+}
+/* Mismo recorte de animaciones en loop que ya aplica prefers-reduced-motion
+   arriba — el shimmer de skeletons y demás loops indefinidos también
+   cuestan en gama baja, no solo la aurora. */
+.perf-mode .animate-orbit,
+.perf-mode .animate-pulse-soft,
+.perf-mode .loader-letter,
+.perf-mode .fab-item,
+.perf-mode .progress-track::after {
+  animation-duration: 0.001ms;
+  animation-iteration-count: 1;
+}
+.perf-mode .toast-bubble {
+  transition-duration: 0.001ms !important;
+}
+.perf-mode .draw-check,
+.perf-mode .burst-dot {
+  animation-duration: 0.001ms !important;
 }
 
 /* Scrollbar: oculta en toda la app (incluye modales y páginas), el scroll
