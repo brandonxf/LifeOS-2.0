@@ -10,6 +10,7 @@ import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { ColorWheel } from '../components/ColorWheel';
+import { applyCustomAccentPreview } from '../components/AccentSync';
 import { cn } from '../lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
@@ -128,7 +129,11 @@ function AppearanceCard() {
       </div>
 
       <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Color personalizado">
-        <ColorWheel initialValue={customAccentHex ?? '#37e779'} onChange={setCustomAccent} />
+        <ColorWheel
+          initialValue={customAccentHex ?? '#37e779'}
+          onChange={applyCustomAccentPreview}
+          onChangeEnd={setCustomAccent}
+        />
       </Modal>
     </Card>
   );
