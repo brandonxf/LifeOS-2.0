@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { useSettings } from '../store/settings';
 import { deriveAccentShades } from '../lib/color';
 
-/** Inyecta un color personalizado como variables CSS en `<html>`, sin tocar
- *  el store (persistido) — para previsualizar en vivo mientras se arrastra
- *  la rueda de color, sin pagar el costo de una escritura a localStorage en
- *  cada frame. */
+/** Inyecta un color personalizado como variables CSS en `<html>`.
+ *  Ojo: nunca llamar a esto en cada frame de un gesto (arrastre, etc) — en
+ *  móvil, cambiar una custom property en <html> obliga a recalcular el
+ *  estilo de toda la app, incluido el fondo `background-attachment: fixed`
+ *  de index.css que depende de `--primary`. Por eso el picker de la rueda
+ *  de color solo llama a esto una vez, al soltar. */
 export function applyCustomAccentPreview(hex: string) {
   const shades = deriveAccentShades(hex);
   const root = document.documentElement.style;

@@ -7,17 +7,24 @@ import { clamp01, hexToHsv, hsvToHex, isValidHex } from '../lib/color';
  *  de nuevo (ej. dentro de un Modal que se abre/cierra) si quiere resetearlo
  *  a otro color de partida.
  *
- *  `onChange` se dispara en cada frame mientras se arrastra — debe ser
- *  barato (nada de escrituras a localStorage/estado persistido) para evitar
- *  lag en móvil. `onChangeEnd`, si se pasa, se dispara una sola vez al
- *  soltar, y es el lugar para commits caros (persistencia, etc). */
+ *  `onChange` se dispara en cada frame mientras se arrastra — no debe tocar
+ *  nada global (variables CSS en <html>, estado persistido, etc): en móvil
+ *  cualquier regla que dependa de una custom property que cambia en <html>
+ *  fuerza un recálculo de estilos de toda la app en cada frame (p. ej. el
+ *  fondo con `background-attachment: fixed` de index.css, que usa
+ *  `var(--primary)`), y eso es lo que causaba el lag/parpadeo real — no
+ *  alcanzaba con evitar el store persistido. Como el picker vive dentro de
+ *  un Modal a pantalla completa, esa previsualización global ni se ve
+ *  mientras se arrastra, así que lo correcto es no tocarla hasta soltar.
+ *  `onChangeEnd`, si se pasa, se dispara una sola vez al soltar — ahí sí es
+ *  seguro hacer commits caros/globales. */
 export function ColorWheel({
   initialValue,
   onChange,
   onChangeEnd,
 }: {
   initialValue: string;
-  onChange: (hex: string) => void;
+  onChange?: (hex: string) => void;
   onChangeEnd?: (hex: string) => void;
 }) {
   const [{ h, s, v }, setHsv] = useState(() => hexToHsv(initialValue));
@@ -34,7 +41,7 @@ export function ColorWheel({
     setHsv(next);
     const hex = hsvToHex(next.h, next.s, next.v);
     setHexInput(hex);
-    onChange(hex);
+    onChange?.(hex);
   }
 
   function applyPendingPoint() {
@@ -94,12 +101,13 @@ export function ColorWheel({
   }, []);
 
   function onValueChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const next = { h, s, v: Number(e.target.value) / 100 };
-    commit(next);
-    // El slider no sufre el lag de la rueda (no dispara decenas de eventos
-    // por frame), así que aquí sí commiteamos en cada cambio, cubriendo
-    // también el ajuste con teclado (que no dispara pointerup).
-    onChangeEnd?.(hsvToHex(next.h, next.s, next.v));
+    // Arrastrar este slider en móvil también puede disparar un evento
+    // 'input' por frame — igual que la rueda, solo actualizamos local/barato
+    // aquí y dejamos el commit caro (onChangeEnd) para cuando se suelta.
+    commit({ h, s, v: Number(e.target.value) / 100 });
+  }
+  function onValueCommit() {
+    onChangeEnd?.(hsvToHex(hsvRef.current.h, hsvRef.current.s, hsvRef.current.v));
   }
 
   function onHexInputChange(raw: string) {
@@ -109,7 +117,7 @@ export function ColorWheel({
       const next = hexToHsv(hex);
       setHsv(next);
       const finalHex = hex.length === 4 ? hsvToHex(next.h, next.s, next.v) : hex;
-      onChange(finalHex);
+      onChange?.(finalHex);
       onChangeEnd?.(finalHex);
     }
   }
@@ -154,6 +162,8 @@ export function ColorWheel({
           max={100}
           value={Math.round(v * 100)}
           onChange={onValueChange}
+          onPointerUp={onValueCommit}
+          onKeyUp={onValueCommit}
           className="h-3 w-full cursor-pointer appearance-none rounded-full"
           style={{ background: `linear-gradient(to right, #000, ${pureHueHex})` }}
         />
