@@ -1,18 +1,33 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './store/auth';
 import { AppLayout } from './components/AppLayout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Finance from './pages/Finance';
-import Tasks from './pages/Tasks';
-import Habits from './pages/Habits';
-import Calendar from './pages/Calendar';
-import Diary from './pages/Diary';
-import Notes from './pages/Notes';
-import Health from './pages/Health';
-import AIChat from './pages/AIChat';
-import Settings from './pages/Settings';
+import { Spinner } from './components/ui';
+
+// Cada página en su propio chunk: antes todas (+ recharts, tiptap, dnd)
+// vivían en un solo bundle de 1.5MB que se descargaba/ejecutaba entero
+// antes de poder ver el login — carísimo en gama baja. Con lazy(), cada
+// una se descarga la primera vez que se visita esa ruta.
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Finance = lazy(() => import('./pages/Finance'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Habits = lazy(() => import('./pages/Habits'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Diary = lazy(() => import('./pages/Diary'));
+const Notes = lazy(() => import('./pages/Notes'));
+const Health = lazy(() => import('./pages/Health'));
+const AIChat = lazy(() => import('./pages/AIChat'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+function PageFallback() {
+  return (
+    <div className="flex h-full min-h-[50vh] w-full items-center justify-center">
+      <Spinner className="h-8 w-8 text-primary" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuth((s) => s.user);
@@ -29,31 +44,33 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-      <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+        <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
 
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/finance" element={<Finance />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/habits" element={<Habits />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/diary" element={<Diary />} />
-        <Route path="/notes" element={<Notes />} />
-        <Route path="/health" element={<Health />} />
-        <Route path="/ai" element={<AIChat />} />
-        <Route path="/settings" element={<Settings />} />
-      </Route>
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/finance" element={<Finance />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/habits" element={<Habits />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/diary" element={<Diary />} />
+          <Route path="/notes" element={<Notes />} />
+          <Route path="/health" element={<Health />} />
+          <Route path="/ai" element={<AIChat />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

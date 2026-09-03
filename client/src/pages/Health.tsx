@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { Plus, Trash2, Dumbbell, Droplet, Moon, Scale, HeartPulse } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
+import { useSettings } from '../store/settings';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
 import { cn } from '../lib/utils';
 import { confirm } from '../store/confirm';
@@ -22,6 +23,7 @@ type MetricType = keyof typeof METRICS;
 
 export default function Health() {
   const qc = useQueryClient();
+  const performanceModeEnabled = useSettings((s) => s.performanceModeEnabled);
   const [modalOpen, setModalOpen] = useState(false);
   const [presetType, setPresetType] = useState<MetricType>('water');
 
@@ -100,7 +102,7 @@ export default function Health() {
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} width={30} />
                     <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13 }} formatter={(v: number) => `${v} ${m.unit}`} />
-                    <Line type="monotone" dataKey="value" stroke={m.color} strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="value" stroke={m.color} strokeWidth={2} dot={{ r: 3 }} isAnimationActive={!performanceModeEnabled} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

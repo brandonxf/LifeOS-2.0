@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
@@ -26,7 +26,19 @@ import { useUI } from '../store/ui';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
+import { Spinner } from './ui';
 import { confirm } from '../store/confirm';
+
+/** Fallback de Suspense para el contenido de cada ruta: un spinner simple,
+ *  no el AppLoader de marca (ese anima un fondo aurora + texto letra por
+ *  letra, pensado para el arranque, no para un cambio de pestaña). */
+function RouteFallback() {
+  return (
+    <div className="flex h-full min-h-[50vh] w-full items-center justify-center">
+      <Spinner className="h-8 w-8 text-primary" />
+    </div>
+  );
+}
 
 const NAV = [
   { to: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -419,11 +431,15 @@ export function AppLayout() {
 
         <main className="min-h-0 flex-1 overflow-hidden">
           {fullBleed ? (
-            <Outlet />
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
           ) : (
             <div className="h-full overflow-y-auto">
               <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
-                <Outlet />
+                <Suspense fallback={<RouteFallback />}>
+                  <Outlet />
+                </Suspense>
               </div>
             </div>
           )}

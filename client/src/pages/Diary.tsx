@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 import { api } from '../lib/api';
+import { useSettings } from '../store/settings';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText, Lightbox } from '../components/ui';
 import { MoodFace, MOOD_LABELS } from '../components/icons';
 import { cn, MOOD_COLORS } from '../lib/utils';
@@ -19,6 +20,7 @@ import type { DiaryEntry } from '../lib/types';
 
 export default function Diary() {
   const qc = useQueryClient();
+  const performanceModeEnabled = useSettings((s) => s.performanceModeEnabled);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<DiaryEntry | null>(null);
   const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null);
@@ -59,7 +61,7 @@ export default function Diary() {
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13 }} formatter={(v: number) => [`${MOOD_LABELS[v]} (${v}/5)`, 'Ánimo']} />
-              <Line type="monotone" dataKey="mood" stroke="rgb(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="mood" stroke="rgb(var(--primary))" strokeWidth={2} dot={{ r: 3 }} isAnimationActive={!performanceModeEnabled} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

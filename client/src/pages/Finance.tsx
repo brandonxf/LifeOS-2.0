@@ -17,6 +17,7 @@ import { format, parseISO } from 'date-fns';
 import { Plus, Trash2, Wallet, TrendingUp, TrendingDown, Repeat, Pause, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
+import { useSettings } from '../store/settings';
 import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from '../components/ui';
 import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
 import { confirm } from '../store/confirm';
@@ -29,6 +30,7 @@ const FREQUENCY_LABELS: Record<string, string> = { weekly: 'Semanal', monthly: '
 
 export default function Finance() {
   const qc = useQueryClient();
+  const performanceModeEnabled = useSettings((s) => s.performanceModeEnabled);
   const [modalOpen, setModalOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [recurringOpen, setRecurringOpen] = useState(false);
@@ -112,8 +114,8 @@ export default function Finance() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13 }} formatter={(v: number) => formatCurrency(v)} />
                 <Legend />
-                <Bar dataKey="income" fill="#0D9488" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" fill="#DC2626" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" fill="#0D9488" radius={[4, 4, 0, 0]} isAnimationActive={!performanceModeEnabled} />
+                <Bar dataKey="expenses" fill="#DC2626" radius={[4, 4, 0, 0]} isAnimationActive={!performanceModeEnabled} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -137,6 +139,7 @@ export default function Finance() {
                   innerRadius={50}
                   outerRadius={90}
                   paddingAngle={2}
+                  isAnimationActive={!performanceModeEnabled}
                 >
                   {summary.data.topCategories.map((_, i) => (
                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />

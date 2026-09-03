@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { AiMark } from '../components/Brand';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
+import { useSettings } from '../store/settings';
 import { Card, Skeleton } from '../components/ui';
 import { cn, formatCurrency } from '../lib/utils';
 import { bogotaISODate } from '../lib/date';
@@ -331,6 +332,7 @@ export default function Dashboard() {
 }
 
 function HealthMini({ summary }: { summary: HealthSummary }) {
+  const performanceModeEnabled = useSettings((s) => s.performanceModeEnabled);
   const water = summary.water;
   const sleep = summary.sleep;
   const workout = summary.workout;
@@ -356,7 +358,7 @@ function HealthMini({ summary }: { summary: HealthSummary }) {
           <BarChart data={chartData}>
             <XAxis dataKey="date" hide />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-            <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+            <Bar dataKey="value" radius={[3, 3, 0, 0]} isAnimationActive={!performanceModeEnabled}>
               {chartData.map((_, i) => (
                 <Cell key={i} fill="rgb(var(--primary))" />
               ))}
