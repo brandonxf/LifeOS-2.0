@@ -7,6 +7,9 @@ export interface AuthUser {
   name: string;
   avatar: string | null;
   username: string | null;
+  // Puede llegar null en cuentas creadas antes de este sistema: se rellena
+  // solo al pedir /api/auth/me (ver Friends.tsx).
+  friendCode: string | null;
   bio: string | null;
   birthDate: string | null;
   location: string | null;

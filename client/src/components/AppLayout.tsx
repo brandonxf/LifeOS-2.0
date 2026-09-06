@@ -11,6 +11,7 @@ import {
   BookOpen,
   StickyNote,
   HeartPulse,
+  Users,
   Settings,
   Bell,
   LogOut,
@@ -48,6 +49,7 @@ const NAV = [
   { to: '/calendar', label: 'Calendario', icon: CalendarIcon },
   { to: '/diary', label: 'Diario', icon: BookOpen },
   { to: '/notes', label: 'Notas', icon: StickyNote },
+  { to: '/friends', label: 'Amigos', icon: Users },
   { to: '/health', label: 'Salud', icon: HeartPulse },
   { to: '/ai', label: 'Asistente IA', icon: AiMark },
 ];

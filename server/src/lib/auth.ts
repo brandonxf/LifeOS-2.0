@@ -38,3 +38,16 @@ export function refreshTokenExpiry(): Date {
   d.setDate(d.getDate() + env.REFRESH_TOKEN_TTL_DAYS);
   return d;
 }
+
+// Sin 0/O/1/I para que no se confundan al transcribirlo a mano.
+const FRIEND_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/** Código corto para que un usuario invite amigos sin exponer su email. */
+export function generateFriendCode(): string {
+  const bytes = randomBytes(7);
+  let code = '';
+  for (let i = 0; i < 7; i++) {
+    code += FRIEND_CODE_ALPHABET[bytes[i] % FRIEND_CODE_ALPHABET.length];
+  }
+  return code;
+}

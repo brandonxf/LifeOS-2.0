@@ -8,3 +8,4 @@ export * from './diary.js';
 export * from './notes.js';
 export * from './health.js';
 export * from './chat.js';
+export * from './friends.js';

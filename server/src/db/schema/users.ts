@@ -10,6 +10,8 @@ export const users = pgTable(
     avatar: text('avatar'),
     // Handle público único (opcional). NULL para cuentas que aún no lo fijan.
     username: text('username').unique(),
+    // Código corto para agregar amigos sin exponer el email.
+    friendCode: text('friend_code').unique(),
     bio: text('bio'),
     birthDate: date('birth_date'),
     location: text('location'),

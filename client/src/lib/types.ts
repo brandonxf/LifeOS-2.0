@@ -134,3 +134,21 @@ export type HealthSummary = Record<
   string,
   { total: number; count: number; latest: number; unit: string; series: { date: string; value: number }[] }
 >;
+
+export interface FriendUser {
+  id: string;
+  name: string;
+  avatar: string | null;
+}
+
+export interface Friendship {
+  id: string;
+  since: string | null;
+  friend: FriendUser;
+}
+
+export interface FriendRequest {
+  id: string;
+  createdAt: string;
+  user: FriendUser;
+}

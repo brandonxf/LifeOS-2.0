@@ -9,6 +9,7 @@ import {
   signAccessToken,
   generateRefreshToken,
   refreshTokenExpiry,
+  generateFriendCode,
 } from '../lib/auth.js';
 import { asyncHandler, badRequest, unauthorized, validate } from '../lib/http.js';
 import { authMiddleware, currentUser } from '../middleware/auth.js';
@@ -64,6 +65,19 @@ function publicUser(u: typeof users.$inferSelect) {
   return rest;
 }
 
+async function uniqueFriendCode(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generateFriendCode();
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.friendCode, code))
+      .limit(1);
+    if (!existing.length) return code;
+  }
+  throw new Error('Could not generate a unique friend code');
+}
+
 async function issueSession(userId: string, email: string, userAgent?: string) {
   const accessToken = signAccessToken({ sub: userId, email });
   const refreshToken = generateRefreshToken();
@@ -90,9 +104,10 @@ router.post(
     if (existing.length) throw badRequest('An account with that email already exists');
 
     const passwordHash = await hashPassword(body.password);
+    const friendCode = await uniqueFriendCode();
     const [user] = await db
       .insert(users)
-      .values({ email: body.email.toLowerCase(), passwordHash, name: body.name })
+      .values({ email: body.email.toLowerCase(), passwordHash, name: body.name, friendCode })
       .returning();
 
     const tokens = await issueSession(user.id, user.email, req.headers['user-agent']);
@@ -166,7 +181,13 @@ router.get(
   '/me',
   authMiddleware,
   asyncHandler(async (req, res) => {
-    const user = currentUser(req);
+    let user = currentUser(req);
+    // Cuentas creadas antes de que existiera el sistema de amigos no tienen
+    // código aún — se genera perezosamente la primera vez que se pide /me.
+    if (!user.friendCode) {
+      const friendCode = await uniqueFriendCode();
+      [user] = await db.update(users).set({ friendCode }).where(eq(users.id, user.id)).returning();
+    }
     res.json({ user: publicUser(user) });
   }),
 );
