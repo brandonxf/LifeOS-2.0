@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { LogoLockup, AuthBackdrop } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
-import { Field, Spinner } from '../components/ui';
+import { Field, PasswordInput, Spinner } from '../components/ui';
 
 const schema = z.object({
   email: z.string().email('Ingresa un correo válido'),
@@ -55,7 +55,7 @@ export default function Login() {
           <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
         </Field>
         <Field label="Contraseña" error={errors.password?.message}>
-          <input className="input-glass" type="password" placeholder="••••••••" {...register('password')} />
+          <PasswordInput className="input-glass" placeholder="••••••••" {...register('password')} />
         </Field>
         <button
           type="button"

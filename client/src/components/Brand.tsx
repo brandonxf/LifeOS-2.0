@@ -208,7 +208,7 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
       <div className="relative z-10 flex flex-col items-center gap-8">
         <h1
           aria-label={word}
-          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgba(55,231,121,0.45)] sm:text-8xl"
+          className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgb(var(--primary)/0.45)] sm:text-8xl"
         >
           {word.split('').map((ch, i) => (
             <span

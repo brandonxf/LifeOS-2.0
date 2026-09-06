@@ -6,7 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
-import { Field, Spinner } from '../components/ui';
+import { Field, PasswordInput, Spinner } from '../components/ui';
 import { AuthShell } from './Login';
 
 const schema = z.object({
@@ -53,7 +53,7 @@ export default function Register() {
           <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
         </Field>
         <Field label="Contraseña" error={errors.password?.message}>
-          <input className="input-glass" type="password" placeholder="Mínimo 8 caracteres" {...register('password')} />
+          <PasswordInput className="input-glass" placeholder="Mínimo 8 caracteres" {...register('password')} />
         </Field>
         <button type="submit" className="btn-primary w-full rounded-xl py-3 text-base shadow-glow" disabled={loading}>
           {loading ? <Spinner /> : 'Crear cuenta'}

@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
@@ -204,6 +204,27 @@ export function Field({
     </div>
   );
 }
+
+/** Input de contraseña con botón de ojito para mostrar/ocultar el texto. */
+export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+  function PasswordInput({ className, ...props }, ref) {
+    const [visible, setVisible] = useState(false);
+    return (
+      <div className="relative">
+        <input ref={ref} {...props} type={visible ? 'text' : 'password'} className={cn(className, 'pr-10')} />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          tabIndex={-1}
+          aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white"
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    );
+  },
+);
 
 /** Bloque de texto (o HTML) que se recorta a N líneas y, solo si de verdad
  *  no cabe, muestra un botón "Ver más" para expandirlo (y "Ver menos" para
