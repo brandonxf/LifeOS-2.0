@@ -51,6 +51,7 @@ export interface HabitMemberProgress {
   avatar: string | null;
   streak: number;
   doneToday: boolean;
+  dates: string[];
 }
 
 export interface Habit {

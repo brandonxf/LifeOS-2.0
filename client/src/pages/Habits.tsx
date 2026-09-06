@@ -34,23 +34,33 @@ const GOAL_CATEGORY_LABELS: Record<string, string> = {
   personal: 'Personal', finance: 'Finanzas', health: 'Salud', work: 'Trabajo',
 };
 
-function Heatmap({ logs, color }: { logs: string[]; color: string }) {
-  const set = new Set(logs);
+/** `participantDates`: un arreglo de fechas por participante (dueño +
+ *  miembros activos). Para un hábito solo trae un elemento (mis logs). Cada
+ *  celda del día se rellena de abajo hacia arriba según qué fracción de
+ *  los participantes lo completó ese día — así un hábito compartido no se
+ *  ve "todo o nada" cuando solo una parte del equipo ya lo hizo hoy. */
+function Heatmap({ participantDates, color }: { participantDates: string[][]; color: string }) {
+  const sets = participantDates.map((d) => new Set(d));
+  const total = sets.length || 1;
   const todayIso = bogotaISODate();
-  const cells: { date: string; done: boolean }[] = [];
+  const cells: { date: string; fraction: number }[] = [];
   for (let i = HEATMAP_DAYS - 1; i >= 0; i--) {
     const iso = shiftIsoDate(todayIso, -i);
-    cells.push({ date: iso, done: set.has(iso) });
+    const count = sets.reduce((n, s) => n + (s.has(iso) ? 1 : 0), 0);
+    cells.push({ date: iso, fraction: count / total });
   }
   return (
     <div className="grid grid-flow-col grid-rows-7 gap-1" style={{ gridAutoColumns: 'minmax(0, 1fr)' }}>
       {cells.map((c) => (
         <div
           key={c.date}
-          title={`${c.date}${c.done ? ' — hecho' : ''}`}
-          className="aspect-square rounded-[3px]"
-          style={{ backgroundColor: c.done ? color : 'rgba(148,163,184,0.15)' }}
-        />
+          title={`${c.date}${c.fraction > 0 ? ` — ${Math.round(c.fraction * 100)}% del equipo` : ''}`}
+          className="relative aspect-square overflow-hidden rounded-[3px] bg-[rgba(148,163,184,0.15)]"
+        >
+          {c.fraction > 0 && (
+            <div className="absolute inset-x-0 bottom-0" style={{ height: `${c.fraction * 100}%`, backgroundColor: color }} />
+          )}
+        </div>
       ))}
     </div>
   );
@@ -345,7 +355,10 @@ export default function Habits() {
                         <span>{badge.emoji}</span> {badge.label}
                       </span>
                     )}
-                    <Heatmap logs={h.logs} color={h.color} />
+                    <Heatmap
+                      color={h.color}
+                      participantDates={h.members?.length ? h.members.map((m) => m.dates) : [h.logs]}
+                    />
                     <p className="mt-2 text-xs text-slate-400">{h.logs.length} veces completado · últimas 17 semanas</p>
                     {(h.members?.length ?? 0) > 0 && (
                       <div className="mt-3 flex flex-wrap items-center gap-3 border-t pt-3">

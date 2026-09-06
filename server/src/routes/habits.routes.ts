@@ -115,6 +115,9 @@ router.get(
             avatar: p.avatar,
             streak: currentStreakFromDates(dates),
             doneToday: dates.has(today),
+            // Historial completo de este miembro, para que el heatmap del
+            // cliente pueda pintar cada día según cuántos ya lo completaron.
+            dates: [...dates],
           };
         });
       }
