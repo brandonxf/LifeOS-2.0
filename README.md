@@ -1,8 +1,8 @@
 # 🌌 Life OS
 
-A full-stack, multi-tenant **Personal Life Operating System** — one private dashboard to manage your finances, tasks, habits, goals, calendar, diary, notes, and health, with an **AI assistant** grounded in your own data.
+A full-stack, multi-tenant **Personal Life Operating System** — one private dashboard to manage your finances, tasks, habits, goals, calendar, diary, notes, and health, with an **AI assistant** grounded in your own data. Add friends to share habits, team up on tasks, and see each other's progress in an activity feed.
 
-![stack](https://img.shields.io/badge/React-18-61dafb) ![stack](https://img.shields.io/badge/Node-Express-3c873a) ![stack](https://img.shields.io/badge/Neon-Postgres-00e599) ![stack](https://img.shields.io/badge/Drizzle-ORM-c5f74f) ![stack](https://img.shields.io/badge/Claude-sonnet--4--6-7C3AED)
+![stack](https://img.shields.io/badge/React-18-61dafb) ![stack](https://img.shields.io/badge/Node-Express-3c873a) ![stack](https://img.shields.io/badge/Neon-Postgres-00e599) ![stack](https://img.shields.io/badge/Drizzle-ORM-c5f74f) ![stack](https://img.shields.io/badge/AI-NVIDIA%20%2F%20Claude-76b900)
 
 ---
 
@@ -18,9 +18,13 @@ A full-stack, multi-tenant **Personal Life Operating System** — one private da
 | **Diary** | TipTap rich-text editor, 1–5 mood selector, tags, monthly mood chart |
 | **Notes** | Masonry grid, pinning, markdown, client-side **and** semantic (pgvector) search |
 | **Health** | Log workouts / water / sleep / weight, 7-day summary cards + per-metric line charts |
-| **AI Assistant** | Streaming (SSE) chat with Claude, context badge showing exactly what data was injected |
+| **Friends & Social** | Add friends with a short invite code (no public directory/search); invite friends to a habit or task — each accepts before it shows up on their side |
+| **Shared Habits** | Habit heatmap fills per-day by *fraction of the team* that completed it, not all-or-nothing; each member's current streak shown next to their avatar |
+| **Team Tasks** | Assign a task to one or more friends; any active assignee can move it through the board, only the owner edits/deletes it |
+| **Activity Feed** | See friends complete a shared habit/task, or a private habit they've opted to broadcast via "Share my progress with friends" — react with a 👏 |
+| **AI Assistant** | Streaming (SSE) chat, context badge showing exactly what data was injected — runs on NVIDIA NIM (free) by default, falls back to Anthropic Claude, then an offline demo mode with neither key set |
 
-Plus: JWT auth with **refresh-token rotation**, soft deletes, rate limiting, dark mode, PWA, skeleton loaders, toasts, and full TypeScript typing everywhere.
+Plus: JWT auth with **refresh-token rotation**, soft deletes, rate limiting, dark mode, PWA, skeleton loaders, toasts, near-real-time polling refresh on every friends/habits/tasks/feed screen, and full TypeScript typing everywhere.
 
 ---
 
@@ -30,7 +34,7 @@ Plus: JWT auth with **refresh-token rotation**, soft deletes, rate limiting, dar
 - **Backend:** Node.js + Express (REST API, SSE streaming)
 - **Database:** [Neon](https://neon.tech) serverless PostgreSQL + Drizzle ORM + Drizzle Kit, with **pgvector** for semantic note search
 - **Cache/Sessions:** Redis ([Upstash](https://upstash.com) recommended) — with an automatic in-memory fallback for local dev
-- **AI:** Anthropic Claude (`claude-sonnet-4-6`)
+- **AI:** [NVIDIA NIM](https://build.nvidia.com) (free, OpenAI-compatible) by default, falls back to Anthropic Claude if only that key is set
 - **Auth:** JWT access tokens + bcrypt + rotating refresh tokens
 
 ---
@@ -74,7 +78,7 @@ life-os/
 - Node.js 20+
 - A **Neon** project (free tier is fine) → grab the pooled connection string
 - *(Optional)* An **Upstash Redis** database → `rediss://…` URL
-- *(Optional)* An **Anthropic API key** → the AI chat runs in an offline demo mode without one
+- *(Optional)* An **NVIDIA API key** (free, [build.nvidia.com](https://build.nvidia.com)) or an **Anthropic API key** → the AI chat runs in an offline demo mode with neither one set
 
 ### 2. Clone & install
 ```bash
@@ -89,7 +93,7 @@ cp .env.example server/.env
 cp .env.example client/.env     # client only needs VITE_API_URL
 ```
 Edit `server/.env` and set at least `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`
-(and `ANTHROPIC_API_KEY` for real AI answers).
+(and `NVIDIA_API_KEY` or `ANTHROPIC_API_KEY` for real AI answers instead of the demo mock).
 
 Generate strong secrets:
 ```bash
@@ -103,6 +107,11 @@ npx tsx src/db/migrate.ts     # enables the pgvector extension on Neon
 npm run db:push               # pushes the Drizzle schema (drizzle-kit push)
 npm run db:seed               # seeds the demo user + realistic data
 ```
+> `db:push` asks for a y/n confirmation whenever a statement could be destructive,
+> which fails outright in a non-interactive shell/CI ("Interactive prompts require
+> a TTY"). Run it from a real terminal the first time, or apply the schema change
+> as plain SQL yourself if you hit that — see the commits from the friends/social
+> feature work for examples of the latter.
 
 ### 5. Run in dev
 From the repo root:
@@ -172,12 +181,34 @@ docker run -p 4000:4000 --env-file .env life-os-server
 
 On every `POST /api/ai/chat`, the server runs Drizzle queries to gather a live snapshot —
 last 10 tasks, today's habit completion, this month's finance summary, last 5 diary moods,
-and recent health logs — builds a grounded system prompt, and streams Claude's reply back
-over **Server-Sent Events**. The UI shows a **context badge** listing exactly what was sent.
+and recent health logs — builds a grounded system prompt, and streams the reply back over
+**Server-Sent Events**. The UI shows a **context badge** listing exactly what was sent.
+Provider is picked at request time (`server/src/services/ai.service.ts`): NVIDIA NIM if
+`NVIDIA_API_KEY` is set, otherwise Anthropic Claude if `ANTHROPIC_API_KEY` is set, otherwise
+a canned offline demo reply so the feature still works with zero keys configured.
 
 > Semantic note search uses a local, dependency-free 1536-dim embedding stored in a pgvector
 > column (HNSW / cosine). Swap `server/src/services/embedding.service.ts` for a hosted
 > embeddings API for higher-quality results — the schema is unchanged.
+
+---
+
+## 🧑‍🤝‍🧑 Friends & Social
+
+Friends are added by a short invite code (`friend_code` on `users`), not a public
+search/directory — avoids exposing emails or a browsable list of accounts. Adding a
+friend, joining a shared habit, and getting assigned to a task are all
+**request → accept/decline**, never automatic, so nothing shows up on someone's
+screen without their say-so. Schema: `friendships`, `habit_members`,
+`task_assignees`, `activity_events` + `activity_reactions` (see
+`server/src/db/schema/`).
+
+The API deploys as a single Vercel Serverless Function, which doesn't hold
+persistent connections — so instead of WebSockets, the Friends/Habits/Tasks/Activity
+screens **poll**: main lists refetch every 5s and secondary lists (requests/invites)
+every 10s while the screen is open and focused, plus an immediate refetch on window
+focus (`client/src/lib/live.ts`). The shared rate limit was raised accordingly
+(`server/src/middleware/rateLimit.ts`, 300 req / 5 min per user).
 
 ---
 
