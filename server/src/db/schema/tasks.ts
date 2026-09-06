@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   index,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 
@@ -39,5 +40,33 @@ export const tasks = pgTable(
   }),
 );
 
+export const taskAssignees = pgTable(
+  'task_assignees',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    taskId: uuid('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: text('status', { enum: ['invited', 'active'] })
+      .notNull()
+      .default('invited'),
+    invitedBy: uuid('invited_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => ({
+    taskIdx: index('task_assignees_task_idx').on(t.taskId),
+    userIdx: index('task_assignees_user_idx').on(t.userId),
+    uniqueAssignee: unique('task_assignees_unique').on(t.taskId, t.userId),
+  }),
+);
+
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+export type TaskAssignee = typeof taskAssignees.$inferSelect;
+export type NewTaskAssignee = typeof taskAssignees.$inferInsert;

@@ -238,6 +238,39 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HT
   },
 );
 
+/** Lista de amigos para elegir a quién invitar/asignar a algo (un hábito
+ *  compartido, una tarea en equipo, etc). Genérico: no sabe nada de hábitos
+ *  ni tareas, solo recibe candidatos ya filtrados por el llamador. */
+export function FriendPickerModal({
+  open, title, candidates, onClose, onPick, pending, emptyMessage,
+}: {
+  open: boolean;
+  title: string;
+  candidates: { id: string; name: string; avatar: string | null }[];
+  onClose: () => void;
+  onPick: (id: string) => void;
+  pending: boolean;
+  emptyMessage: string;
+}) {
+  return (
+    <Modal open={open} onClose={onClose} title={title}>
+      {!candidates.length ? (
+        <p className="text-sm text-slate-400">{emptyMessage}</p>
+      ) : (
+        <div className="divide-y">
+          {candidates.map((f) => (
+            <div key={f.id} className="flex items-center gap-3 py-2.5">
+              <Avatar name={f.name} avatar={f.avatar} size={32} />
+              <p className="min-w-0 flex-1 truncate text-sm font-medium">{f.name}</p>
+              <button onClick={() => onPick(f.id)} disabled={pending} className="btn-primary h-8 px-3 text-xs">Elegir</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 /** Bloque de texto (o HTML) que se recorta a N líneas y, solo si de verdad
  *  no cabe, muestra un botón "Ver más" para expandirlo (y "Ver menos" para
  *  volver a recortarlo). Se remide con ResizeObserver porque el mismo

@@ -33,6 +33,12 @@ export interface FinanceRecurring {
   active: boolean;
 }
 
+export interface TaskAssignee {
+  id: string;
+  name: string;
+  avatar: string | null;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -43,6 +49,14 @@ export interface Task {
   dueDate: string | null;
   completedAt: string | null;
   createdAt: string;
+  isOwner: boolean;
+  assignees?: TaskAssignee[];
+}
+
+export interface TaskInvite {
+  id: string;
+  task: { id: string; title: string };
+  invitedBy: { name: string };
 }
 
 export interface HabitMemberProgress {

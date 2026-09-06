@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { format, parseISO, isPast, isToday } from 'date-fns';
-import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag, Check, X, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText, Avatar, FriendPickerModal } from '../components/ui';
 import { AnimatedCheckbox } from '../components/AnimatedCheck';
 import { cn, PRIORITY_STYLES } from '../lib/utils';
-import type { Task } from '../lib/types';
+import type { Task, Friendship, TaskInvite } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { cancelTaskReminder, scheduleTaskReminder } from '../lib/notifications';
 import { useSettings } from '../store/settings';
@@ -31,10 +31,38 @@ export default function Tasks() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [viewing, setViewing] = useState<Task | null>(null);
+  const [assignTask, setAssignTask] = useState<Task | null>(null);
   const [filterPriority, setFilterPriority] = useState('');
   const [filterTag, setFilterTag] = useState('');
 
   const tasks = useQuery({ queryKey: ['tasks'], queryFn: () => api<Task[]>('/api/tasks') });
+  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends') });
+  const invites = useQuery({ queryKey: ['tasks', 'invites'], queryFn: () => api<TaskInvite[]>('/api/tasks/invites') });
+
+  const acceptInvite = useMutation({
+    mutationFn: (id: string) => api(`/api/tasks/invites/${id}/accept`, { method: 'POST' }),
+    onSuccess: () => {
+      toast.success('¡Te uniste a la tarea!');
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['tasks', 'invites'] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const declineInvite = useMutation({
+    mutationFn: (id: string) => api(`/api/tasks/invites/${id}/decline`, { method: 'POST' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', 'invites'] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+  const assign = useMutation({
+    mutationFn: ({ taskId, friendId }: { taskId: string; friendId: string }) =>
+      api(`/api/tasks/${taskId}/assign`, { method: 'POST', body: { friendId } }),
+    onSuccess: () => {
+      toast.success('Tarea asignada');
+      setAssignTask(null);
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Task['status'] }) =>
@@ -143,6 +171,28 @@ export default function Tasks() {
         </div>
       </div>
 
+      {(invites.data?.length ?? 0) > 0 && (
+        <Card>
+          <h3 className="mb-3 text-sm font-semibold text-slate-500">Invitaciones a tareas</h3>
+          <div className="divide-y">
+            {invites.data!.map((inv) => (
+              <div key={inv.id} className="flex items-center gap-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{inv.task.title}</p>
+                  <p className="text-xs text-slate-400">Invitación de {inv.invitedBy.name}</p>
+                </div>
+                <button onClick={() => acceptInvite.mutate(inv.id)} className="rounded-lg p-1.5 text-success hover:bg-success/10" aria-label="Aceptar">
+                  <Check className="h-4 w-4" />
+                </button>
+                <button onClick={() => declineInvite.mutate(inv.id)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger" aria-label="Rechazar">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {tasks.isLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64" />)}
@@ -202,6 +252,11 @@ export default function Tasks() {
                     {task.tags.map((tag) => <span key={tag}>#{tag}</span>)}
                   </div>
                 </div>
+                {(task.assignees?.length ?? 0) > 0 && (
+                  <div className="flex -space-x-1.5">
+                    {task.assignees!.map((a) => <Avatar key={a.id} name={a.name} avatar={a.avatar} size={22} />)}
+                  </div>
+                )}
                 <button onClick={() => confirmDelete(task)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
               </div>
             ))}
@@ -214,12 +269,31 @@ export default function Tasks() {
         task={viewing}
         onClose={() => setViewing(null)}
         onEdit={(t) => { setViewing(null); setEditing(t); setModalOpen(true); }}
+        onAssign={(t) => { setViewing(null); setAssignTask(t); }}
+      />
+      <FriendPickerModal
+        open={!!assignTask}
+        title={assignTask ? `Asignar "${assignTask.title}"` : ''}
+        candidates={(friends.data ?? [])
+          .map((f) => f.friend)
+          .filter((f) => !(assignTask?.assignees ?? []).some((a) => a.id === f.id))}
+        onClose={() => setAssignTask(null)}
+        onPick={(friendId) => assign.mutate({ taskId: assignTask!.id, friendId })}
+        pending={assign.isPending}
+        emptyMessage={friends.data?.length ? 'Ya asignaste a todos tus amigos a esta tarea.' : 'Agrega amigos primero desde la sección Amigos.'}
       />
     </div>
   );
 }
 
-function TaskViewModal({ task, onClose, onEdit }: { task: Task | null; onClose: () => void; onEdit: (t: Task) => void }) {
+function TaskViewModal({
+  task, onClose, onEdit, onAssign,
+}: {
+  task: Task | null;
+  onClose: () => void;
+  onEdit: (t: Task) => void;
+  onAssign: (t: Task) => void;
+}) {
   const overdue = task?.dueDate && isPast(parseISO(task.dueDate)) && !isToday(parseISO(task.dueDate)) && task.status !== 'done';
   return (
     <Modal open={!!task} onClose={onClose} title={task?.title || 'Tarea'} wide>
@@ -239,7 +313,25 @@ function TaskViewModal({ task, onClose, onEdit }: { task: Task | null; onClose: 
             )}
             {task.tags.map((tag) => <span key={tag} className="chip bg-primary/10 text-primary">#{tag}</span>)}
           </div>
-          <button onClick={() => onEdit(task)} className="btn-primary w-full">Editar</button>
+          {(task.assignees?.length ?? 0) > 0 && (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-slate-400">Asignados</p>
+              <div className="flex flex-wrap gap-2">
+                {task.assignees!.map((a) => (
+                  <div key={a.id} className="flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-1 pr-3 dark:bg-slate-800">
+                    <Avatar name={a.name} avatar={a.avatar} size={22} />
+                    <span className="text-xs font-medium">{a.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2">
+            {task.isOwner && (
+              <button onClick={() => onAssign(task)} className="btn btn-ghost flex-1 border"><UserPlus className="h-4 w-4" /> Asignar</button>
+            )}
+            <button onClick={() => onEdit(task)} className="btn-primary flex-1">Editar</button>
+          </div>
         </div>
       )}
     </Modal>
@@ -270,6 +362,11 @@ function TaskCard({ task, onDelete, onMove }: { task: Task; onDelete: () => void
         )}
         {task.tags.map((tag) => <span key={tag} className="chip bg-primary/10 text-primary">#{tag}</span>)}
       </div>
+      {(task.assignees?.length ?? 0) > 0 && (
+        <div className="mt-2 flex -space-x-1.5">
+          {task.assignees!.map((a) => <Avatar key={a.id} name={a.name} avatar={a.avatar} size={22} />)}
+        </div>
+      )}
       {onMove && (
         <select
           value={task.status}

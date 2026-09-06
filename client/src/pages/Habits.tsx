@@ -4,7 +4,7 @@ import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X, Check, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, Avatar } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, Avatar, FriendPickerModal } from '../components/ui';
 import { ColorWheel } from '../components/ColorWheel';
 import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
 import { useCompletionPulse, CompletionBurst, DrawnCheck } from '../components/AnimatedCheck';
@@ -453,26 +453,18 @@ function InviteModal({
   pending: boolean;
 }) {
   const memberIds = new Set((habit?.members ?? []).map((m) => m.id));
-  const candidates = friends.filter((f) => !memberIds.has(f.friend.id));
+  const candidates = friends.filter((f) => !memberIds.has(f.friend.id)).map((f) => f.friend);
 
   return (
-    <Modal open={!!habit} onClose={onClose} title={habit ? `Invitar a "${habit.name}"` : ''}>
-      {!candidates.length ? (
-        <p className="text-sm text-slate-400">
-          {friends.length ? 'Ya invitaste a todos tus amigos a este hábito.' : 'Agrega amigos primero desde la sección Amigos.'}
-        </p>
-      ) : (
-        <div className="divide-y">
-          {candidates.map((f) => (
-            <div key={f.id} className="flex items-center gap-3 py-2.5">
-              <Avatar name={f.friend.name} avatar={f.friend.avatar} size={32} />
-              <p className="min-w-0 flex-1 truncate text-sm font-medium">{f.friend.name}</p>
-              <button onClick={() => onInvite(f.friend.id)} disabled={pending} className="btn-primary h-8 px-3 text-xs">Invitar</button>
-            </div>
-          ))}
-        </div>
-      )}
-    </Modal>
+    <FriendPickerModal
+      open={!!habit}
+      title={habit ? `Invitar a "${habit.name}"` : ''}
+      candidates={candidates}
+      onClose={onClose}
+      onPick={onInvite}
+      pending={pending}
+      emptyMessage={friends.length ? 'Ya invitaste a todos tus amigos a este hábito.' : 'Agrega amigos primero desde la sección Amigos.'}
+    />
   );
 }
 
