@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, Check, X, Trash2, UserPlus, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Card, EmptyState } from '../components/ui';
+import { SectionTitle, Skeleton, Card, EmptyState, Avatar } from '../components/ui';
 import { useAuth, type AuthUser } from '../store/auth';
 import { confirm } from '../store/confirm';
-import type { Friendship, FriendRequest, FriendUser } from '../lib/types';
+import type { Friendship, FriendRequest } from '../lib/types';
 
 export default function Friends() {
   const qc = useQueryClient();
@@ -123,7 +123,7 @@ export default function Friends() {
           <div className="divide-y">
             {incoming.map((r) => (
               <div key={r.id} className="flex items-center gap-3 py-2.5">
-                <Avatar user={r.user} />
+                <Avatar name={r.user.name} avatar={r.user.avatar} />
                 <p className="min-w-0 flex-1 truncate text-sm font-medium">{r.user.name}</p>
                 <button onClick={() => accept.mutate(r.id)} className="rounded-lg p-1.5 text-success hover:bg-success/10" aria-label="Aceptar">
                   <Check className="h-4 w-4" />
@@ -135,7 +135,7 @@ export default function Friends() {
             ))}
             {outgoing.map((r) => (
               <div key={r.id} className="flex items-center gap-3 py-2.5">
-                <Avatar user={r.user} />
+                <Avatar name={r.user.name} avatar={r.user.avatar} />
                 <p className="min-w-0 flex-1 truncate text-sm font-medium">{r.user.name}</p>
                 <span className="shrink-0 text-xs text-slate-400">Esperando respuesta</span>
                 <button onClick={() => remove.mutate(r.id)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger" aria-label="Cancelar">
@@ -158,7 +158,7 @@ export default function Friends() {
             <div className="divide-y">
               {friends.data.map((f) => (
                 <div key={f.id} className="flex items-center gap-3 py-3">
-                  <Avatar user={f.friend} />
+                  <Avatar name={f.friend.name} avatar={f.friend.avatar} />
                   <p className="min-w-0 flex-1 truncate text-sm font-medium">{f.friend.name}</p>
                   <button onClick={() => confirmRemove(f.id, f.friend.name)} className="text-slate-400 hover:text-danger" aria-label="Eliminar amigo">
                     <Trash2 className="h-4 w-4" />
@@ -169,14 +169,6 @@ export default function Friends() {
           </Card>
         )}
       </div>
-    </div>
-  );
-}
-
-function Avatar({ user }: { user: FriendUser }) {
-  return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-bold text-primary">
-      {user.avatar ? <img src={user.avatar} alt="" className="h-full w-full object-cover" /> : user.name?.[0]?.toUpperCase()}
     </div>
   );
 }

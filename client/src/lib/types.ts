@@ -45,6 +45,14 @@ export interface Task {
   createdAt: string;
 }
 
+export interface HabitMemberProgress {
+  id: string;
+  name: string;
+  avatar: string | null;
+  streak: number;
+  doneToday: boolean;
+}
+
 export interface Habit {
   id: string;
   name: string;
@@ -54,6 +62,14 @@ export interface Habit {
   frequency: string;
   targetPerWeek: number;
   logs: string[];
+  isOwner: boolean;
+  members?: HabitMemberProgress[];
+}
+
+export interface HabitInvite {
+  id: string;
+  habit: { id: string; name: string; icon: string; color: string };
+  invitedBy: { name: string };
 }
 export interface HabitStats {
   totalCompletions: number;

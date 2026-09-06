@@ -7,6 +7,18 @@ export function Card({ className, children }: { className?: string; children: Re
   return <div className={cn('card', className)}>{children}</div>;
 }
 
+/** Círculo con la foto de alguien, o su inicial si no tiene avatar. */
+export function Avatar({ name, avatar, size = 36 }: { name: string; avatar: string | null; size?: number }) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 font-bold text-primary"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : name?.[0]?.toUpperCase()}
+    </div>
+  );
+}
+
 export function SectionTitle({
   title,
   subtitle,

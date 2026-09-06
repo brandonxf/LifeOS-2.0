@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
-import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X, Check, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, Avatar } from '../components/ui';
 import { ColorWheel } from '../components/ColorWheel';
 import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
 import { useCompletionPulse, CompletionBurst, DrawnCheck } from '../components/AnimatedCheck';
 import { cn } from '../lib/utils';
-import type { Habit, Goal, GoalMilestone } from '../lib/types';
+import type { Habit, Goal, GoalMilestone, HabitInvite, Friendship } from '../lib/types';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { confirm } from '../store/confirm';
 import { bogotaISODate, shiftIsoDate } from '../lib/date';
@@ -172,10 +172,38 @@ export default function Habits() {
   const [habitModal, setHabitModal] = useState(false);
   const [goalModal, setGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [inviteHabit, setInviteHabit] = useState<Habit | null>(null);
   const today = bogotaISODate();
 
   const habits = useQuery({ queryKey: ['habits'], queryFn: () => api<Habit[]>('/api/habits') });
   const goals = useQuery({ queryKey: ['goals'], queryFn: () => api<Goal[]>('/api/goals') });
+  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends') });
+  const invites = useQuery({ queryKey: ['habits', 'invites'], queryFn: () => api<HabitInvite[]>('/api/habits/invites') });
+
+  const acceptInvite = useMutation({
+    mutationFn: (id: string) => api(`/api/habits/invites/${id}/accept`, { method: 'POST' }),
+    onSuccess: () => {
+      toast.success('¡Te uniste al hábito!');
+      qc.invalidateQueries({ queryKey: ['habits'] });
+      qc.invalidateQueries({ queryKey: ['habits', 'invites'] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const declineInvite = useMutation({
+    mutationFn: (id: string) => api(`/api/habits/invites/${id}/decline`, { method: 'POST' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['habits', 'invites'] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+  const invite = useMutation({
+    mutationFn: ({ habitId, friendId }: { habitId: string; friendId: string }) =>
+      api(`/api/habits/${habitId}/invite`, { method: 'POST', body: { friendId } }),
+    onSuccess: () => {
+      toast.success('Invitación enviada');
+      setInviteHabit(null);
+      qc.invalidateQueries({ queryKey: ['habits'] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const toggle = useMutation({
     mutationFn: (id: string) => api<{ done: boolean }>(`/api/habits/${id}/log`, { method: 'POST', body: { date: today } }),
@@ -229,6 +257,31 @@ export default function Habits() {
         <SectionTitle title="Hábitos" subtitle="Construye rachas, un día a la vez"
           action={<button onClick={() => setHabitModal(true)} className="btn-primary"><Plus className="h-4 w-4" /> Nuevo hábito</button>} />
 
+        {(invites.data?.length ?? 0) > 0 && (
+          <Card className="mb-4">
+            <h3 className="mb-3 text-sm font-semibold text-slate-500">Invitaciones a hábitos</h3>
+            <div className="divide-y">
+              {invites.data!.map((inv) => (
+                <div key={inv.id} className="flex items-center gap-3 py-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${inv.habit.color}22`, color: inv.habit.color }}>
+                    <HabitIcon name={inv.habit.icon} className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{inv.habit.name}</p>
+                    <p className="text-xs text-slate-400">Invitación de {inv.invitedBy.name}</p>
+                  </div>
+                  <button onClick={() => acceptInvite.mutate(inv.id)} className="rounded-lg p-1.5 text-success hover:bg-success/10" aria-label="Aceptar">
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => declineInvite.mutate(inv.id)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger" aria-label="Rechazar">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {habits.isLoading ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
         ) : !habits.data?.length ? (
@@ -277,7 +330,14 @@ export default function Habits() {
                         <div className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                           <Flame className="h-4 w-4" /> {streak(h.logs)}
                         </div>
-                        <button onClick={() => confirmDeleteHabit(h)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                        {h.isOwner && (
+                          <button onClick={() => setInviteHabit(h)} className="text-slate-300 hover:text-primary" aria-label="Invitar amigo">
+                            <UserPlus className="h-4 w-4" />
+                          </button>
+                        )}
+                        {h.isOwner && (
+                          <button onClick={() => confirmDeleteHabit(h)} className="text-slate-300 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                        )}
                       </div>
                     </div>
                     {badge && (
@@ -287,6 +347,20 @@ export default function Habits() {
                     )}
                     <Heatmap logs={h.logs} color={h.color} />
                     <p className="mt-2 text-xs text-slate-400">{h.logs.length} veces completado · últimas 17 semanas</p>
+                    {(h.members?.length ?? 0) > 0 && (
+                      <div className="mt-3 flex flex-wrap items-center gap-3 border-t pt-3">
+                        {h.members!.map((m) => (
+                          <div key={m.id} className="flex items-center gap-1.5" title={`${m.name} · racha de ${m.streak}`}>
+                            <div className={cn('rounded-full', m.doneToday && 'ring-2 ring-success ring-offset-2 dark:ring-offset-slate-900')}>
+                              <Avatar name={m.name} avatar={m.avatar} size={28} />
+                            </div>
+                            <span className="flex items-center gap-0.5 text-xs font-medium text-slate-500">
+                              <Flame className="h-3 w-3 text-amber-500" /> {m.streak}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </Card>
                 );
               })}
@@ -345,7 +419,47 @@ export default function Habits() {
 
       <HabitModal open={habitModal} onClose={() => setHabitModal(false)} />
       <GoalModal open={goalModal} onClose={() => setGoalModal(false)} editing={editingGoal} />
+      <InviteModal
+        habit={inviteHabit}
+        friends={friends.data ?? []}
+        onClose={() => setInviteHabit(null)}
+        onInvite={(friendId) => invite.mutate({ habitId: inviteHabit!.id, friendId })}
+        pending={invite.isPending}
+      />
     </div>
+  );
+}
+
+function InviteModal({
+  habit, friends, onClose, onInvite, pending,
+}: {
+  habit: Habit | null;
+  friends: Friendship[];
+  onClose: () => void;
+  onInvite: (friendId: string) => void;
+  pending: boolean;
+}) {
+  const memberIds = new Set((habit?.members ?? []).map((m) => m.id));
+  const candidates = friends.filter((f) => !memberIds.has(f.friend.id));
+
+  return (
+    <Modal open={!!habit} onClose={onClose} title={habit ? `Invitar a "${habit.name}"` : ''}>
+      {!candidates.length ? (
+        <p className="text-sm text-slate-400">
+          {friends.length ? 'Ya invitaste a todos tus amigos a este hábito.' : 'Agrega amigos primero desde la sección Amigos.'}
+        </p>
+      ) : (
+        <div className="divide-y">
+          {candidates.map((f) => (
+            <div key={f.id} className="flex items-center gap-3 py-2.5">
+              <Avatar name={f.friend.name} avatar={f.friend.avatar} size={32} />
+              <p className="min-w-0 flex-1 truncate text-sm font-medium">{f.friend.name}</p>
+              <button onClick={() => onInvite(f.friend.id)} disabled={pending} className="btn-primary h-8 px-3 text-xs">Invitar</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }
 

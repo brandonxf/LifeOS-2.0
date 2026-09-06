@@ -51,7 +51,35 @@ export const habitLogs = pgTable(
   (t) => ({
     habitIdx: index('habit_logs_habit_idx').on(t.habitId),
     userDateIdx: index('habit_logs_user_date_idx').on(t.userId, t.date),
-    uniqueLog: unique('habit_logs_unique').on(t.habitId, t.date),
+    // Antes era (habit_id, date): con hábitos compartidos, dos miembros
+    // distintos deben poder marcar el mismo hábito el mismo día.
+    uniqueLog: unique('habit_logs_unique').on(t.habitId, t.userId, t.date),
+  }),
+);
+
+export const habitMembers = pgTable(
+  'habit_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    habitId: uuid('habit_id')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: text('status', { enum: ['invited', 'active'] })
+      .notNull()
+      .default('invited'),
+    invitedBy: uuid('invited_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => ({
+    habitIdx: index('habit_members_habit_idx').on(t.habitId),
+    userIdx: index('habit_members_user_idx').on(t.userId),
+    uniqueMember: unique('habit_members_unique').on(t.habitId, t.userId),
   }),
 );
 
@@ -102,6 +130,8 @@ export const goalMilestones = pgTable(
 
 export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
+export type HabitMember = typeof habitMembers.$inferSelect;
+export type NewHabitMember = typeof habitMembers.$inferInsert;
 export type HabitLog = typeof habitLogs.$inferSelect;
 export type NewHabitLog = typeof habitLogs.$inferInsert;
 export type Goal = typeof goals.$inferSelect;
