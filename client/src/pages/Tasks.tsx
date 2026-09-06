@@ -30,6 +30,7 @@ export default function Tasks() {
   const [view, setView] = useState<'board' | 'list'>('board');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
+  const [viewing, setViewing] = useState<Task | null>(null);
   const [filterPriority, setFilterPriority] = useState('');
   const [filterTag, setFilterTag] = useState('');
 
@@ -167,7 +168,7 @@ export default function Tasks() {
                         <Draggable draggableId={task.id} index={index} key={task.id}>
                           {(prov, snap) => (
                             <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
-                              onClick={() => { setEditing(task); setModalOpen(true); }}
+                              onClick={() => setViewing(task)}
                               className={cn('cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition dark:bg-slate-900', snap.isDragging && 'rotate-1 shadow-lg')}>
                               <TaskCard task={task} onDelete={() => confirmDelete(task)} onMove={(status) => changeStatus(task, status)} />
                             </div>
@@ -193,7 +194,7 @@ export default function Tasks() {
                   onChange={() => changeStatus(task, task.status === 'done' ? 'todo' : 'done')}
                   size={18}
                 />
-                <div className="min-w-0 flex-1 cursor-pointer" onClick={() => { setEditing(task); setModalOpen(true); }}>
+                <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setViewing(task)}>
                   <p className={cn('truncate text-sm font-medium', task.status === 'done' && 'text-slate-400 line-through')}>{task.title}</p>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
                     <span className={cn('chip', PRIORITY_STYLES[task.priority])}>{PRIORITY_LABELS[task.priority]}</span>
@@ -209,7 +210,39 @@ export default function Tasks() {
       )}
 
       <TaskModal open={modalOpen} onClose={() => setModalOpen(false)} editing={editing} />
+      <TaskViewModal
+        task={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(t) => { setViewing(null); setEditing(t); setModalOpen(true); }}
+      />
     </div>
+  );
+}
+
+function TaskViewModal({ task, onClose, onEdit }: { task: Task | null; onClose: () => void; onEdit: (t: Task) => void }) {
+  const overdue = task?.dueDate && isPast(parseISO(task.dueDate)) && !isToday(parseISO(task.dueDate)) && task.status !== 'done';
+  return (
+    <Modal open={!!task} onClose={onClose} title={task?.title || 'Tarea'} wide>
+      {task && (
+        <div className="space-y-4">
+          {task.description && (
+            <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{task.description}</p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={cn('chip', PRIORITY_STYLES[task.priority])}>
+              <Flag className="h-3 w-3" /> {PRIORITY_LABELS[task.priority]}
+            </span>
+            {task.dueDate && (
+              <span className={cn('chip', overdue ? 'bg-danger/10 text-danger' : 'bg-slate-100 text-slate-500 dark:bg-slate-800')}>
+                <Calendar className="h-3 w-3" /> {format(parseISO(task.dueDate), "MMM d, yyyy")}
+              </span>
+            )}
+            {task.tags.map((tag) => <span key={tag} className="chip bg-primary/10 text-primary">#{tag}</span>)}
+          </div>
+          <button onClick={() => onEdit(task)} className="btn-primary w-full">Editar</button>
+        </div>
+      )}
+    </Modal>
   );
 }
 

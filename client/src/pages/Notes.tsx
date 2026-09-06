@@ -45,6 +45,7 @@ export default function Notes() {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Note | null>(null);
+  const [viewing, setViewing] = useState<Note | null>(null);
   const [search, setSearch] = useState('');
   const [semantic, setSemantic] = useState(false);
   const [debounced, setDebounced] = useState('');
@@ -144,7 +145,7 @@ export default function Notes() {
                   'prose prose-invert max-w-none whitespace-pre-wrap text-white/80 [&_a]:text-white cursor-pointer',
                   FONT_CLASS[n.font], SIZE_CLASS[n.fontSize], ALIGN_CLASS[n.align],
                 )}
-                onClick={() => { setEditing(n); setModalOpen(true); }}
+                onClick={() => setViewing(n)}
               >
                 <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>{n.content}</ReactMarkdown>
               </div>
@@ -162,7 +163,38 @@ export default function Notes() {
       )}
 
       <NoteModal open={modalOpen} onClose={() => setModalOpen(false)} editing={editing} />
+      <NoteViewModal
+        note={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(n) => { setViewing(null); setEditing(n); setModalOpen(true); }}
+      />
     </div>
+  );
+}
+
+function NoteViewModal({ note, onClose, onEdit }: { note: Note | null; onClose: () => void; onEdit: (n: Note) => void }) {
+  return (
+    <Modal open={!!note} onClose={onClose} title={note?.title || 'Nota'} wide>
+      {note && (
+        <div className="space-y-4">
+          <div
+            className={cn(
+              'prose prose-invert max-w-none whitespace-pre-wrap rounded-2xl p-4 text-white/90 [&_a]:text-white',
+              FONT_CLASS[note.font], SIZE_CLASS[note.fontSize], ALIGN_CLASS[note.align],
+            )}
+            style={{ backgroundColor: note.color }}
+          >
+            <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>{note.content}</ReactMarkdown>
+          </div>
+          {note.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {note.tags.map((t) => <span key={t} className="chip bg-primary/10 text-primary">#{t}</span>)}
+            </div>
+          )}
+          <button onClick={() => onEdit(note)} className="btn-primary w-full">Editar</button>
+        </div>
+      )}
+    </Modal>
   );
 }
 

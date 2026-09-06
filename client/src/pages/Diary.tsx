@@ -23,6 +23,7 @@ export default function Diary() {
   const performanceModeEnabled = useSettings((s) => s.performanceModeEnabled);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<DiaryEntry | null>(null);
+  const [viewing, setViewing] = useState<DiaryEntry | null>(null);
   const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null);
 
   const entries = useQuery({ queryKey: ['diary'], queryFn: () => api<DiaryEntry[]>('/api/diary') });
@@ -80,15 +81,15 @@ export default function Diary() {
                 <MoodFace mood={e.mood} className="h-7 w-7" style={{ color: MOOD_COLORS[e.mood] }} />
                 <div className="mt-2 h-full w-1 rounded-full" style={{ backgroundColor: MOOD_COLORS[e.mood] }} />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setViewing(e)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold">{e.title || 'Sin título'}</h3>
                     <p className="text-xs capitalize text-slate-400">{format(parseISO(e.date), "EEEE, d 'de' MMMM 'de' yyyy")}</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setEditing(e); setModalOpen(true); }} className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-primary">Editar</button>
-                    <button onClick={() => confirmDeleteEntry(e)} className="rounded-lg p-1.5 text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={(ev) => { ev.stopPropagation(); setEditing(e); setModalOpen(true); }} className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:text-primary">Editar</button>
+                    <button onClick={(ev) => { ev.stopPropagation(); confirmDeleteEntry(e); }} className="rounded-lg p-1.5 text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
                 <ExpandableText
@@ -103,7 +104,7 @@ export default function Diary() {
                       <button
                         key={i}
                         type="button"
-                        onClick={() => setLightbox({ photos: e.photos, index: i })}
+                        onClick={(ev) => { ev.stopPropagation(); setLightbox({ photos: e.photos, index: i }); }}
                         className="shrink-0"
                       >
                         <img src={src} alt="" className="h-16 w-16 rounded-lg object-cover transition hover:opacity-80" />
@@ -123,6 +124,12 @@ export default function Diary() {
       )}
 
       <DiaryModal open={modalOpen} onClose={() => setModalOpen(false)} editing={editing} />
+      <DiaryViewModal
+        entry={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(e) => { setViewing(null); setEditing(e); setModalOpen(true); }}
+        onPhotoClick={(photos, index) => setLightbox({ photos, index })}
+      />
 
       {lightbox && (
         <Lightbox
@@ -133,6 +140,47 @@ export default function Diary() {
         />
       )}
     </div>
+  );
+}
+
+function DiaryViewModal({
+  entry, onClose, onEdit, onPhotoClick,
+}: {
+  entry: DiaryEntry | null;
+  onClose: () => void;
+  onEdit: (e: DiaryEntry) => void;
+  onPhotoClick: (photos: string[], index: number) => void;
+}) {
+  return (
+    <Modal open={!!entry} onClose={onClose} title={entry?.title || 'Entrada'} wide>
+      {entry && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <MoodFace mood={entry.mood} className="h-6 w-6" style={{ color: MOOD_COLORS[entry.mood] }} />
+            <p className="text-xs capitalize text-slate-400">{format(parseISO(entry.date), "EEEE, d 'de' MMMM 'de' yyyy")}</p>
+          </div>
+          <div
+            className="prose prose-sm dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: entry.content }}
+          />
+          {entry.photos?.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {entry.photos.map((src, i) => (
+                <button key={i} type="button" onClick={() => onPhotoClick(entry.photos, i)} className="shrink-0">
+                  <img src={src} alt="" className="h-20 w-20 rounded-lg object-cover transition hover:opacity-80" />
+                </button>
+              ))}
+            </div>
+          )}
+          {entry.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {entry.tags.map((t) => <span key={t} className="chip bg-primary/10 text-primary">#{t}</span>)}
+            </div>
+          )}
+          <button onClick={() => onEdit(entry)} className="btn-primary w-full">Editar</button>
+        </div>
+      )}
+    </Modal>
   );
 }
 
