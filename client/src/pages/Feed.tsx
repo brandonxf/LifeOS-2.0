@@ -5,10 +5,11 @@ import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Card, EmptyState, Avatar } from '../components/ui';
 import { cn } from '../lib/utils';
 import type { ActivityEvent } from '../lib/types';
+import { LIVE_FAST } from '../lib/live';
 
 export default function Feed() {
   const qc = useQueryClient();
-  const feed = useQuery({ queryKey: ['feed'], queryFn: () => api<ActivityEvent[]>('/api/feed') });
+  const feed = useQuery({ queryKey: ['feed'], queryFn: () => api<ActivityEvent[]>('/api/feed'), ...LIVE_FAST });
 
   const react = useMutation({
     mutationFn: (id: string) => api<{ reactionCount: number; reactedByMe: boolean }>(`/api/feed/${id}/react`, { method: 'POST' }),

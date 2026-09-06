@@ -10,6 +10,7 @@ import { HabitIcon, HABIT_ICON_KEYS } from '../components/icons';
 import { useCompletionPulse, CompletionBurst, DrawnCheck } from '../components/AnimatedCheck';
 import { cn } from '../lib/utils';
 import type { Habit, Goal, GoalMilestone, HabitInvite, Friendship } from '../lib/types';
+import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { confirm } from '../store/confirm';
 import { bogotaISODate, shiftIsoDate } from '../lib/date';
@@ -186,10 +187,10 @@ export default function Habits() {
   const [inviteHabit, setInviteHabit] = useState<Habit | null>(null);
   const today = bogotaISODate();
 
-  const habits = useQuery({ queryKey: ['habits'], queryFn: () => api<Habit[]>('/api/habits') });
+  const habits = useQuery({ queryKey: ['habits'], queryFn: () => api<Habit[]>('/api/habits'), ...LIVE_FAST });
   const goals = useQuery({ queryKey: ['goals'], queryFn: () => api<Goal[]>('/api/goals') });
-  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends') });
-  const invites = useQuery({ queryKey: ['habits', 'invites'], queryFn: () => api<HabitInvite[]>('/api/habits/invites') });
+  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends'), ...LIVE_SLOW });
+  const invites = useQuery({ queryKey: ['habits', 'invites'], queryFn: () => api<HabitInvite[]>('/api/habits/invites'), ...LIVE_SLOW });
 
   const acceptInvite = useMutation({
     mutationFn: (id: string) => api(`/api/habits/invites/${id}/accept`, { method: 'POST' }),

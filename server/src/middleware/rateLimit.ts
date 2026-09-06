@@ -3,10 +3,13 @@ import { cache } from '../lib/redis.js';
 
 /**
  * Sliding-window-ish rate limiter backed by Redis (falls back to memory).
- * 100 requests / 15 minutes, keyed per authenticated user (or IP for public routes).
+ * 300 requests / 5 minutos (~60/min sostenido), por usuario autenticado (o
+ * IP en rutas públicas). Antes era 100/15min (~6.7/min) — se subió para que
+ * el polling de Amigos/Hábitos/Tareas/Actividad (cada pocos segundos
+ * mientras esas pantallas están abiertas) no choque con el límite.
  */
-const WINDOW_SECONDS = 15 * 60;
-const MAX_REQUESTS = 100;
+const WINDOW_SECONDS = 5 * 60;
+const MAX_REQUESTS = 300;
 
 export function rateLimiter(max = MAX_REQUESTS, windowSeconds = WINDOW_SECONDS) {
   return async (req: Request, res: Response, next: NextFunction) => {

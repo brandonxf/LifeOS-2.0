@@ -7,6 +7,7 @@ import { SectionTitle, Skeleton, Card, EmptyState, Avatar } from '../components/
 import { useAuth, type AuthUser } from '../store/auth';
 import { confirm } from '../store/confirm';
 import type { Friendship, FriendRequest } from '../lib/types';
+import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
 
 export default function Friends() {
   const qc = useQueryClient();
@@ -24,10 +25,11 @@ export default function Friends() {
     },
   });
 
-  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends') });
+  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends'), ...LIVE_FAST });
   const requests = useQuery({
     queryKey: ['friends', 'requests'],
     queryFn: () => api<{ incoming: FriendRequest[]; outgoing: FriendRequest[] }>('/api/friends/requests'),
+    ...LIVE_SLOW,
   });
 
   function invalidateAll() {

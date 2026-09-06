@@ -9,6 +9,7 @@ import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText,
 import { AnimatedCheckbox } from '../components/AnimatedCheck';
 import { cn, PRIORITY_STYLES } from '../lib/utils';
 import type { Task, Friendship, TaskInvite } from '../lib/types';
+import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { cancelTaskReminder, scheduleTaskReminder } from '../lib/notifications';
 import { useSettings } from '../store/settings';
@@ -35,9 +36,9 @@ export default function Tasks() {
   const [filterPriority, setFilterPriority] = useState('');
   const [filterTag, setFilterTag] = useState('');
 
-  const tasks = useQuery({ queryKey: ['tasks'], queryFn: () => api<Task[]>('/api/tasks') });
-  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends') });
-  const invites = useQuery({ queryKey: ['tasks', 'invites'], queryFn: () => api<TaskInvite[]>('/api/tasks/invites') });
+  const tasks = useQuery({ queryKey: ['tasks'], queryFn: () => api<Task[]>('/api/tasks'), ...LIVE_FAST });
+  const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends'), ...LIVE_SLOW });
+  const invites = useQuery({ queryKey: ['tasks', 'invites'], queryFn: () => api<TaskInvite[]>('/api/tasks/invites'), ...LIVE_SLOW });
 
   const acceptInvite = useMutation({
     mutationFn: (id: string) => api(`/api/tasks/invites/${id}/accept`, { method: 'POST' }),
