@@ -27,6 +27,9 @@ export const habits = pgTable(
       .notNull()
       .default('daily'),
     targetPerWeek: integer('target_per_week').notNull().default(7),
+    // Si es true, mis check-ins de este hábito aparecen en el feed de mis
+    // amigos aunque no estén invitados como miembros de este hábito.
+    shareProgress: boolean('share_progress').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },

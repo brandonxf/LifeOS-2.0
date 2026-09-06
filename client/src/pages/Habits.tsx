@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
-import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X, Check, UserPlus } from 'lucide-react';
+import { Plus, Trash2, Flame, Target, Trophy, ChevronDown, ChevronUp, X, Check, UserPlus, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, Avatar, FriendPickerModal } from '../components/ui';
@@ -180,6 +180,7 @@ function HabitChecklistButton({ habit, done, onToggle }: { habit: Habit; done: b
 export default function Habits() {
   const qc = useQueryClient();
   const [habitModal, setHabitModal] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [goalModal, setGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [inviteHabit, setInviteHabit] = useState<Habit | null>(null);
@@ -265,7 +266,7 @@ export default function Habits() {
       {/* Today's checklist */}
       <div>
         <SectionTitle title="Hábitos" subtitle="Construye rachas, un día a la vez"
-          action={<button onClick={() => setHabitModal(true)} className="btn-primary"><Plus className="h-4 w-4" /> Nuevo hábito</button>} />
+          action={<button onClick={() => { setEditingHabit(null); setHabitModal(true); }} className="btn-primary"><Plus className="h-4 w-4" /> Nuevo hábito</button>} />
 
         {(invites.data?.length ?? 0) > 0 && (
           <Card className="mb-4">
@@ -296,7 +297,7 @@ export default function Habits() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
         ) : !habits.data?.length ? (
           <EmptyState icon={Flame} title="Aún no hay hábitos" description="Agrega un hábito para empezar a registrar tus rachas."
-            action={<button onClick={() => setHabitModal(true)} className="btn-primary"><Plus className="h-4 w-4" /> Nuevo hábito</button>} />
+            action={<button onClick={() => { setEditingHabit(null); setHabitModal(true); }} className="btn-primary"><Plus className="h-4 w-4" /> Nuevo hábito</button>} />
         ) : (
           <>
             <Card className="mb-4">
@@ -340,6 +341,11 @@ export default function Habits() {
                         <div className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                           <Flame className="h-4 w-4" /> {streak(h.logs)}
                         </div>
+                        {h.isOwner && (
+                          <button onClick={() => { setEditingHabit(h); setHabitModal(true); }} className="text-slate-300 hover:text-primary" aria-label="Editar hábito">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
                         {h.isOwner && (
                           <button onClick={() => setInviteHabit(h)} className="text-slate-300 hover:text-primary" aria-label="Invitar amigo">
                             <UserPlus className="h-4 w-4" />
@@ -430,7 +436,7 @@ export default function Habits() {
         )}
       </div>
 
-      <HabitModal open={habitModal} onClose={() => setHabitModal(false)} />
+      <HabitModal open={habitModal} onClose={() => setHabitModal(false)} editing={editingHabit} />
       <GoalModal open={goalModal} onClose={() => setGoalModal(false)} editing={editingGoal} />
       <InviteModal
         habit={inviteHabit}
@@ -470,24 +476,38 @@ function InviteModal({
 
 const HABIT_COLORS = ['#37e779', '#0d9488', '#f59e0b', '#22c55e', '#f43f5e', '#e879f9', '#a3e635'];
 
-function HabitModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function HabitModal({ open, onClose, editing }: { open: boolean; onClose: () => void; editing: Habit | null }) {
   const qc = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('flame');
   const [color, setColor] = useState('#37e779');
+  const [shareProgress, setShareProgress] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  useEffect(() => { if (open) { setName(''); setDescription(''); setIcon('flame'); setColor('#37e779'); } }, [open]);
+  useEffect(() => {
+    if (open) {
+      setName(editing?.name ?? '');
+      setDescription(editing?.description ?? '');
+      setIcon(editing?.icon ?? 'flame');
+      setColor(editing?.color ?? '#37e779');
+      setShareProgress(editing?.shareProgress ?? false);
+    }
+  }, [open, editing]);
 
   const save = useMutation({
-    mutationFn: () => api('/api/habits', { method: 'POST', body: { name, description, icon, color } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['habits'] }); toast.success('Hábito creado'); onClose(); },
+    mutationFn: () => {
+      const body = { name, description, icon, color, shareProgress };
+      return editing
+        ? api(`/api/habits/${editing.id}`, { method: 'PUT', body })
+        : api('/api/habits', { method: 'POST', body });
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['habits'] }); toast.success(editing ? 'Hábito actualizado' : 'Hábito creado'); onClose(); },
     onError: (e: any) => toast.error(e.message),
   });
 
   return (
-    <Modal open={open} onClose={onClose} title="Nuevo hábito">
+    <Modal open={open} onClose={onClose} title={editing ? 'Editar hábito' : 'Nuevo hábito'}>
       <form onSubmit={(e) => { e.preventDefault(); if (!name.trim()) return toast.error('El nombre es obligatorio'); save.mutate(); }} className="space-y-4">
         <Field label="Nombre"><input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Ejercicio matutino" /></Field>
         <Field label="Descripción"><input className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" /></Field>
@@ -523,7 +543,14 @@ function HabitModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             </button>
           </div>
         </Field>
-        <button type="submit" className="btn-primary w-full" disabled={save.isPending}>Crear hábito</button>
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-sm">
+          <input type="checkbox" checked={shareProgress} onChange={(e) => setShareProgress(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+          <span>
+            <span className="font-medium">Compartir mi progreso con mis amigos</span>
+            <span className="mt-0.5 block text-xs text-slate-400">Tus check-ins aparecen en el feed de tus amigos, aunque no los invites a este hábito.</span>
+          </span>
+        </label>
+        <button type="submit" className="btn-primary w-full" disabled={save.isPending}>{editing ? 'Guardar cambios' : 'Crear hábito'}</button>
       </form>
 
       <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Color personalizado">

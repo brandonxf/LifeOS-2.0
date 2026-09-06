@@ -18,6 +18,7 @@ import notesRoutes from './routes/notes.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import friendsRoutes from './routes/friends.routes.js';
+import feedRoutes from './routes/feed.routes.js';
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/friends', friendsRoutes);
+app.use('/api/feed', feedRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
