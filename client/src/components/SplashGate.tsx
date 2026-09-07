@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { AppLoader } from './Brand';
 
 // Deja terminar la secuencia completa del splash — logo (zambullida +
-// destello, ~0.9s), luego "Life OS" letra-por-letra (arranca a los 550ms,
-// termina ~2.1s) y por último la barra de progreso, que se deja varios
-// ciclos visible (arranca a los 1900ms) antes de pasar a login/dashboard.
-const SPLASH_DURATION = 4200;
+// destello, 1.4s bien apreciable), luego "Life OS" letra-por-letra (arranca
+// a los 1150ms, termina ~2.7s) y por último la barra de progreso, que se
+// deja varios ciclos visible (arranca a los 2500ms) antes de pasar a
+// login/dashboard.
+const SPLASH_DURATION = 5000;
 
 /** Splash de marca al abrir la app: se muestra una sola vez al arrancar,
  *  antes que nada más (login incluido). */

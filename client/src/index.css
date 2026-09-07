@@ -189,8 +189,9 @@
 /* Logo del splash: zambullida cinematográfica (desenfocado y a menor escala
    -> foco a su tamaño final, con un ligero rebote) más un destello radial
    detrás que se expande y se apaga, al estilo de la animación de marca de
-   Netflix. El título letra-por-letra arranca con la cola de esta animación
-   ya encima (ver el delay base en AppLoader). */
+   Netflix. Dura 1.4s para que se alcance a apreciar antes de que arranque
+   el título letra-por-letra (ver el delay base en AppLoader, pensado para
+   solaparse solo con la cola de esta animación). */
 @keyframes logo-reveal {
   0% {
     opacity: 0;
@@ -225,11 +226,11 @@
 }
 .logo-reveal {
   opacity: 0;
-  animation: logo-reveal 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: logo-reveal 1400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .logo-glow {
   opacity: 0;
-  animation: logo-glow 900ms ease-out forwards;
+  animation: logo-glow 1400ms ease-out forwards;
 }
 /* Bloque de la barra de progreso + texto de ayuda: entra después del logo y
    el título, para que la secuencia se lea de arriba a abajo en vez de

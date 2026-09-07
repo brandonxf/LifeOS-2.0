@@ -226,14 +226,14 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
                 key={i}
                 aria-hidden="true"
                 className="loader-letter"
-                style={{ animationDelay: `${550 + i * 150}ms` }}
+                style={{ animationDelay: `${1150 + i * 150}ms` }}
               >
               {ch === ' ' ? ' ' : ch}
               </span>
             ))}
           </h1>
         </div>
-        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '1900ms' }}>
+        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '2500ms' }}>
           <div className="progress-track h-1.5 w-56" />
           <p className="text-sm text-slate-400">{label}</p>
         </div>
