@@ -22,6 +22,39 @@ export function Logo({ size = 36, className }: { size?: number; className?: stri
   );
 }
 
+const LOGO_PART_BAR =
+  'M2331 11468 c-41 -5 -117 -23 -170 -40 -173 -55 -290 -125 -412 -247 -146 -146 -238 -320 -284 -536 -13 -61 -15 -449 -15 -3012 0 -1896 4 -2997 10 -3095 31 -462 136 -917 305 -1328 56 -135 184 -391 267 -530 132 -223 226 -354 448 -625 134 -163 446 -456 680 -637 274 -212 702 -456 1020 -583 52 -21 127 -50 165 -65 39 -16 129 -46 200 -69 618 -192 1111 -251 1915 -231 1087 28 1316 55 1583 185 89 43 208 141 272 223 205 260 227 635 56 932 -61 104 -201 240 -312 302 -172 96 -286 111 -684 90 -431 -22 -1147 -22 -1340 1 -713 85 -1282 315 -1745 703 -230 193 -449 481 -571 750 -82 181 -155 427 -190 644 -28 172 -29 257 -32 3685 -2 2429 -3 2585 -20 2662 -42 197 -135 377 -263 513 -223 236 -549 350 -883 308z';
+const LOGO_PART_RING =
+  'M6020 10769 c-329 -22 -653 -72 -810 -126 -343 -116 -557 -385 -577 -728 -13 -223 59 -415 217 -576 128 -130 290 -206 486 -229 79 -9 149 -8 349 5 946 60 1490 8 2063 -196 279 -99 599 -263 851 -436 686 -469 1195 -1145 1445 -1920 70 -215 90 -288 121 -448 173 -876 0 -1803 -482 -2579 -81 -131 -214 -312 -308 -421 -126 -145 -193 -254 -229 -375 -26 -83 -32 -259 -12 -350 31 -147 134 -317 250 -411 82 -67 222 -134 321 -155 113 -23 272 -15 381 20 194 62 382 225 666 576 82 102 103 130 216 293 102 147 243 391 337 582 274 558 436 1112 501 1720 20 192 24 674 5 865 -24 258 -77 573 -142 850 -49 208 -166 576 -225 707 -14 32 -44 103 -66 158 -75 188 -227 473 -412 775 -289 470 -760 988 -1232 1356 -745 579 -1587 916 -2564 1025 -150 17 -263 22 -600 24 -228 2 -476 -1 -550 -6z';
+const LOGO_PART_DOT =
+  'M6385 6599 c-434 -63 -824 -346 -1010 -734 -225 -467 -160 -1003 169 -1412 130 -161 308 -294 502 -376 205 -86 348 -112 573 -104 239 8 433 69 643 201 297 186 517 499 589 837 32 147 33 411 2 549 -122 547 -555 953 -1100 1035 -110 16 -271 18 -368 4z';
+
+/** Variante del isotipo solo para el splash: la barra, el aro y el punto
+ *  entran cada uno por su lado y encajan en su sitio formando el logo,
+ *  en vez del zoom simple de `Logo` (ver los keyframes `part-*-in` y
+ *  `assemble-bounce` en index.css). */
+export function LogoAssemble({ size = 144, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 1312 1199"
+      width={size}
+      height={size}
+      className={cn('shrink-0 text-primary', className)}
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label="Life OS"
+    >
+      <g transform="translate(0,1199) scale(0.1,-0.1)" fill="currentColor">
+        <g className="logo-assemble-bounce">
+          <path className="logo-part logo-part-bar" d={LOGO_PART_BAR} />
+          <path className="logo-part logo-part-ring" d={LOGO_PART_RING} />
+          <path className="logo-part logo-part-dot" d={LOGO_PART_DOT} />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
 /** Isotipo + "Life OS" en un solo lockup. El isotipo y "OS" siguen el acento
  *  (`currentColor`, `text-primary` por defecto); "Life" queda en blanco opaco
  *  a propósito: solo úsalo sobre fondos oscuros fijos (paneles de auth),
@@ -212,9 +245,9 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
               aria-hidden="true"
               className="logo-glow absolute h-40 w-40 rounded-full bg-primary blur-2xl"
             />
-            <Logo
+            <LogoAssemble
               size={144}
-              className="logo-reveal relative drop-shadow-[0_2px_30px_rgb(var(--primary)/0.55)]"
+              className="relative drop-shadow-[0_2px_30px_rgb(var(--primary)/0.55)]"
             />
           </div>
           <h1
@@ -226,14 +259,14 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
                 key={i}
                 aria-hidden="true"
                 className="loader-letter"
-                style={{ animationDelay: `${1150 + i * 150}ms` }}
+                style={{ animationDelay: `${1250 + i * 150}ms` }}
               >
               {ch === ' ' ? ' ' : ch}
               </span>
             ))}
           </h1>
         </div>
-        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '2500ms' }}>
+        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '2600ms' }}>
           <div className="progress-track h-1.5 w-56" />
           <p className="text-sm text-slate-400">{label}</p>
         </div>
