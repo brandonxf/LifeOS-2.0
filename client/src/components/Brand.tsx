@@ -206,6 +206,16 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
     <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col items-center justify-center gap-10 bg-ink-950 text-center">
       <Ambient />
       <div className="relative z-10 flex flex-col items-center gap-8">
+        <div className="relative flex h-28 w-28 items-center justify-center">
+          <span
+            aria-hidden="true"
+            className="logo-glow absolute h-24 w-24 rounded-full bg-primary blur-2xl"
+          />
+          <Logo
+            size={88}
+            className="logo-reveal relative drop-shadow-[0_2px_30px_rgb(var(--primary)/0.55)]"
+          />
+        </div>
         <h1
           aria-label={word}
           className="font-display text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_30px_rgb(var(--primary)/0.45)] sm:text-8xl"
@@ -215,13 +225,13 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
               key={i}
               aria-hidden="true"
               className="loader-letter"
-              style={{ animationDelay: `${i * 150}ms` }}
+              style={{ animationDelay: `${550 + i * 150}ms` }}
             >
               {ch === ' ' ? ' ' : ch}
             </span>
           ))}
         </h1>
-        <div className="flex flex-col items-center gap-4">
+        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '1900ms' }}>
           <div className="progress-track h-1.5 w-56" />
           <p className="text-sm text-slate-400">{label}</p>
         </div>

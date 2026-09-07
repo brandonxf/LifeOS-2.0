@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { AppLoader } from './Brand';
 
-// Deja terminar la animación letra-por-letra de "Life OS" (dura ~1.5s) con
-// un pequeño margen antes de pasar a login/dashboard.
-const SPLASH_DURATION = 1900;
+// Deja terminar la secuencia completa del splash — logo (zambullida +
+// destello, ~0.9s), luego "Life OS" letra-por-letra (arranca a los 550ms,
+// termina ~2.1s) y por último la barra de progreso — con un pequeño margen
+// antes de pasar a login/dashboard.
+const SPLASH_DURATION = 2600;
 
 /** Splash de marca al abrir la app: se muestra una sola vez al arrancar,
  *  antes que nada más (login incluido). */

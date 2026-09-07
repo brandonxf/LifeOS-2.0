@@ -186,6 +186,58 @@
   opacity: 0;
   animation: letter-in 0.62s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
+/* Logo del splash: zambullida cinematográfica (desenfocado y a menor escala
+   -> foco a su tamaño final, con un ligero rebote) más un destello radial
+   detrás que se expande y se apaga, al estilo de la animación de marca de
+   Netflix. El título letra-por-letra arranca con la cola de esta animación
+   ya encima (ver el delay base en AppLoader). */
+@keyframes logo-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+    filter: blur(16px);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  72% {
+    transform: scale(1.14);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes logo-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  45% {
+    opacity: 0.85;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+.logo-reveal {
+  opacity: 0;
+  animation: logo-reveal 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.logo-glow {
+  opacity: 0;
+  animation: logo-glow 900ms ease-out forwards;
+}
+/* Bloque de la barra de progreso + texto de ayuda: entra después del logo y
+   el título, para que la secuencia se lea de arriba a abajo en vez de
+   aparecer todo junto con el resto del splash. */
+.loader-progress {
+  opacity: 0;
+  animation: letter-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
 .animate-orbit {
   transform-origin: 60px 60px;
   animation: orbit-spin 3.4s linear infinite;
@@ -288,12 +340,17 @@
   .animate-pulse-soft,
   .animate-blob,
   .loader-letter,
+  .logo-reveal,
+  .logo-glow,
+  .loader-progress,
   .fab-item,
   .progress-track::after {
     animation-duration: 0.001ms;
     animation-iteration-count: 1;
   }
-  .loader-letter {
+  .loader-letter,
+  .logo-reveal,
+  .loader-progress {
     opacity: 1;
   }
   .toast-bubble {
@@ -392,6 +449,9 @@
 .perf-mode .animate-orbit,
 .perf-mode .animate-pulse-soft,
 .perf-mode .loader-letter,
+.perf-mode .logo-reveal,
+.perf-mode .logo-glow,
+.perf-mode .loader-progress,
 .perf-mode .fab-item,
 .perf-mode .progress-track::after {
   animation-duration: 0.001ms;
