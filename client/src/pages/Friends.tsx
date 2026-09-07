@@ -8,11 +8,15 @@ import { useAuth, type AuthUser } from '../store/auth';
 import { confirm } from '../store/confirm';
 import type { Friendship, FriendRequest } from '../lib/types';
 import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
+import { DrawnCheck, useCompletionPulse, CompletionBurst } from '../components/AnimatedCheck';
+import { cn } from '../lib/utils';
 
 export default function Friends() {
   const qc = useQueryClient();
   const { user, setUser } = useAuth();
   const [code, setCode] = useState('');
+  const [copied, setCopied] = useState(false);
+  const copyPulse = useCompletionPulse(copied);
 
   // Refresca el perfil por si el código de amigo aún no se había generado
   // (cuentas creadas antes de que existiera este sistema).
@@ -75,6 +79,8 @@ export default function Friends() {
     try {
       await navigator.clipboard.writeText(user.friendCode);
       toast.success('Código copiado');
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
     } catch {
       toast.error('No se pudo copiar el código');
     }
@@ -94,8 +100,16 @@ export default function Friends() {
           <span className="rounded-xl border bg-slate-100 px-4 py-2 font-mono text-lg tracking-widest dark:bg-slate-900">
             {user?.friendCode ?? '·······'}
           </span>
-          <button onClick={copyCode} className="btn btn-ghost border" disabled={!user?.friendCode}>
-            <Copy className="h-4 w-4" /> Copiar
+          <button
+            onClick={copyCode}
+            className={cn('btn btn-ghost border', copied && 'border-primary/50 text-primary')}
+            disabled={!user?.friendCode}
+          >
+            <span className="relative flex h-4 w-4 items-center justify-center">
+              <CompletionBurst show={copyPulse} />
+              {copied ? <DrawnCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </span>
+            {copied ? 'Copiado' : 'Copiar'}
           </button>
         </div>
       </Card>
