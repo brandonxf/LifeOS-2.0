@@ -282,13 +282,12 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
           ...(perfMode ? null : { backdropFilter: 'blur(28px) saturate(160%)', WebkitBackdropFilter: 'blur(28px) saturate(160%)' }),
         }}
       >
-        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-white/15" />
-        <div className="flex items-center justify-between px-5 pb-1 pt-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Menú</p>
+        <div className="relative flex items-center justify-center px-5 pb-2 pt-5">
+          <p className="font-display text-xl font-bold tracking-tight">Menú</p>
           <button
             onClick={() => setOpen(false)}
             aria-label="Cerrar menú"
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition-transform hover:bg-slate-100 active:scale-90 dark:hover:bg-white/[0.06]"
+            className="absolute right-4 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition-transform hover:bg-slate-100 active:scale-90 dark:hover:bg-white/[0.06]"
           >
             <X className="h-4 w-4" />
           </button>
