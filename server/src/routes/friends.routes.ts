@@ -1,12 +1,51 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq, inArray, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { friendships, users } from '../db/schema/index.js';
+import { friendships, users, habits, habitMembers, tasks, taskAssignees } from '../db/schema/index.js';
 import { asyncHandler, badRequest, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
 
 const router = Router();
+
+/**
+ * Al dejar de ser amigos, se rompe cualquier colaboración cruzada entre
+ * ambos: si uno invitó al otro a un hábito o tarea suya (aceptada o
+ * pendiente), esa fila de `habit_members`/`task_assignees` se borra. Solo
+ * afecta las filas donde uno es dueño y el otro colaborador — un hábito
+ * compartido con un tercer amigo no se toca. Los logs/eventos de actividad
+ * ya hechos no se borran (mismo criterio que el resto de la app: sobreviven
+ * aunque el hábito/tarea o, en este caso, el vínculo desaparezca), pero al
+ * perder la membresía dejan de ser visibles para cualquiera de los dos.
+ */
+async function unlinkSharedStuff(userA: string, userB: string) {
+  const [habitsOfA, habitsOfB, tasksOfA, tasksOfB] = await Promise.all([
+    db.select({ id: habits.id }).from(habits).where(eq(habits.userId, userA)),
+    db.select({ id: habits.id }).from(habits).where(eq(habits.userId, userB)),
+    db.select({ id: tasks.id }).from(tasks).where(eq(tasks.userId, userA)),
+    db.select({ id: tasks.id }).from(tasks).where(eq(tasks.userId, userB)),
+  ]);
+
+  const habitIdsOfA = habitsOfA.map((h) => h.id);
+  const habitIdsOfB = habitsOfB.map((h) => h.id);
+  const taskIdsOfA = tasksOfA.map((t) => t.id);
+  const taskIdsOfB = tasksOfB.map((t) => t.id);
+
+  await Promise.all([
+    habitIdsOfA.length
+      ? db.delete(habitMembers).where(and(eq(habitMembers.userId, userB), inArray(habitMembers.habitId, habitIdsOfA)))
+      : null,
+    habitIdsOfB.length
+      ? db.delete(habitMembers).where(and(eq(habitMembers.userId, userA), inArray(habitMembers.habitId, habitIdsOfB)))
+      : null,
+    taskIdsOfA.length
+      ? db.delete(taskAssignees).where(and(eq(taskAssignees.userId, userB), inArray(taskAssignees.taskId, taskIdsOfA)))
+      : null,
+    taskIdsOfB.length
+      ? db.delete(taskAssignees).where(and(eq(taskAssignees.userId, userA), inArray(taskAssignees.taskId, taskIdsOfB)))
+      : null,
+  ]);
+}
 
 function publicFriend(u: typeof users.$inferSelect) {
   return { id: u.id, name: u.name, avatar: u.avatar };
@@ -173,6 +212,14 @@ router.delete(
       )
       .returning();
     if (!row) throw notFound('No encontrado');
+
+    // Si ya eran amigos (no solo una solicitud cancelada/rechazada), desarma
+    // todo lo que tenían juntos: hábitos y tareas compartidas entre ambos.
+    if (row.status === 'accepted') {
+      const otherId = row.requesterId === user.id ? row.addresseeId : row.requesterId;
+      await unlinkSharedStuff(user.id, otherId);
+    }
+
     res.json({ ok: true });
   }),
 );

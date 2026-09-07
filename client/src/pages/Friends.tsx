@@ -67,7 +67,7 @@ export default function Friends() {
   async function confirmRemove(id: string, name: string) {
     const ok = await confirm({
       title: 'Eliminar amigo',
-      message: `¿Seguro que quieres eliminar a ${name} de tus amigos?`,
+      message: `¿Seguro que quieres eliminar a ${name} de tus amigos? También se quitarán los hábitos y tareas que compartan entre ustedes.`,
       confirmLabel: 'Eliminar',
       danger: true,
     });
