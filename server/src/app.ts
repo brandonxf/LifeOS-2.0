@@ -18,6 +18,7 @@ import notesRoutes from './routes/notes.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import friendsRoutes from './routes/friends.routes.js';
 import feedRoutes from './routes/feed.routes.js';
+import usersRoutes from './routes/users.routes.js';
 
 const app = express();
 
@@ -63,6 +64,11 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toIS
 
 // Public auth routes (rate-limited by IP).
 app.use('/api/auth', rateLimiter(), authRoutes);
+
+// Fotos de perfil: públicas a propósito (un <img> no manda Authorization) y
+// montadas antes del authMiddleware global. Se sirven con caché inmutable, así
+// que en la práctica son un puñado de peticiones por dispositivo.
+app.use('/api/users', rateLimiter(), usersRoutes);
 
 // Everything below requires a valid JWT and is rate-limited per user.
 app.use('/api', authMiddleware, rateLimiter());

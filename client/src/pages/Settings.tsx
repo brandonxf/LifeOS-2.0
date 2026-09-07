@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
+import { AvatarPicker } from '../components/AvatarPicker';
+import { avatarSrc } from '../lib/avatar';
 import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -30,7 +32,6 @@ const profileSchema = z.object({
     .string()
     .regex(/^[a-zA-Z0-9_]{3,30}$/, '3-30 caracteres: letras, números o _')
     .or(z.literal('')),
-  avatar: z.string().url('Debe ser una URL válida').max(2048).or(z.literal('')),
   bio: z.string().max(500, 'Máximo 500 caracteres').or(z.literal('')),
   birthDate: z.string().or(z.literal('')),
   location: z.string().max(120).or(z.literal('')),
@@ -302,8 +303,8 @@ export default function Settings() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/15 text-2xl font-bold text-primary">
-            {user?.avatar ? (
-              <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+            {avatarSrc(user?.avatar) ? (
+              <img src={avatarSrc(user?.avatar)} alt={user?.name} className="h-full w-full object-cover" />
             ) : (
               user?.name?.[0]?.toUpperCase()
             )}
@@ -429,7 +430,6 @@ function EditProfileModal({
       name: user?.name ?? '',
       email: user?.email ?? '',
       username: user?.username ?? '',
-      avatar: user?.avatar ?? '',
       bio: user?.bio ?? '',
       birthDate: user?.birthDate ?? '',
       location: user?.location ?? '',
@@ -437,10 +437,13 @@ function EditProfileModal({
       pronouns: user?.pronouns ?? '',
     },
   });
+  // Fuera del form de react-hook-form: AvatarPicker ya entrega el data URI
+  // (o null) listo para mandar, no un <input> que registrar.
+  const [avatar, setAvatar] = useState<string | null>(user?.avatar ?? null);
 
   const mutation = useMutation({
     mutationFn: (data: ProfileForm) =>
-      api<{ user: AuthUser }>('/api/auth/me', { method: 'PATCH', body: data }),
+      api<{ user: AuthUser }>('/api/auth/me', { method: 'PATCH', body: { ...data, avatar } }),
     onSuccess: (res) => {
       toast.success('Perfil actualizado');
       onSaved(res.user);
@@ -453,6 +456,7 @@ function EditProfileModal({
   return (
     <Modal open onClose={onClose} title="Editar perfil" wide>
       <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+        <AvatarPicker value={avatar} name={user?.name ?? ''} onChange={setAvatar} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nombre" error={errors.name?.message}>
             <input className="input" {...register('name')} />
@@ -481,9 +485,6 @@ function EditProfileModal({
             <input className="input" type="tel" placeholder="+52 …" {...register('phone')} />
           </Field>
         </div>
-        <Field label="URL de avatar (opcional)" error={errors.avatar?.message}>
-          <input className="input" placeholder="https://…" {...register('avatar')} />
-        </Field>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn-primary" disabled={mutation.isPending}>

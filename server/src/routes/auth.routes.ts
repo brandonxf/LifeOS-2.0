@@ -13,6 +13,12 @@ import {
 } from '../lib/auth.js';
 import { asyncHandler, badRequest, unauthorized, validate } from '../lib/http.js';
 import { authMiddleware, currentUser } from '../middleware/auth.js';
+import {
+  AVATAR_MAX_BYTES,
+  avatarUrl,
+  isOwnAvatarUrl,
+  parseAvatarDataUri,
+} from '../lib/avatar.js';
 
 const router = Router();
 
@@ -38,8 +44,11 @@ const updateProfileSchema = z
   .object({
     name: z.string().min(1).max(120).optional(),
     email: z.string().email().optional(),
-    // URL de avatar o null para quitarlo. Cadena vacía se trata como null.
-    avatar: z.string().url().max(2048).nullish().or(z.literal('')),
+    // Foto de perfil. Acepta un data URI (imagen recién subida desde la
+    // galería/cámara), una URL http(s) externa, la propia URL que ya tiene
+    // el usuario, o ''/null para quitarla. El tamaño real se valida abajo,
+    // no aquí, para poder dar un mensaje entendible.
+    avatar: z.string().max(3_000_000).nullish().or(z.literal('')),
     // Handle: 3-30 chars, letras/números/guion bajo. '' o null lo limpian.
     username: z
       .string()
@@ -61,7 +70,9 @@ const changePasswordSchema = z.object({
 });
 
 function publicUser(u: typeof users.$inferSelect) {
-  const { passwordHash, deletedAt, ...rest } = u;
+  // avatarData/avatarMime nunca salen en JSON: la foto se sirve por
+  // GET /api/users/:id/avatar (ver lib/avatar.ts).
+  const { passwordHash, deletedAt, avatarData, avatarMime, avatarUpdatedAt, ...rest } = u;
   return rest;
 }
 
@@ -230,13 +241,50 @@ router.patch(
       updates.username = username;
     }
 
+    if (body.avatar !== undefined) {
+      const raw = (body.avatar ?? '').trim();
+      if (!raw) {
+        // Quitar la foto: borra también los bytes guardados.
+        updates.avatar = null;
+        updates.avatarData = null;
+        updates.avatarMime = null;
+        updates.avatarUpdatedAt = null;
+      } else if (raw.startsWith('data:')) {
+        const parsed = parseAvatarDataUri(raw);
+        if (!parsed) throw badRequest('Esa imagen no sirve como foto de perfil (usa JPG, PNG o WEBP)');
+        if (parsed.bytes > AVATAR_MAX_BYTES) {
+          throw badRequest('La imagen pesa demasiado. Recorta o reduce el zoom e inténtalo de nuevo');
+        }
+        const now = new Date();
+        updates.avatarData = parsed.base64;
+        updates.avatarMime = parsed.mime;
+        updates.avatarUpdatedAt = now;
+        updates.avatar = avatarUrl(user.id, now);
+      } else if (isOwnAvatarUrl(raw)) {
+        // El cliente reenvió la URL que ya tenía: no se toca nada.
+      } else if (/^https?:\/\//i.test(raw) && raw.length <= 2048) {
+        // Sigue valiendo una URL externa (avatares de cuentas viejas).
+        updates.avatar = raw;
+        updates.avatarData = null;
+        updates.avatarMime = null;
+        updates.avatarUpdatedAt = null;
+      } else {
+        throw badRequest('Avatar no válido');
+      }
+    }
     // Texto opcional: '' o null limpian el campo.
-    if (body.avatar !== undefined) updates.avatar = body.avatar ? body.avatar : null;
     if (body.bio !== undefined) updates.bio = body.bio ? body.bio : null;
     if (body.birthDate !== undefined) updates.birthDate = body.birthDate ? body.birthDate : null;
     if (body.location !== undefined) updates.location = body.location ? body.location : null;
     if (body.phone !== undefined) updates.phone = body.phone ? body.phone : null;
     if (body.pronouns !== undefined) updates.pronouns = body.pronouns ? body.pronouns : null;
+
+    // Puede quedar vacío si lo único que llegó fue el avatar que ya tenía:
+    // `.set({})` sería un UPDATE inválido.
+    if (!Object.keys(updates).length) {
+      res.json({ user: publicUser(user) });
+      return;
+    }
 
     const [updated] = await db
       .update(users)
