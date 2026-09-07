@@ -199,16 +199,16 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
   );
 }
 
-/** Menú flotante (speed-dial) para móvil: reemplaza el sidebar en pantallas
- *  pequeñas. Un botón circular abajo-derecha se despliega hacia arriba
- *  mostrando cada sección con su etiqueta e ícono. */
+/** Menú de móvil: reemplaza el sidebar en pantallas pequeñas. Un botón
+ *  circular abajo-derecha abre una hoja inferior con TODAS las secciones en
+ *  una grilla — con 10+ secciones, una lista vertical (el speed-dial de
+ *  antes) se apilaba hasta salirse de la pantalla; en grilla de 4 columnas
+ *  entran en 3 filas cortas sin importar cuántas secciones haya. */
 function MobileFab({ onLogout }: { onLogout: () => void }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // Items del menú (nav principal + ajustes). Se renderizan de arriba hacia
-  // abajo; el más cercano al botón anima primero.
   const items = [...NAV, { to: '/settings', label: 'Ajustes', icon: Settings }];
 
   // En el chat de IA el composer (con su botón de enviar) va abajo a la
@@ -231,40 +231,50 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
         />
       )}
 
-      <div
-        className="fixed right-4 z-50 flex flex-col items-end gap-3"
-        style={{ bottom: onAi ? 'calc(7rem + env(safe-area-inset-bottom))' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
-      >
-        {open && (
-          <div className="no-scrollbar flex max-h-[calc(100vh-8rem)] flex-col items-end gap-3 overflow-y-auto pr-0.5 pt-2">
+      {/* Hoja inferior: grilla de secciones, no una lista que crece hacia arriba. */}
+      {open && (
+        <div
+          className="animate-sheet-in fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-slate-200 bg-white shadow-glass-lg dark:border-white/10 dark:bg-ink-900/95 dark:backdrop-blur-2xl"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-white/15" />
+          <div className="flex items-center justify-between px-5 pb-1 pt-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Menú</p>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Cerrar menú"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="grid max-h-[60vh] grid-cols-4 gap-x-1 gap-y-4 overflow-y-auto px-5 pb-6 pt-2">
             {items.map(({ to, label, icon: Icon }, i) => {
               const active = pathname === to;
               return (
                 <button
                   key={to}
                   onClick={() => go(to)}
-                  className="fab-item flex items-center gap-3"
-                  style={{ animationDelay: `${(items.length - 1 - i) * 28}ms` }}
+                  className="fab-item flex flex-col items-center gap-1.5"
+                  style={{ animationDelay: `${i * 18}ms` }}
                 >
                   <span
                     className={cn(
-                      'rounded-full px-3 py-1.5 text-sm font-semibold shadow-lg',
+                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
                       active
-                        ? 'bg-primary text-ink-950'
-                        : 'bg-ink-900/90 text-slate-100 backdrop-blur',
-                    )}
-                  >
-                    {label}
-                  </span>
-                  <span
-                    className={cn(
-                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-lg',
-                      active
-                        ? 'bg-primary text-ink-950'
-                        : 'bg-white text-primary-600 dark:bg-ink-900/90 dark:text-primary dark:backdrop-blur',
+                        ? 'bg-primary text-ink-950 shadow-glow'
+                        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
                     )}
                   >
                     <Icon className="h-5 w-5" />
+                  </span>
+                  <span
+                    className={cn(
+                      'text-center text-[11px] font-medium leading-tight',
+                      active ? 'text-primary' : 'text-slate-500 dark:text-slate-400',
+                    )}
+                  >
+                    {label}
                   </span>
                 </button>
               );
@@ -276,31 +286,30 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
                 setOpen(false);
                 onLogout();
               }}
-              className="fab-item flex items-center gap-3"
-              style={{ animationDelay: '0ms' }}
+              className="fab-item flex flex-col items-center gap-1.5"
+              style={{ animationDelay: `${items.length * 18}ms` }}
             >
-              <span className="rounded-full bg-ink-900/90 px-3 py-1.5 text-sm font-semibold text-danger shadow-lg backdrop-blur">
-                Cerrar sesión
-              </span>
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-danger shadow-lg dark:bg-ink-900/90 dark:backdrop-blur">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-danger/10 text-danger">
                 <LogOut className="h-5 w-5" />
               </span>
+              <span className="text-center text-[11px] font-medium leading-tight text-danger">Salir</span>
             </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Botón principal */}
+      {/* Botón principal: se oculta con la hoja abierta (que ya trae su
+          propia X) para que no quede flotando encima de la grilla. */}
+      {!open && (
         <button
-          onClick={() => setOpen((o) => !o)}
-          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
-          className={cn(
-            'flex h-14 w-14 items-center justify-center rounded-full text-ink-950 shadow-glow transition-transform active:scale-95',
-            open ? 'bg-primary-400 rotate-90' : 'bg-primary',
-          )}
+          onClick={() => setOpen(true)}
+          aria-label="Abrir menú"
+          className="fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-ink-950 shadow-glow transition-transform active:scale-95"
+          style={{ bottom: onAi ? 'calc(7rem + env(safe-area-inset-bottom))' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
         >
-          {open ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+          <Plus className="h-6 w-6" />
         </button>
-      </div>
+      )}
     </div>
   );
 }
