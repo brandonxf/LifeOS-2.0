@@ -213,11 +213,6 @@
   0% {
     opacity: 0;
     transform: translate(-260%, -60%) rotate(-30deg) scale(0.4);
-    filter: blur(6px);
-  }
-  60% {
-    opacity: 1;
-    filter: blur(0);
   }
   100% {
     opacity: 1;
@@ -228,11 +223,6 @@
   0% {
     opacity: 0;
     transform: translate(180%, -140%) rotate(40deg) scale(0.4);
-    filter: blur(6px);
-  }
-  60% {
-    opacity: 1;
-    filter: blur(0);
   }
   100% {
     opacity: 1;

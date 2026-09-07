@@ -40,7 +40,7 @@ export function LogoAssemble({ size = 144, className }: { size?: number; classNa
       width={size}
       height={size}
       className={cn('shrink-0 text-primary', className)}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, overflow: 'visible' }}
       role="img"
       aria-label="Life OS"
     >
