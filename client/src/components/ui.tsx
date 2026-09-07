@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type InputHTM
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { avatarSrc } from '../lib/avatar';
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return <div className={cn('card', className)}>{children}</div>;
@@ -14,7 +15,7 @@ export function Avatar({ name, avatar, size = 36 }: { name: string; avatar: stri
       className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 font-bold text-primary"
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
-      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : name?.[0]?.toUpperCase()}
+      {avatarSrc(avatar) ? <img src={avatarSrc(avatar)} alt="" className="h-full w-full object-cover" /> : name?.[0]?.toUpperCase()}
     </div>
   );
 }

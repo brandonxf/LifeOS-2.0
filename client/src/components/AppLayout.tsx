@@ -25,6 +25,7 @@ import {
 import { useAuth } from '../store/auth';
 import { useUI } from '../store/ui';
 import { api } from '../lib/api';
+import { avatarSrc } from '../lib/avatar';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
 import { Spinner } from './ui';
@@ -139,6 +140,7 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const initial = user?.name?.[0]?.toUpperCase() ?? '?';
+  const avatar = avatarSrc(user?.avatar);
 
   return (
     <div className="relative">
@@ -148,8 +150,8 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
         className="ml-1 flex items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.06]"
       >
         <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-bold text-primary">
-          {user?.avatar ? (
-            <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+          {avatar ? (
+            <img src={avatar} alt="" className="h-full w-full object-cover" />
           ) : (
             initial
           )}
@@ -165,8 +167,8 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
           <div className="glass-menu fixed inset-x-4 top-[calc(4rem+env(safe-area-inset-top))] z-20 mx-auto w-auto max-w-xs animate-fade-in rounded-2xl border bg-white p-2 shadow-xl dark:bg-ink-900/85 dark:backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-64 sm:max-w-none">
             <div className="flex items-center gap-3 px-3 py-2.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-base font-bold text-primary">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+                {avatar ? (
+                  <img src={avatar} alt="" className="h-full w-full object-cover" />
                 ) : (
                   initial
                 )}
