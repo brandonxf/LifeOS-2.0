@@ -247,31 +247,35 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
       setPressedTo(null);
       if (action) action();
       else navigate(to);
-    }, 150);
+    }, 100);
   }
 
   return (
     <div className="lg:hidden">
-      {/* Scrim con desenfoque de fondo */}
+      {/* Scrim con desenfoque de fondo. Cierra más rápido de lo que abre
+          (170ms vs 300ms): al cerrar no hay nada que "presentar" con calma,
+          solo debe quitarse del camino. */}
       <div
         aria-hidden={!open}
         onClick={() => setOpen(false)}
         className={cn(
-          'fixed inset-0 z-40 bg-ink-950/50 transition-opacity duration-300 ease-out',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0',
+          'fixed inset-0 z-40 bg-ink-950/50 transition-opacity ease-out',
+          open ? 'duration-300 opacity-100' : 'pointer-events-none duration-150 opacity-0',
         )}
         style={perfMode ? undefined : { backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
       />
 
-      {/* Hoja inferior: grilla de secciones, no una lista que crece hacia arriba. */}
+      {/* Hoja inferior: grilla de secciones, no una lista que crece hacia arriba.
+          Igual que el scrim, cierra más rápido que abre y con ease-out (arranca
+          de una, no como ease-in que se siente pegado al principio). */}
       <div
         aria-hidden={!open}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-slate-200 shadow-glass-lg transition-[transform,opacity] duration-[380ms] dark:border-white/10',
+          'fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-slate-200 shadow-glass-lg transition-[transform,opacity] dark:border-white/10',
           perfMode ? 'bg-white dark:bg-ink-900' : 'bg-white/90 dark:bg-ink-900/80',
           open
-            ? 'translate-y-0 opacity-100 ease-[cubic-bezier(0.22,1.4,0.36,1)]'
-            : 'pointer-events-none translate-y-10 opacity-0 ease-in',
+            ? 'translate-y-0 opacity-100 duration-[380ms] ease-[cubic-bezier(0.22,1.4,0.36,1)]'
+            : 'pointer-events-none translate-y-10 opacity-0 duration-150 ease-[cubic-bezier(0.4,0,1,1)]',
         )}
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
