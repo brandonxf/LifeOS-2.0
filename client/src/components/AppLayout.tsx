@@ -24,8 +24,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useUI } from '../store/ui';
+import { useSettings } from '../store/settings';
 import { api } from '../lib/api';
 import { avatarSrc } from '../lib/avatar';
+import { hapticTap } from '../lib/haptics';
 import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
 import { Spinner } from './ui';
@@ -203,11 +205,26 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
  *  circular abajo-derecha abre una hoja inferior con TODAS las secciones en
  *  una grilla — con 10+ secciones, una lista vertical (el speed-dial de
  *  antes) se apilaba hasta salirse de la pantalla; en grilla de 4 columnas
- *  entran en 3 filas cortas sin importar cuántas secciones haya. */
+ *  entran en 3 filas cortas sin importar cuántas secciones haya.
+ *
+ *  La hoja y el scrim quedan SIEMPRE montados (nunca `{open && ...}`) y el
+ *  abrir/cerrar es una transición CSS de transform/opacity — así cerrar
+ *  también anima, no solo abrir. El grid de íconos sí se remonta en cada
+ *  apertura (con `key={open}`) para que el stagger de entrada se repita
+ *  cada vez, no solo la primera. */
 function MobileFab({ onLogout }: { onLogout: () => void }) {
   const [open, setOpen] = useState(false);
+  // Ícono que el usuario acaba de tocar: se "hincha" un instante antes de
+  // cerrar y navegar, para que se sienta la selección en vez de un salto
+  // seco a la otra pantalla.
+  const [pressedTo, setPressedTo] = useState<string | null>(null);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  // El blur de vidrio se salta a propósito la regla que lo apaga en móvil
+  // (ver "Rendimiento en móvil" en index.css) porque este menú es chico y
+  // vive poco tiempo en pantalla — pero respeta el interruptor manual de
+  // "Modo rendimiento" para gama baja.
+  const perfMode = useSettings((s) => s.performanceModeEnabled);
 
   const items = [...NAV, { to: '/settings', label: 'Ajustes', icon: Settings }];
 
@@ -215,101 +232,133 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
   // derecha; subimos el FAB para no taparlo.
   const onAi = pathname === '/ai';
 
-  function go(to: string) {
-    setOpen(false);
-    navigate(to);
+  function openMenu() {
+    hapticTap();
+    setOpen(true);
+  }
+
+  /** Toca un ícono → hincha, vibra, y un instante después cierra + navega
+   *  (o corre `action`, para "Salir" que abre un confirm antes). */
+  function select(to: string, action?: () => void) {
+    hapticTap();
+    setPressedTo(to);
+    window.setTimeout(() => {
+      setOpen(false);
+      setPressedTo(null);
+      if (action) action();
+      else navigate(to);
+    }, 150);
   }
 
   return (
     <div className="lg:hidden">
       {/* Scrim con desenfoque de fondo */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-ink-950/45 animate-scrim-in"
-          style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-          onClick={() => setOpen(false)}
-        />
-      )}
+      <div
+        aria-hidden={!open}
+        onClick={() => setOpen(false)}
+        className={cn(
+          'fixed inset-0 z-40 bg-ink-950/50 transition-opacity duration-300 ease-out',
+          open ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+        style={perfMode ? undefined : { backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
+      />
 
       {/* Hoja inferior: grilla de secciones, no una lista que crece hacia arriba. */}
-      {open && (
-        <div
-          className="animate-sheet-in fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-slate-200 bg-white shadow-glass-lg dark:border-white/10 dark:bg-ink-900/95 dark:backdrop-blur-2xl"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        >
-          <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-white/15" />
-          <div className="flex items-center justify-between px-5 pb-1 pt-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Menú</p>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Cerrar menú"
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="grid max-h-[60vh] grid-cols-4 gap-x-1 gap-y-4 overflow-y-auto px-5 pb-6 pt-2">
-            {items.map(({ to, label, icon: Icon }, i) => {
-              const active = pathname === to;
-              return (
-                <button
-                  key={to}
-                  onClick={() => go(to)}
-                  className="fab-item flex flex-col items-center gap-1.5"
-                  style={{ animationDelay: `${i * 18}ms` }}
-                >
-                  <span
-                    className={cn(
-                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
-                      active
-                        ? 'bg-primary text-ink-950 shadow-glow'
-                        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span
-                    className={cn(
-                      'text-center text-[11px] font-medium leading-tight',
-                      active ? 'text-primary' : 'text-slate-500 dark:text-slate-400',
-                    )}
-                  >
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
-
-            {/* Cerrar sesión */}
-            <button
-              onClick={() => {
-                setOpen(false);
-                onLogout();
-              }}
-              className="fab-item flex flex-col items-center gap-1.5"
-              style={{ animationDelay: `${items.length * 18}ms` }}
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-danger/10 text-danger">
-                <LogOut className="h-5 w-5" />
-              </span>
-              <span className="text-center text-[11px] font-medium leading-tight text-danger">Salir</span>
-            </button>
-          </div>
+      <div
+        aria-hidden={!open}
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-slate-200 shadow-glass-lg transition-[transform,opacity] duration-[380ms] dark:border-white/10',
+          perfMode ? 'bg-white dark:bg-ink-900' : 'bg-white/90 dark:bg-ink-900/80',
+          open
+            ? 'translate-y-0 opacity-100 ease-[cubic-bezier(0.22,1.4,0.36,1)]'
+            : 'pointer-events-none translate-y-10 opacity-0 ease-in',
+        )}
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          ...(perfMode ? null : { backdropFilter: 'blur(28px) saturate(160%)', WebkitBackdropFilter: 'blur(28px) saturate(160%)' }),
+        }}
+      >
+        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-white/15" />
+        <div className="flex items-center justify-between px-5 pb-1 pt-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Menú</p>
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Cerrar menú"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition-transform hover:bg-slate-100 active:scale-90 dark:hover:bg-white/[0.06]"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-      )}
+        {/* La key fuerza un remount en cada apertura: así el stagger de
+            entrada de cada ícono se repite todas las veces, no solo la primera. */}
+        <div key={String(open)} className="grid max-h-[60vh] grid-cols-4 gap-x-1 gap-y-4 overflow-y-auto px-5 pb-6 pt-2">
+          {items.map(({ to, label, icon: Icon }, i) => {
+            const active = pathname === to;
+            const pressed = pressedTo === to;
+            return (
+              <button
+                key={to}
+                onClick={() => select(to)}
+                className="fab-item flex flex-col items-center gap-1.5"
+                style={{ animationDelay: open ? `${i * 22}ms` : '0ms' }}
+              >
+                <span
+                  className={cn(
+                    'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-150 active:scale-90',
+                    pressed && 'scale-110 ring-2 ring-primary/50',
+                    active
+                      ? 'bg-primary text-ink-950 shadow-glow'
+                      : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span
+                  className={cn(
+                    'text-center text-[11px] font-medium leading-tight',
+                    active ? 'text-primary' : 'text-slate-500 dark:text-slate-400',
+                  )}
+                >
+                  {label}
+                </span>
+              </button>
+            );
+          })}
 
-      {/* Botón principal: se oculta con la hoja abierta (que ya trae su
+          {/* Cerrar sesión */}
+          <button
+            onClick={() => select('logout', onLogout)}
+            className="fab-item flex flex-col items-center gap-1.5"
+            style={{ animationDelay: open ? `${items.length * 22}ms` : '0ms' }}
+          >
+            <span
+              className={cn(
+                'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-danger/10 text-danger transition-transform duration-150 active:scale-90',
+                pressedTo === 'logout' && 'scale-110 ring-2 ring-danger/50',
+              )}
+            >
+              <LogOut className="h-5 w-5" />
+            </span>
+            <span className="text-center text-[11px] font-medium leading-tight text-danger">Salir</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Botón principal: se desvanece con la hoja abierta (que ya trae su
           propia X) para que no quede flotando encima de la grilla. */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="Abrir menú"
-          className="fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-ink-950 shadow-glow transition-transform active:scale-95"
-          style={{ bottom: onAi ? 'calc(7rem + env(safe-area-inset-bottom))' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
-        >
-          <Plus className="h-6 w-6" />
-        </button>
-      )}
+      <button
+        onClick={openMenu}
+        aria-hidden={open}
+        tabIndex={open ? -1 : 0}
+        aria-label="Abrir menú"
+        className={cn(
+          'fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-ink-950 shadow-glow transition-all duration-200 active:scale-90',
+          open && 'pointer-events-none scale-75 opacity-0',
+        )}
+        style={{ bottom: onAi ? 'calc(7rem + env(safe-area-inset-bottom))' : 'calc(1.25rem + env(safe-area-inset-bottom))' }}
+      >
+        <Plus className="h-6 w-6" />
+      </button>
     </div>
   );
 }

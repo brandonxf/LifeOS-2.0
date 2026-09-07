@@ -335,21 +335,26 @@
   animation: progress-slide 1.15s ease-in-out infinite;
 }
 
-/* Entrada escalonada de cada item del menú flotante (FAB / speed-dial).
+/* Entrada escalonada de cada item del menú flotante (FAB / hoja de móvil).
    Solo opacidad + scale hacia adentro: NO usar translateY, porque el
-   transform amplía el área de scroll del contenedor y asoma una barra. */
+   transform amplía el área de scroll del contenedor y asoma una barra.
+   Easing con rebote (overshoot a 1.06 antes de asentar en 1) para que cada
+   ícono se sienta "vivo" al aparecer, no solo un fade plano. */
 @keyframes fab-in {
   0% {
     opacity: 0;
-    transform: scale(0.85);
+    transform: scale(0.6);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.06);
   }
   100% {
-    opacity: 1;
     transform: scale(1);
   }
 }
 .fab-item {
-  animation: fab-in 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  animation: fab-in 0.32s cubic-bezier(0.24, 0.9, 0.32, 1) backwards;
 }
 
 /* Fade del scrim: SOLO opacidad. No usar translateY aquí: en un overlay
@@ -365,24 +370,6 @@
 }
 .animate-scrim-in {
   animation: scrim-in 0.2s ease-out;
-}
-
-/* Hoja inferior del menú de móvil (grid de secciones): a diferencia del
-   scrim, esta sí es un elemento acotado (no un overlay inset-0), así que
-   deslizarla desde abajo no dispara el problema de scrollbar del comentario
-   de arriba. */
-@keyframes sheet-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.animate-sheet-in {
-  animation: sheet-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 /* ── Micro-animación de "completado" ──────────────────────────────
