@@ -5,7 +5,7 @@ import { db } from '../db/index.js';
 import { habits, habitLogs, habitMembers, friendships, users, activityEvents } from '../db/schema/index.js';
 import { asyncHandler, badRequest, forbidden, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
-import { bogotaISODate, shiftIsoDate } from '../lib/date.js';
+import { bogotaISODate, shiftIsoDate, currentStreakFromDates } from '../lib/date.js';
 
 const router = Router();
 
@@ -18,20 +18,6 @@ const habitSchema = z.object({
   targetPerWeek: z.number().int().min(1).max(7).default(7),
   shareProgress: z.boolean().default(false),
 });
-
-/** Días consecutivos hasta hoy (o ayer, para no romper la racha justo antes
- *  de marcar el día) a partir de un set de fechas "YYYY-MM-DD". Compartido
- *  entre /:id/stats y el resumen de miembros en GET /. */
-function currentStreakFromDates(dates: Set<string>): number {
-  let current = 0;
-  let cursor = bogotaISODate();
-  if (!dates.has(cursor)) cursor = shiftIsoDate(cursor, -1);
-  while (dates.has(cursor)) {
-    current++;
-    cursor = shiftIsoDate(cursor, -1);
-  }
-  return current;
-}
 
 router.get(
   '/',

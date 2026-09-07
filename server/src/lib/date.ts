@@ -19,3 +19,18 @@ export function shiftIsoDate(iso: string, deltaDays: number): string {
   d.setUTCDate(d.getUTCDate() + deltaDays);
   return d.toISOString().slice(0, 10);
 }
+
+/** Racha actual (días consecutivos hasta hoy, u hoy sin contar si aún no se
+ *  marcó) a partir de un set de fechas "YYYY-MM-DD" marcadas. Usado tanto
+ *  para el propio hábito (habits.routes.ts) como para lo que un amigo
+ *  muestra en su perfil (friends.routes.ts). */
+export function currentStreakFromDates(dates: Set<string>): number {
+  let current = 0;
+  let cursor = bogotaISODate();
+  if (!dates.has(cursor)) cursor = shiftIsoDate(cursor, -1);
+  while (dates.has(cursor)) {
+    current++;
+    cursor = shiftIsoDate(cursor, -1);
+  }
+  return current;
+}

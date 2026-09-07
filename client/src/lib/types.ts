@@ -160,6 +160,26 @@ export interface FriendUser {
   avatar: string | null;
 }
 
+export interface SharedHabit {
+  id: string;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  /** Quién es dueño de este hábito: yo lo cree e invité al amigo, o al
+   *  revés. */
+  owner: 'me' | 'friend';
+  /** Racha actual DEL AMIGO en este hábito (no la mía). */
+  friendStreak: number;
+}
+
+export interface SharedTask {
+  id: string;
+  title: string;
+  status: 'todo' | 'in_progress' | 'done';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  owner: 'me' | 'friend';
+}
+
 /** Perfil completo de un amigo (GET /api/friends/profile/:userId). Sin
  *  email/teléfono a propósito — eso es contacto, no perfil. */
 export interface FriendProfile {
@@ -172,6 +192,8 @@ export interface FriendProfile {
   location: string | null;
   birthDate: string | null;
   createdAt: string;
+  friendsSince: string | null;
+  shared: { habits: SharedHabit[]; tasks: SharedTask[] };
 }
 
 export interface Friendship {

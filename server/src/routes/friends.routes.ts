@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { and, eq, inArray, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { friendships, users, habits, habitMembers, tasks, taskAssignees } from '../db/schema/index.js';
+import { friendships, users, habits, habitMembers, habitLogs, tasks, taskAssignees } from '../db/schema/index.js';
 import { asyncHandler, badRequest, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
+import { currentStreakFromDates } from '../lib/date.js';
 
 const router = Router();
 
@@ -70,9 +71,11 @@ function publicFriendProfile(u: typeof users.$inferSelect) {
   };
 }
 
-async function areFriends(userA: string, userB: string): Promise<boolean> {
+/** La amistad ACEPTADA entre ambos, o null si no la hay (todavía pendiente,
+ *  o de plano no existe). */
+async function getFriendship(userA: string, userB: string) {
   const [row] = await db
-    .select({ id: friendships.id })
+    .select()
     .from(friendships)
     .where(
       and(
@@ -84,7 +87,117 @@ async function areFriends(userA: string, userB: string): Promise<boolean> {
       ),
     )
     .limit(1);
-  return !!row;
+  return row ?? null;
+}
+
+/** Hábitos y tareas que `meId` y `friendId` tienen en común — de cualquiera
+ *  de los dos lados (el que posee y el otro es colaborador activo). Va en
+ *  el perfil del amigo: es la parte "más detallada" de qué hacen juntos, no
+ *  solo su bio. La racha que se muestra es la DEL AMIGO en ese hábito, no
+ *  la mía. */
+async function sharedHabitsAndTasks(meId: string, friendId: string) {
+  const [myHabitsShared, friendHabitsShared, myTasksShared, friendTasksShared] = await Promise.all([
+    db
+      .select({ habit: habits })
+      .from(habitMembers)
+      .innerJoin(habits, eq(habits.id, habitMembers.habitId))
+      .where(
+        and(
+          eq(habitMembers.userId, friendId),
+          eq(habitMembers.status, 'active'),
+          eq(habits.userId, meId),
+          isNull(habits.deletedAt),
+        ),
+      ),
+    db
+      .select({ habit: habits })
+      .from(habitMembers)
+      .innerJoin(habits, eq(habits.id, habitMembers.habitId))
+      .where(
+        and(
+          eq(habitMembers.userId, meId),
+          eq(habitMembers.status, 'active'),
+          eq(habits.userId, friendId),
+          isNull(habits.deletedAt),
+        ),
+      ),
+    db
+      .select({ task: tasks })
+      .from(taskAssignees)
+      .innerJoin(tasks, eq(tasks.id, taskAssignees.taskId))
+      .where(
+        and(
+          eq(taskAssignees.userId, friendId),
+          eq(taskAssignees.status, 'active'),
+          eq(tasks.userId, meId),
+          isNull(tasks.deletedAt),
+        ),
+      ),
+    db
+      .select({ task: tasks })
+      .from(taskAssignees)
+      .innerJoin(tasks, eq(tasks.id, taskAssignees.taskId))
+      .where(
+        and(
+          eq(taskAssignees.userId, meId),
+          eq(taskAssignees.status, 'active'),
+          eq(tasks.userId, friendId),
+          isNull(tasks.deletedAt),
+        ),
+      ),
+  ]);
+
+  const habitRows = [
+    ...myHabitsShared.map((r) => ({ ...r.habit, owner: 'me' as const })),
+    ...friendHabitsShared.map((r) => ({ ...r.habit, owner: 'friend' as const })),
+  ];
+
+  let sharedHabits: {
+    id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    owner: 'me' | 'friend';
+    friendStreak: number;
+  }[] = [];
+
+  if (habitRows.length) {
+    const habitIds = habitRows.map((h) => h.id);
+    const logs = await db
+      .select({ habitId: habitLogs.habitId, date: habitLogs.date })
+      .from(habitLogs)
+      .where(and(inArray(habitLogs.habitId, habitIds), eq(habitLogs.userId, friendId)));
+    const datesByHabit: Record<string, Set<string>> = {};
+    for (const l of logs) (datesByHabit[l.habitId] ??= new Set()).add(l.date);
+
+    sharedHabits = habitRows.map((h) => ({
+      id: h.id,
+      name: h.name,
+      icon: h.icon,
+      color: h.color,
+      owner: h.owner,
+      friendStreak: currentStreakFromDates(datesByHabit[h.id] ?? new Set()),
+    }));
+  }
+
+  const sharedTasks = [
+    ...myTasksShared.map((r) => ({
+      id: r.task.id,
+      title: r.task.title,
+      status: r.task.status,
+      priority: r.task.priority,
+      owner: 'me' as const,
+    })),
+    ...friendTasksShared.map((r) => ({
+      id: r.task.id,
+      title: r.task.title,
+      status: r.task.status,
+      priority: r.task.priority,
+      owner: 'friend' as const,
+    })),
+  ];
+
+  return { habits: sharedHabits, tasks: sharedTasks };
 }
 
 // GET /api/friends — mis amistades aceptadas.
@@ -160,12 +273,15 @@ router.get(
     const { userId } = req.params;
     if (userId === user.id) throw badRequest('Ese es tu propio perfil');
 
-    if (!(await areFriends(user.id, userId))) throw notFound('No encontrado');
+    const friendship = await getFriendship(user.id, userId);
+    if (!friendship) throw notFound('No encontrado');
 
     const [friend] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!friend) throw notFound('No encontrado');
 
-    res.json(publicFriendProfile(friend));
+    const shared = await sharedHabitsAndTasks(user.id, userId);
+
+    res.json({ ...publicFriendProfile(friend), friendsSince: friendship.respondedAt, shared });
   }),
 );
 

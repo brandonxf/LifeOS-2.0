@@ -1,35 +1,24 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, Check, X, Trash2, UserPlus, Users, MapPin, Cake, ChevronRight } from 'lucide-react';
+import { Copy, Check, X, Trash2, UserPlus, Users, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { format, parseISO } from 'date-fns';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Card, EmptyState, Avatar, Modal } from '../components/ui';
-import { avatarSrc } from '../lib/avatar';
+import { SectionTitle, Skeleton, Card, EmptyState, Avatar } from '../components/ui';
 import { useAuth, type AuthUser } from '../store/auth';
 import { confirm } from '../store/confirm';
-import type { Friendship, FriendRequest, FriendProfile } from '../lib/types';
+import type { Friendship, FriendRequest } from '../lib/types';
 import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
 import { DrawnCheck, useCompletionPulse, CompletionBurst } from '../components/AnimatedCheck';
 import { cn } from '../lib/utils';
 
-/** Edad en años a partir de una fecha ISO YYYY-MM-DD. */
-function ageFrom(iso: string): number {
-  const b = parseISO(iso);
-  const now = new Date();
-  let age = now.getFullYear() - b.getFullYear();
-  const m = now.getMonth() - b.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
-  return age;
-}
-
 export default function Friends() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { user, setUser } = useAuth();
   const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
   const copyPulse = useCompletionPulse(copied);
-  const [viewing, setViewing] = useState<Friendship | null>(null);
 
   // Refresca el perfil por si el código de amigo aún no se había generado
   // (cuentas creadas antes de que existiera este sistema).
@@ -77,16 +66,14 @@ export default function Friends() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function confirmRemove(id: string, name: string, onConfirmed?: () => void) {
+  async function confirmRemove(id: string, name: string) {
     const ok = await confirm({
       title: 'Eliminar amigo',
       message: `¿Seguro que quieres eliminar a ${name} de tus amigos? También se quitarán los hábitos y tareas que compartan entre ustedes.`,
       confirmLabel: 'Eliminar',
       danger: true,
     });
-    if (!ok) return;
-    onConfirmed?.();
-    remove.mutate(id);
+    if (ok) remove.mutate(id);
   }
 
   async function copyCode() {
@@ -190,7 +177,7 @@ export default function Friends() {
               {friends.data.map((f) => (
                 <button
                   key={f.id}
-                  onClick={() => setViewing(f)}
+                  onClick={() => navigate(`/friends/${f.friend.id}`)}
                   aria-label={`Ver perfil de ${f.friend.name}`}
                   className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                 >
@@ -213,107 +200,6 @@ export default function Friends() {
           </Card>
         )}
       </div>
-
-      {viewing && (
-        <FriendProfileModal
-          friendship={viewing}
-          onClose={() => setViewing(null)}
-          onRemove={() => confirmRemove(viewing.id, viewing.friend.name, () => setViewing(null))}
-        />
-      )}
     </div>
-  );
-}
-
-/** Perfil de un amigo: se abre al tocar su fila en "Tus amigos". Trae los
- *  mismos campos "de presentación" que el dueño ya muestra en su propio
- *  Ajustes → Perfil (bio, ubicación, cumpleaños…) — nunca email/teléfono. */
-function FriendProfileModal({
-  friendship,
-  onClose,
-  onRemove,
-}: {
-  friendship: Friendship;
-  onClose: () => void;
-  onRemove: () => void;
-}) {
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ['friends', 'profile', friendship.friend.id],
-    queryFn: () => api<FriendProfile>(`/api/friends/profile/${friendship.friend.id}`),
-  });
-
-  const src = avatarSrc(profile?.avatar ?? friendship.friend.avatar);
-
-  return (
-    <Modal open onClose={onClose} title="Perfil">
-      {isLoading ? (
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            {/* `.skeleton` fija su propio radio (rounded-lg) con más prioridad
-                que una clase rounded-full pasada por fuera — se envuelve en un
-                contenedor circular con overflow-hidden en vez de pelear con
-                la cascada. */}
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full">
-              <Skeleton className="h-full w-full" />
-            </div>
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-          <Skeleton className="h-16" />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-2xl font-bold text-primary ring-1 ring-primary/20">
-              {src ? (
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              ) : (
-                friendship.friend.name[0]?.toUpperCase()
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-lg font-semibold">
-                {profile?.name ?? friendship.friend.name}
-                {profile?.pronouns && <span className="ml-2 text-sm font-normal text-slate-400">({profile.pronouns})</span>}
-              </p>
-              {profile?.username && <p className="truncate text-sm text-primary">@{profile.username}</p>}
-              {friendship.since && (
-                <p className="mt-1 text-xs text-slate-400">
-                  Amigos desde {format(parseISO(friendship.since), "d 'de' MMMM yyyy")}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {profile?.bio && <p className="text-sm text-slate-600 dark:text-slate-300">{profile.bio}</p>}
-
-          {(profile?.location || profile?.birthDate) && (
-            <div className="grid grid-cols-1 gap-2 border-t pt-4 text-sm dark:border-white/10 sm:grid-cols-2">
-              {profile?.location && (
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <MapPin className="h-4 w-4 shrink-0" /> {profile.location}
-                </div>
-              )}
-              {profile?.birthDate && (
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <Cake className="h-4 w-4 shrink-0" />
-                  {format(parseISO(profile.birthDate), "d 'de' MMMM")}
-                  <span className="text-slate-400">· {ageFrom(profile.birthDate)} años</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 border-t pt-4 dark:border-white/10">
-            <button type="button" className="btn-ghost" onClick={onClose}>Cerrar</button>
-            <button type="button" className="btn-danger" onClick={onRemove}>
-              <Trash2 className="h-4 w-4" /> Eliminar amigo
-            </button>
-          </div>
-        </div>
-      )}
-    </Modal>
   );
 }
