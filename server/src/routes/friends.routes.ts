@@ -51,6 +51,42 @@ function publicFriend(u: typeof users.$inferSelect) {
   return { id: u.id, name: u.name, avatar: u.avatar };
 }
 
+/** Perfil de un amigo: lo mismo que ve cualquiera de la lista (id/nombre/
+ *  avatar) más los campos "de presentación" que el dueño ya elige mostrar
+ *  en su propio Ajustes → Perfil. A propósito NO incluye email/teléfono —
+ *  esos son datos de contacto, no de perfil, y no se exponen solo por ser
+ *  amigos. */
+function publicFriendProfile(u: typeof users.$inferSelect) {
+  return {
+    id: u.id,
+    name: u.name,
+    avatar: u.avatar,
+    username: u.username,
+    bio: u.bio,
+    pronouns: u.pronouns,
+    location: u.location,
+    birthDate: u.birthDate,
+    createdAt: u.createdAt,
+  };
+}
+
+async function areFriends(userA: string, userB: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: friendships.id })
+    .from(friendships)
+    .where(
+      and(
+        eq(friendships.status, 'accepted'),
+        or(
+          and(eq(friendships.requesterId, userA), eq(friendships.addresseeId, userB)),
+          and(eq(friendships.requesterId, userB), eq(friendships.addresseeId, userA)),
+        ),
+      ),
+    )
+    .limit(1);
+  return !!row;
+}
+
 // GET /api/friends — mis amistades aceptadas.
 router.get(
   '/',
@@ -112,6 +148,24 @@ router.get(
         user: publicFriend(r.other),
       })),
     });
+  }),
+);
+
+// GET /api/friends/profile/:userId — perfil de un amigo (no de cualquier
+// usuario: exige que ya sean amigos aceptados).
+router.get(
+  '/profile/:userId',
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const { userId } = req.params;
+    if (userId === user.id) throw badRequest('Ese es tu propio perfil');
+
+    if (!(await areFriends(user.id, userId))) throw notFound('No encontrado');
+
+    const [friend] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!friend) throw notFound('No encontrado');
+
+    res.json(publicFriendProfile(friend));
   }),
 );
 

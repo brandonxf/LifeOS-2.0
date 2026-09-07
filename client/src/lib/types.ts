@@ -160,6 +160,20 @@ export interface FriendUser {
   avatar: string | null;
 }
 
+/** Perfil completo de un amigo (GET /api/friends/profile/:userId). Sin
+ *  email/teléfono a propósito — eso es contacto, no perfil. */
+export interface FriendProfile {
+  id: string;
+  name: string;
+  avatar: string | null;
+  username: string | null;
+  bio: string | null;
+  pronouns: string | null;
+  location: string | null;
+  birthDate: string | null;
+  createdAt: string;
+}
+
 export interface Friendship {
   id: string;
   since: string | null;
