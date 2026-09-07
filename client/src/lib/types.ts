@@ -154,19 +154,6 @@ export interface Note {
   similarity?: number;
 }
 
-export interface HealthLog {
-  id: string;
-  type: 'workout' | 'water' | 'sleep' | 'weight';
-  value: string;
-  unit: string;
-  notes: string | null;
-  date: string;
-}
-export type HealthSummary = Record<
-  string,
-  { total: number; count: number; latest: number; unit: string; series: { date: string; value: number }[] }
->;
-
 export interface FriendUser {
   id: string;
   name: string;

@@ -12,7 +12,6 @@ import {
   calendarEvents,
   diaryEntries,
   notes,
-  healthLogs,
 } from './schema/index.js';
 import { hashPassword } from '../lib/auth.js';
 import { embed } from '../services/embedding.service.js';
@@ -209,22 +208,6 @@ async function main() {
     })),
   );
   console.log(`  ✓ ${noteDefs.length} notes (with embeddings)`);
-
-  // ── Health ───────────────────────────────────────────────────────────
-  const healthRows = [];
-  for (let d = 0; d < 14; d++) {
-    const date = iso(daysAgo(d));
-    healthRows.push(
-      { userId, type: 'water' as const, value: (1.5 + Math.random() * 1.5).toFixed(2), unit: 'L', notes: null, date },
-      { userId, type: 'sleep' as const, value: (6 + Math.random() * 2.5).toFixed(2), unit: 'hours', notes: null, date },
-      { userId, type: 'weight' as const, value: (74 + Math.random() * 1.5).toFixed(2), unit: 'kg', notes: null, date },
-    );
-    if (Math.random() < 0.6) {
-      healthRows.push({ userId, type: 'workout' as const, value: (20 + Math.random() * 45).toFixed(2), unit: 'min', notes: null, date });
-    }
-  }
-  await db.insert(healthLogs).values(healthRows);
-  console.log(`  ✓ ${healthRows.length} health logs`);
 
   console.log('\n✅ Seed complete!');
   console.log(`   Login with: ${DEMO_EMAIL} / ${DEMO_PASSWORD}\n`);

@@ -1,25 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  BarChart,
-  Bar,
-  ResponsiveContainer,
-  Cell,
-  XAxis,
-  Tooltip,
-} from 'recharts';
 import { format, isToday, isPast, parseISO } from 'date-fns';
-import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, HeartPulse, ArrowRight, Send, Sparkles } from 'lucide-react';
+import { Wallet, CheckSquare, Flame, Target, Calendar as CalIcon, ArrowRight, Send, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AiMark } from '../components/Brand';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
-import { useSettings } from '../store/settings';
 import { Card, Skeleton } from '../components/ui';
 import { cn, formatCurrency } from '../lib/utils';
 import { bogotaISODate } from '../lib/date';
-import type { FinanceSummary, Task, Habit, Goal, CalendarEvent, HealthSummary } from '../lib/types';
+import type { FinanceSummary, Task, Habit, Goal, CalendarEvent } from '../lib/types';
 
 /** Tarjeta de resumen generado por IA (semanal/mensual). Se pide bajo
  *  demanda —no en cada carga del dashboard— porque cada generación es una
@@ -126,7 +117,6 @@ export default function Dashboard() {
   const habits = useQuery({ queryKey: ['habits'], queryFn: () => api<Habit[]>('/api/habits') });
   const goals = useQuery({ queryKey: ['goals'], queryFn: () => api<Goal[]>('/api/goals') });
   const events = useQuery({ queryKey: ['events'], queryFn: () => api<CalendarEvent[]>('/api/calendar/events') });
-  const health = useQuery({ queryKey: ['health', 'summary'], queryFn: () => api<HealthSummary>('/api/health/summary') });
 
   const today = bogotaISODate();
 
@@ -301,7 +291,7 @@ export default function Dashboard() {
         </Tile>
 
         {/* Calendar */}
-        <Tile title="Próximos eventos" icon={CalIcon} to="/calendar" className="lg:col-span-3">
+        <Tile title="Próximos eventos" icon={CalIcon} to="/calendar" className="lg:col-span-6">
           {events.isLoading ? (
             <Skeleton className="h-28 w-full" />
           ) : (
@@ -317,55 +307,7 @@ export default function Dashboard() {
             </div>
           )}
         </Tile>
-
-        {/* Health */}
-        <Tile title="Salud (7 días)" icon={HeartPulse} to="/health" className="lg:col-span-3">
-          {health.isLoading ? (
-            <Skeleton className="h-28 w-full" />
-          ) : (
-            <HealthMini summary={health.data ?? {}} />
-          )}
-        </Tile>
       </div>
-    </div>
-  );
-}
-
-function HealthMini({ summary }: { summary: HealthSummary }) {
-  const performanceModeEnabled = useSettings((s) => s.performanceModeEnabled);
-  const water = summary.water;
-  const sleep = summary.sleep;
-  const workout = summary.workout;
-  const chartData = (water?.series ?? sleep?.series ?? []).map((s) => ({ date: s.date.slice(5), value: s.value }));
-  return (
-    <div>
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div>
-          <p className="num text-2xl font-bold text-primary">{water ? water.latest.toFixed(1) : '—'}</p>
-          <p className="text-[10px] text-slate-400 dark:text-white/40">Agua {water?.unit}</p>
-        </div>
-        <div>
-          <p className="num text-2xl font-bold text-primary">{sleep ? sleep.latest.toFixed(1) : '—'}</p>
-          <p className="text-[10px] text-slate-400 dark:text-white/40">Sueño h</p>
-        </div>
-        <div>
-          <p className="num text-2xl font-bold text-success">{workout ? Math.round(workout.total) : '—'}</p>
-          <p className="text-[10px] text-slate-400 dark:text-white/40">Ejercicio min</p>
-        </div>
-      </div>
-      {chartData.length > 0 && (
-        <ResponsiveContainer width="100%" height={60}>
-          <BarChart data={chartData}>
-            <XAxis dataKey="date" hide />
-            <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-            <Bar dataKey="value" radius={[3, 3, 0, 0]} isAnimationActive={!performanceModeEnabled}>
-              {chartData.map((_, i) => (
-                <Cell key={i} fill="rgb(var(--primary))" />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      )}
     </div>
   );
 }

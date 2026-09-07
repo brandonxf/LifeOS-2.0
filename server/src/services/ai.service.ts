@@ -11,7 +11,6 @@ import {
   goals,
   notes,
   diaryEntries,
-  healthLogs,
 } from '../db/schema/index.js';
 import { embed } from './embedding.service.js';
 import { env } from '../config/env.js';
@@ -45,7 +44,6 @@ export interface UserContext {
   habitsToday: { name: string; done: boolean }[];
   finance: { income: number; expenses: number; balance: number; month: string };
   diary: { date: string; mood: number }[];
-  health: { type: string; value: string; unit: string; date: string }[];
 }
 
 const MOOD_LABELS = ['', 'fatal', 'mal', 'regular', 'bien', 'genial'];
@@ -63,7 +61,7 @@ export async function buildUserContext(userId: string): Promise<UserContext> {
   const today = todayISO();
   const monthStart = monthStartISO();
 
-  const [taskRows, habitRows, todaysLogs, financeRows, diaryRows, healthRows] =
+  const [taskRows, habitRows, todaysLogs, financeRows, diaryRows] =
     await Promise.all([
       // Last 10 tasks: overdue or due today, most urgent first
       db
@@ -96,12 +94,6 @@ export async function buildUserContext(userId: string): Promise<UserContext> {
         .where(and(eq(diaryEntries.userId, userId), isNull(diaryEntries.deletedAt)))
         .orderBy(desc(diaryEntries.date))
         .limit(5),
-      db
-        .select()
-        .from(healthLogs)
-        .where(and(eq(healthLogs.userId, userId), isNull(healthLogs.deletedAt)))
-        .orderBy(desc(healthLogs.date))
-        .limit(3),
     ]);
 
   const loggedHabitIds = new Set(todaysLogs.map((l) => l.habitId));
@@ -129,12 +121,6 @@ export async function buildUserContext(userId: string): Promise<UserContext> {
       month: monthStart.slice(0, 7),
     },
     diary: diaryRows.map((d) => ({ date: d.date, mood: d.mood })),
-    health: healthRows.map((h) => ({
-      type: h.type,
-      value: h.value,
-      unit: h.unit,
-      date: h.date,
-    })),
   };
 }
 
@@ -157,10 +143,6 @@ export function buildSystemPrompt(ctx: UserContext, userName: string): string {
   const diaryTxt = ctx.diary.length
     ? ctx.diary.map((d) => `- ${d.date}: mood ${d.mood}/5 (${MOOD_LABELS[d.mood] ?? '?'})`).join('\n')
     : '- (no diary entries)';
-
-  const healthTxt = ctx.health.length
-    ? ctx.health.map((h) => `- ${h.date}: ${h.type} ${h.value}${h.unit}`).join('\n')
-    : '- (no health logs)';
 
   return `Eres el asistente personal dentro de "Life OS", un panel de gestión de vida para ${userName}.
 Tienes acceso en vivo a una foto de sus datos, abajo.
@@ -200,7 +182,6 @@ y antes una sola frase de confirmación. Tipos y campos (obligatorios marcados *
 - create_goal — title*; targetValue (número); currentValue (número); unit; category; deadline ("YYYY-MM-DD"); description.
 - create_note — content* (o title); title; tags (array); pinned (bool).
 - create_diary_entry — content*; mood (1-5); title; tags (array); date ("YYYY-MM-DD", hoy por defecto).
-- create_health_log — type* ("workout"|"water"|"sleep"|"weight"); value* (número); unit* (ej. "min","L","h","kg"); date ("YYYY-MM-DD"); notes.
 Ejemplo:
 \`\`\`action
 {"type":"create_task","title":"Comprar leche","priority":"medium","dueDate":"${todayISO()}"}
@@ -232,10 +213,7 @@ ${habitsTxt}
 - Balance: $${ctx.finance.balance}
 
 ## Ánimos recientes del diario
-${diaryTxt}
-
-## Registros de salud recientes
-${healthTxt}`;
+${diaryTxt}`;
 }
 
 /** Describe which data was injected — surfaced to the UI as a "context badge". */
@@ -245,7 +223,6 @@ export function contextBadge(ctx: UserContext): string[] {
     `${ctx.habitsToday.length} habits`,
     `finances (${ctx.finance.month})`,
     `${ctx.diary.length} diary entries`,
-    `${ctx.health.length} health logs`,
   ];
 }
 
@@ -272,7 +249,7 @@ export async function streamChat(
     const mock =
       "Estoy en **modo demo sin conexión** porque no hay una clave de IA configurada. " +
       "Agrega `NVIDIA_API_KEY` (modelos gratuitos) o `ANTHROPIC_API_KEY` al `.env` del servidor.\n\n" +
-      "Con tus datos ya puedo ver tus tareas, hábitos, finanzas, ánimos del diario y registros de salud conectados — configura la clave y pídeme *\"Resume mi semana\"*.";
+      "Con tus datos ya puedo ver tus tareas, hábitos, finanzas y ánimos del diario conectados — configura la clave y pídeme *\"Resume mi semana\"*.";
     for (const chunk of mock.match(/.{1,4}/g) ?? [mock]) {
       cb.onDelta(chunk);
       await new Promise((r) => setTimeout(r, 8));
@@ -327,7 +304,7 @@ export async function streamChat(
 
 export interface ActionResult {
   ok: boolean;
-  kind: 'task' | 'finance' | 'event' | 'habit' | 'goal' | 'note' | 'diary' | 'health' | 'unknown';
+  kind: 'task' | 'finance' | 'event' | 'habit' | 'goal' | 'note' | 'diary' | 'unknown';
   label: string;
   error?: string;
 }
@@ -471,23 +448,6 @@ async function executeOne(userId: string, p: any): Promise<ActionResult> {
         date,
       });
       return { ok: true, kind: 'diary', label: 'Entrada de diario' };
-    }
-    case 'create_health_log': {
-      const type = ['workout', 'water', 'sleep', 'weight'].includes(p.type) ? p.type : null;
-      if (!type) return { ok: false, kind: 'health', label: 'registro de salud', error: 'tipo inválido (workout|water|sleep|weight)' };
-      const value = Number(p.value);
-      if (!value || value <= 0) return { ok: false, kind: 'health', label: 'registro de salud', error: 'valor inválido' };
-      if (!p.unit) return { ok: false, kind: 'health', label: 'registro de salud', error: 'falta la unidad' };
-      const date = ISO_DATE.test(p.date ?? '') ? p.date : today;
-      await db.insert(healthLogs).values({
-        userId,
-        type,
-        value: value.toString(),
-        unit: String(p.unit),
-        notes: p.notes ? String(p.notes) : null,
-        date,
-      });
-      return { ok: true, kind: 'health', label: `Salud: ${type} ${value}${p.unit}` };
     }
     default:
       return { ok: false, kind: 'unknown', label: 'acción', error: `tipo desconocido: ${p?.type}` };

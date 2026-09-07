@@ -6,7 +6,6 @@ export * from './habits.js';
 export * from './calendar.js';
 export * from './diary.js';
 export * from './notes.js';
-export * from './health.js';
 export * from './chat.js';
 export * from './friends.js';
 export * from './activity.js';

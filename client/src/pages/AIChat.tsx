@@ -161,7 +161,7 @@ export default function AIChat() {
           } else if (event === 'action') {
             const KEY: Record<string, string> = {
               task: 'tasks', finance: 'finance', event: 'events', habit: 'habits',
-              goal: 'goals', note: 'notes', diary: 'diary', health: 'health',
+              goal: 'goals', note: 'notes', diary: 'diary',
             };
             for (const r of data.results as { ok: boolean; kind: string; label: string; error?: string }[]) {
               if (r.ok) {

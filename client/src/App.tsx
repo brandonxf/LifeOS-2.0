@@ -19,7 +19,6 @@ const Diary = lazy(() => import('./pages/Diary'));
 const Notes = lazy(() => import('./pages/Notes'));
 const Friends = lazy(() => import('./pages/Friends'));
 const Feed = lazy(() => import('./pages/Feed'));
-const Health = lazy(() => import('./pages/Health'));
 const AIChat = lazy(() => import('./pages/AIChat'));
 const Settings = lazy(() => import('./pages/Settings'));
 
@@ -67,7 +66,6 @@ export default function App() {
           <Route path="/notes" element={<Notes />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/feed" element={<Feed />} />
-          <Route path="/health" element={<Health />} />
           <Route path="/ai" element={<AIChat />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
