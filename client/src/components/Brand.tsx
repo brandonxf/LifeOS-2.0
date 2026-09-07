@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { cn } from '../lib/utils';
 
 /** Marca de la app "Life OS": el isotipo oficial (mismo mark en toda la app
@@ -232,11 +232,42 @@ export function AuthBackdrop({ className }: { className?: string }) {
   );
 }
 
+/** Espera a que el navegador confirme que ya pintó un frame real (doble
+ *  requestAnimationFrame, con un timeout corto de respaldo) antes de dar luz
+ *  verde a las animaciones del splash. En el arranque en frío de la app en
+ *  celular el hilo principal puede estar ocupado un instante justo al
+ *  montar, y una animación que ya arrancó por reloj en ese momento pierde
+ *  en silencio sus primeros frames — se ve recortada/rápida aunque en
+ *  desktop (sin ese arranque en frío) se vea bien. */
+function useArmedAfterPaint() {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setArmed(true));
+    });
+    const fallback = window.setTimeout(() => setArmed(true), 120);
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      window.clearTimeout(fallback);
+    };
+  }, []);
+  return armed;
+}
+
 /** Pantalla de carga de marca a pantalla completa (transición al entrar a la app). */
 export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: string }) {
   const word = 'Life OS';
+  const armed = useArmedAfterPaint();
   return (
-    <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col items-center justify-center gap-10 bg-ink-950 text-center">
+    <div
+      className={cn(
+        'fixed inset-0 z-[60] flex animate-fade-in flex-col items-center justify-center gap-10 bg-ink-950 text-center',
+        armed && 'splash-armed',
+      )}
+    >
       <Ambient />
       <div className="relative z-10 flex flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-3">
@@ -259,14 +290,14 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
                 key={i}
                 aria-hidden="true"
                 className="loader-letter"
-                style={{ animationDelay: `${1250 + i * 150}ms` }}
+                style={{ animationDelay: `${1750 + i * 150}ms` }}
               >
               {ch === ' ' ? ' ' : ch}
               </span>
             ))}
           </h1>
         </div>
-        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '2600ms' }}>
+        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '3100ms' }}>
           <div className="progress-track h-1.5 w-56" />
           <p className="text-sm text-slate-400">{label}</p>
         </div>
