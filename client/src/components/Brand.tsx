@@ -206,13 +206,13 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
     <div className="fixed inset-0 z-[60] flex animate-fade-in flex-col items-center justify-center gap-10 bg-ink-950 text-center">
       <Ambient />
       <div className="relative z-10 flex flex-col items-center gap-8">
-        <div className="relative flex h-28 w-28 items-center justify-center">
+        <div className="relative flex h-44 w-44 items-center justify-center">
           <span
             aria-hidden="true"
-            className="logo-glow absolute h-24 w-24 rounded-full bg-primary blur-2xl"
+            className="logo-glow absolute h-36 w-36 rounded-full bg-primary blur-2xl"
           />
           <Logo
-            size={88}
+            size={144}
             className="logo-reveal relative drop-shadow-[0_2px_30px_rgb(var(--primary)/0.55)]"
           />
         </div>
