@@ -159,19 +159,20 @@ function GoalMilestones({ goalId }: { goalId: string }) {
   );
 }
 
-/** Insignia de racha con fueguito: en reposo es un contorno gris; al completar
- *  el hábito de hoy se llena de amarillo de abajo hacia arriba (solo el
- *  ícono, el número se mantiene neutro) — nunca anima si ya cargó completo. */
+/** Insignia de racha con fueguito: fondo dorado como antes; el contorno
+ *  del fueguito ya se ve ámbar en reposo y, al completar el hábito de hoy,
+ *  se rellena de amarillo pleno de abajo hacia arriba (solo el ícono, el
+ *  número se mantiene igual) — nunca anima si ya cargó completo. */
 function StreakFlameBadge({ streakCount, done }: { streakCount: number; done: boolean }) {
   const pulse = useCompletionPulse(done);
   return (
-    <div className="relative flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+    <div className="relative flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
       <CompletionBurst show={pulse} color="#f59e0b" />
       <span className="relative inline-flex h-4 w-4 shrink-0">
         <Flame className="absolute inset-0 h-4 w-4" />
         <Flame className={cn('flame-fill absolute inset-0 h-4 w-4 fill-amber-400 text-amber-400', done && 'flame-fill-done')} />
       </span>
-      <span className="num">{streakCount}</span>
+      <span>{streakCount}</span>
     </div>
   );
 }
@@ -381,23 +382,27 @@ export default function Habits() {
                       participantDates={h.members?.length ? h.members.map((m) => m.dates) : [h.logs]}
                     />
                     <p className="mt-2 text-xs text-slate-400">{h.logs.length} veces completado · últimas 17 semanas</p>
-                    {(h.members?.length ?? 0) > 0 && (
-                      <div className="mt-3 flex flex-wrap items-center gap-3 border-t pt-3">
-                        {h.members!.map((m) => (
-                          <div key={m.id} className="flex items-center gap-1.5" title={`${m.name} · racha de ${m.streak}`}>
-                            <div className={cn('rounded-full', m.doneToday && 'ring-2 ring-success ring-offset-2 dark:ring-offset-slate-900')}>
-                              <Avatar name={m.name} avatar={m.avatar} size={28} />
+                    {(h.members?.length ?? 0) > 0 ? (
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          {h.members!.map((m) => (
+                            <div key={m.id} className="flex items-center gap-1.5" title={`${m.name} · racha de ${m.streak}`}>
+                              <div className={cn('rounded-full', m.doneToday && 'ring-2 ring-success ring-offset-2 dark:ring-offset-slate-900')}>
+                                <Avatar name={m.name} avatar={m.avatar} size={28} />
+                              </div>
+                              <span className="flex items-center gap-0.5 text-xs font-medium text-slate-500">
+                                <Flame className="h-3 w-3 text-amber-500" /> {m.streak}
+                              </span>
                             </div>
-                            <span className="flex items-center gap-0.5 text-xs font-medium text-slate-500">
-                              <Flame className="h-3 w-3 text-amber-500" /> {m.streak}
-                            </span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                        <StreakFlameBadge streakCount={streak(h.logs)} done={h.logs.includes(today)} />
+                      </div>
+                    ) : (
+                      <div className="mt-3 flex justify-end">
+                        <StreakFlameBadge streakCount={streak(h.logs)} done={h.logs.includes(today)} />
                       </div>
                     )}
-                    <div className="mt-3 flex justify-end">
-                      <StreakFlameBadge streakCount={streak(h.logs)} done={h.logs.includes(today)} />
-                    </div>
                   </Card>
                 );
               })}
