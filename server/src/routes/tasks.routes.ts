@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { and, asc, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { tasks, taskAssignees, friendships, users, activityEvents } from '../db/schema/index.js';
+import { tasks, taskAssignees, friendships, users } from '../db/schema/index.js';
 import { asyncHandler, badRequest, forbidden, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
 
@@ -246,13 +246,12 @@ router.patch(
     );
 
     const [task] = await db
-      .select({ userId: tasks.userId, title: tasks.title })
+      .select({ userId: tasks.userId })
       .from(tasks)
       .where(and(eq(tasks.id, req.params.id), isNull(tasks.deletedAt)))
       .limit(1);
     if (!task) throw notFound('Task not found');
 
-    let hasActiveAssignees = false;
     if (task.userId !== user.id) {
       const [membership] = await db
         .select({ id: taskAssignees.id })
@@ -266,14 +265,6 @@ router.patch(
         )
         .limit(1);
       if (!membership) throw notFound('Task not found');
-      hasActiveAssignees = true;
-    } else {
-      const [anyAssignee] = await db
-        .select({ id: taskAssignees.id })
-        .from(taskAssignees)
-        .where(and(eq(taskAssignees.taskId, req.params.id), eq(taskAssignees.status, 'active')))
-        .limit(1);
-      hasActiveAssignees = !!anyAssignee;
     }
 
     const [row] = await db
@@ -281,15 +272,6 @@ router.patch(
       .set({ status, completedAt: status === 'done' ? new Date() : null })
       .where(eq(tasks.id, req.params.id))
       .returning();
-
-    if (status === 'done' && hasActiveAssignees) {
-      await db.insert(activityEvents).values({
-        userId: user.id,
-        kind: 'task_completed',
-        entityId: req.params.id,
-        label: task.title,
-      });
-    }
 
     res.json(row);
   }),

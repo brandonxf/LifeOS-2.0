@@ -505,7 +505,6 @@ function HabitModal({ open, onClose, editing }: { open: boolean; onClose: () => 
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('flame');
   const [color, setColor] = useState('#37e779');
-  const [shareProgress, setShareProgress] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -514,13 +513,12 @@ function HabitModal({ open, onClose, editing }: { open: boolean; onClose: () => 
       setDescription(editing?.description ?? '');
       setIcon(editing?.icon ?? 'flame');
       setColor(editing?.color ?? '#37e779');
-      setShareProgress(editing?.shareProgress ?? false);
     }
   }, [open, editing]);
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { name, description, icon, color, shareProgress };
+      const body = { name, description, icon, color };
       return editing
         ? api(`/api/habits/${editing.id}`, { method: 'PUT', body })
         : api('/api/habits', { method: 'POST', body });
@@ -566,13 +564,6 @@ function HabitModal({ open, onClose, editing }: { open: boolean; onClose: () => 
             </button>
           </div>
         </Field>
-        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-sm">
-          <input type="checkbox" checked={shareProgress} onChange={(e) => setShareProgress(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
-          <span>
-            <span className="font-medium">Compartir mi progreso con mis amigos</span>
-            <span className="mt-0.5 block text-xs text-slate-400">Tus check-ins aparecen en el feed de tus amigos, aunque no los invites a este hábito.</span>
-          </span>
-        </label>
         <button type="submit" className="btn-primary w-full" disabled={save.isPending}>{editing ? 'Guardar cambios' : 'Crear hábito'}</button>
       </form>
 

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { habits, habitLogs, habitMembers, friendships, users, activityEvents } from '../db/schema/index.js';
+import { habits, habitLogs, habitMembers, friendships, users } from '../db/schema/index.js';
 import { asyncHandler, badRequest, forbidden, notFound, validate } from '../lib/http.js';
 import { currentUser } from '../middleware/auth.js';
 import { bogotaISODate, shiftIsoDate, currentStreakFromDates } from '../lib/date.js';
@@ -16,7 +16,6 @@ const habitSchema = z.object({
   color: z.string().optional(),
   frequency: z.enum(['daily', 'weekly']).default('daily'),
   targetPerWeek: z.number().int().min(1).max(7).default(7),
-  shareProgress: z.boolean().default(false),
 });
 
 router.get(
@@ -302,13 +301,12 @@ router.post(
     const day = date ?? bogotaISODate();
 
     const [habit] = await db
-      .select({ userId: habits.userId, name: habits.name, shareProgress: habits.shareProgress })
+      .select({ userId: habits.userId, name: habits.name })
       .from(habits)
       .where(and(eq(habits.id, req.params.id), isNull(habits.deletedAt)))
       .limit(1);
     if (!habit) throw notFound('Habit not found');
 
-    let hasActiveMembers = false;
     if (habit.userId !== user.id) {
       const [membership] = await db
         .select({ id: habitMembers.id })
@@ -322,14 +320,6 @@ router.post(
         )
         .limit(1);
       if (!membership) throw notFound('Habit not found');
-      hasActiveMembers = true;
-    } else {
-      const [anyMember] = await db
-        .select({ id: habitMembers.id })
-        .from(habitMembers)
-        .where(and(eq(habitMembers.habitId, req.params.id), eq(habitMembers.status, 'active')))
-        .limit(1);
-      hasActiveMembers = !!anyMember;
     }
 
     const [existing] = await db
@@ -340,28 +330,9 @@ router.post(
 
     if (existing) {
       await db.delete(habitLogs).where(eq(habitLogs.id, existing.id));
-      await db
-        .delete(activityEvents)
-        .where(
-          and(
-            eq(activityEvents.kind, 'habit_completed'),
-            eq(activityEvents.entityId, req.params.id),
-            eq(activityEvents.userId, user.id),
-            eq(activityEvents.date, day),
-          ),
-        );
       res.json({ date: day, done: false });
     } else {
       await db.insert(habitLogs).values({ habitId: req.params.id, userId: user.id, date: day });
-      if (hasActiveMembers || habit.shareProgress) {
-        await db.insert(activityEvents).values({
-          userId: user.id,
-          kind: 'habit_completed',
-          entityId: req.params.id,
-          label: habit.name,
-          date: day,
-        });
-      }
       res.json({ date: day, done: true });
     }
   }),

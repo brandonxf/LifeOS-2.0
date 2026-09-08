@@ -79,7 +79,6 @@ export interface Habit {
   logs: string[];
   isOwner: boolean;
   members?: HabitMemberProgress[];
-  shareProgress: boolean;
 }
 
 export interface HabitInvite {
@@ -208,12 +207,3 @@ export interface FriendRequest {
   user: FriendUser;
 }
 
-export interface ActivityEvent {
-  id: string;
-  kind: 'habit_completed' | 'task_completed';
-  label: string;
-  actor: FriendUser;
-  createdAt: string;
-  reactionCount: number;
-  reactedByMe: boolean;
-}

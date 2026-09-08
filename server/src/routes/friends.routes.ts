@@ -14,10 +14,10 @@ const router = Router();
  * ambos: si uno invitó al otro a un hábito o tarea suya (aceptada o
  * pendiente), esa fila de `habit_members`/`task_assignees` se borra. Solo
  * afecta las filas donde uno es dueño y el otro colaborador — un hábito
- * compartido con un tercer amigo no se toca. Los logs/eventos de actividad
- * ya hechos no se borran (mismo criterio que el resto de la app: sobreviven
- * aunque el hábito/tarea o, en este caso, el vínculo desaparezca), pero al
- * perder la membresía dejan de ser visibles para cualquiera de los dos.
+ * compartido con un tercer amigo no se toca. Los logs ya hechos no se borran
+ * (mismo criterio que el resto de la app: sobreviven aunque el hábito/tarea
+ * o, en este caso, el vínculo desaparezca), pero al perder la membresía
+ * dejan de ser visibles para cualquiera de los dos.
  */
 async function unlinkSharedStuff(userA: string, userB: string) {
   const [habitsOfA, habitsOfB, tasksOfA, tasksOfB] = await Promise.all([

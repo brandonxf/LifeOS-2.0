@@ -1,8 +1,8 @@
 /**
- * Presets de react-query para pantallas "sociales" (Amigos, Hábitos, Tareas,
- * Actividad): sin WebSockets no hay push real desde el servidor (la API es
- * una función serverless en Vercel, no sostiene conexiones persistentes), así
- * que se simula con polling mientras la pantalla está abierta/enfocada.
+ * Presets de react-query para pantallas "sociales" (Amigos, Hábitos, Tareas):
+ * sin WebSockets no hay push real desde el servidor (la API es una función
+ * serverless en Vercel, no sostiene conexiones persistentes), así que se
+ * simula con polling mientras la pantalla está abierta/enfocada.
  * `refetchIntervalInBackground` no se toca (default false): no sondea si la
  * pestaña/app está en segundo plano.
  */

@@ -1,6 +1,6 @@
 # 🌌 Life OS
 
-Un **sistema operativo personal** full-stack y multi-tenant — un panel privado para manejar tus finanzas, tareas, hábitos, metas, calendario, diario, notas y salud, con un **asistente de IA** que conoce tus propios datos. Agrega amigos para compartir hábitos, hacer tareas en equipo y ver el progreso de los demás en un feed de actividad.
+Un **sistema operativo personal** full-stack y multi-tenant — un panel privado para manejar tus finanzas, tareas, hábitos, metas, calendario, diario, notas y salud, con un **asistente de IA** que conoce tus propios datos. Agrega amigos para compartir hábitos y hacer tareas en equipo.
 
 ![stack](https://img.shields.io/badge/React-18-61dafb) ![stack](https://img.shields.io/badge/Node-Express-3c873a) ![stack](https://img.shields.io/badge/Neon-Postgres-00e599) ![stack](https://img.shields.io/badge/Drizzle-ORM-c5f74f) ![stack](https://img.shields.io/badge/AI-NVIDIA%20%2F%20Claude-76b900)
 
@@ -21,10 +21,9 @@ Un **sistema operativo personal** full-stack y multi-tenant — un panel privado
 | **Amigos y Social** | Agrega amigos con un código corto de invitación (sin directorio/búsqueda pública); invita amigos a un hábito o tarea — cada quien acepta antes de que le aparezca |
 | **Hábitos compartidos** | El heatmap del hábito se rellena cada día según *qué fracción del equipo* lo completó, no todo-o-nada; se ve la racha actual de cada miembro junto a su avatar |
 | **Tareas en equipo** | Asigna una tarea a uno o varios amigos; cualquier asignado activo la puede mover en el tablero, solo el dueño la edita/borra |
-| **Feed de actividad** | Ve cuando tus amigos completan un hábito/tarea compartida, o un hábito privado que decidieron transmitir con "Compartir mi progreso con mis amigos" — reacciona con un 👏 |
 | **Asistente de IA** | Chat en streaming (SSE), insignia de contexto que muestra exactamente qué datos se enviaron — corre en NVIDIA NIM (gratis) por defecto, con respaldo en Anthropic Claude, y modo demo sin conexión si no hay ninguna clave configurada |
 
-Además: autenticación JWT con **rotación de refresh tokens**, borrado suave, límite de peticiones, modo oscuro, PWA, esqueletos de carga, notificaciones toast, refresco casi en tiempo real (por polling) en todas las pantallas de amigos/hábitos/tareas/feed, y tipado completo en TypeScript.
+Además: autenticación JWT con **rotación de refresh tokens**, borrado suave, límite de peticiones, modo oscuro, PWA, esqueletos de carga, notificaciones toast, refresco casi en tiempo real (por polling) en todas las pantallas de amigos/hábitos/tareas, y tipado completo en TypeScript.
 
 ---
 
