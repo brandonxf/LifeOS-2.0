@@ -405,6 +405,20 @@
   animation: burst-dot 460ms ease-out forwards;
 }
 
+/* Fueguito de racha (StreakFlameBadge en Habits.tsx): el ícono amarillo vive
+   superpuesto al contorno gris, recortado con clip-path desde abajo. Al
+   completar el hábito de hoy el recorte sube hasta cubrirlo entero — un
+   "llenado" en vez de un simple cambio de color. Si el hábito ya estaba
+   completo al cargar la página, no hay transición previa que animar: se
+   pinta lleno directo, tal como pide el resto de estas micro-animaciones. */
+.flame-fill {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 550ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.flame-fill-done {
+  clip-path: inset(0 0 0 0);
+}
+
 /* Oculta la barra de scroll pero mantiene el scroll (táctil). Se usa en el
    menú flotante: al animar la entrada, el transform amplía momentáneamente
    el área de scroll del contenedor y asomaba una barra. */
@@ -445,6 +459,9 @@
   .draw-check,
   .burst-dot {
     animation-duration: 0.001ms !important;
+  }
+  .flame-fill {
+    transition-duration: 0.001ms !important;
   }
 }
 

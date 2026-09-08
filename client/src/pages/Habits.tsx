@@ -159,6 +159,23 @@ function GoalMilestones({ goalId }: { goalId: string }) {
   );
 }
 
+/** Insignia de racha con fueguito: en reposo es un contorno gris; al completar
+ *  el hábito de hoy se llena de amarillo de abajo hacia arriba (solo el
+ *  ícono, el número se mantiene neutro) — nunca anima si ya cargó completo. */
+function StreakFlameBadge({ streakCount, done }: { streakCount: number; done: boolean }) {
+  const pulse = useCompletionPulse(done);
+  return (
+    <div className="relative flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+      <CompletionBurst show={pulse} color="#f59e0b" />
+      <span className="relative inline-flex h-4 w-4 shrink-0">
+        <Flame className="absolute inset-0 h-4 w-4" />
+        <Flame className={cn('flame-fill absolute inset-0 h-4 w-4 fill-amber-400 text-amber-400', done && 'flame-fill-done')} />
+      </span>
+      <span className="num">{streakCount}</span>
+    </div>
+  );
+}
+
 function HabitChecklistButton({ habit, done, onToggle }: { habit: Habit; done: boolean; onToggle: () => void }) {
   const pulse = useCompletionPulse(done);
   return (
@@ -339,9 +356,6 @@ export default function Habits() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                          <Flame className="h-4 w-4" /> {streak(h.logs)}
-                        </div>
                         {h.isOwner && (
                           <button onClick={() => { setEditingHabit(h); setHabitModal(true); }} className="text-slate-300 hover:text-primary" aria-label="Editar hábito">
                             <Pencil className="h-4 w-4" />
@@ -381,6 +395,9 @@ export default function Habits() {
                         ))}
                       </div>
                     )}
+                    <div className="mt-3 flex justify-end">
+                      <StreakFlameBadge streakCount={streak(h.logs)} done={h.logs.includes(today)} />
+                    </div>
                   </Card>
                 );
               })}
