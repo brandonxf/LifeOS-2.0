@@ -481,7 +481,13 @@
   .animate-blob {
     animation: none !important;
   }
-  [class*='backdrop-blur'] {
+  /* `.card` y `.btn-glass` meten su backdrop-blur vía @apply (queda dentro
+     del CSS compilado de la clase, no como token suelto en el `class` del
+     elemento), así que el selector de atributo de abajo no los alcanza:
+     hay que nombrarlos aparte o el blur de cada tarjeta se queda vivo. */
+  [class*='backdrop-blur'],
+  .card,
+  .btn-glass {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -526,7 +532,9 @@
 .perf-mode .animate-blob {
   animation: none !important;
 }
-.perf-mode [class*='backdrop-blur'] {
+.perf-mode [class*='backdrop-blur'],
+.perf-mode .card,
+.perf-mode .btn-glass {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
