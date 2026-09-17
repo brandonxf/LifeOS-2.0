@@ -45,7 +45,7 @@ export default function Register() {
 
   return (
     <AuthShell mode="register" title="Crea tu cuenta" subtitle="Empieza a organizar tu vida">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 lg:space-y-6">
         <Field label="Nombre" error={errors.name?.message}>
           <input className="input-glass" placeholder="Juan Pérez" {...register('name')} />
         </Field>
@@ -55,7 +55,11 @@ export default function Register() {
         <Field label="Contraseña" error={errors.password?.message}>
           <PasswordInput className="input-glass" placeholder="Mínimo 8 caracteres" {...register('password')} />
         </Field>
-        <button type="submit" className="btn-primary w-full rounded-xl py-3 text-base shadow-glow" disabled={loading}>
+        <button
+          type="submit"
+          className="btn-primary w-full rounded-xl py-3 text-base shadow-glow lg:py-4 lg:text-lg"
+          disabled={loading}
+        >
           {loading ? <Spinner /> : 'Crear cuenta'}
         </button>
       </form>

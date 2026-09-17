@@ -57,7 +57,7 @@ export default function Login() {
 
   return (
     <AuthShell mode="login" title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 lg:space-y-6">
         <Field label="Correo" error={errors.email?.message}>
           <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
         </Field>
@@ -67,19 +67,19 @@ export default function Login() {
         <button
           type="button"
           onClick={() => toast('Función próximamente')}
-          className="text-sm text-white/60 transition hover:text-primary"
+          className="text-sm text-white/60 transition hover:text-primary lg:text-base"
         >
           ¿Olvidaste tu contraseña?
         </button>
         <button
           type="submit"
-          className="btn-primary w-full rounded-xl py-3 text-base shadow-glow"
+          className="btn-primary w-full rounded-xl py-3 text-base shadow-glow lg:py-4 lg:text-lg"
           disabled={loading}
         >
           {loading ? <Spinner /> : 'Iniciar sesión'}
         </button>
       </form>
-      <button onClick={fillDemo} className="mt-4 w-full text-center text-xs text-white/50 transition hover:text-white/80">
+      <button onClick={fillDemo} className="mt-4 w-full text-center text-xs text-white/50 transition hover:text-white/80 lg:text-sm">
         Usar cuenta demo (demo@lifeos.app / demo1234)
       </button>
     </AuthShell>
@@ -129,21 +129,21 @@ export function AuthShell({
       </div>
 
       {/* Panel del formulario */}
-      <div className="relative z-10 flex w-full items-center justify-center p-4 lg:w-[46%] lg:border-l lg:border-white/10 lg:bg-black/10 lg:p-16">
-        <div className="w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10 lg:max-w-sm lg:p-0 lg:rounded-none lg:border-none lg:bg-transparent lg:shadow-none lg:backdrop-blur-none">
+      <div className="relative z-10 flex w-full items-center justify-center p-4 lg:w-1/2 lg:border-l lg:border-white/10 lg:bg-black/10 lg:p-10 xl:p-16">
+        <div className="w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10 lg:max-w-lg lg:p-0 lg:rounded-none lg:border-none lg:bg-transparent lg:shadow-none lg:backdrop-blur-none">
           {/* Marca (móvil/tablet) */}
           <div className="flex flex-col items-center lg:hidden">
             <LogoLockup width={200} />
           </div>
 
-          <div className="mb-8 mt-6 text-center lg:mt-0 lg:text-left">
-            <h1 className="font-display text-2xl font-bold text-white sm:text-[1.7rem]">{title}</h1>
-            <p className="mt-1.5 text-sm text-white/55">{subtitle}</p>
+          <div className="mb-8 mt-6 text-center lg:mb-10 lg:mt-0 lg:text-left">
+            <h1 className="font-display text-2xl font-bold text-white sm:text-[1.7rem] lg:text-4xl">{title}</h1>
+            <p className="mt-1.5 text-sm text-white/55 lg:mt-2.5 lg:text-lg">{subtitle}</p>
           </div>
 
           {children}
 
-          <p className="mt-8 text-center text-sm text-white/60 lg:text-left">
+          <p className="mt-8 text-center text-sm text-white/60 lg:text-left lg:text-base">
             {mode === 'login' ? (
               <>
                 ¿Nuevo por aquí?{' '}
