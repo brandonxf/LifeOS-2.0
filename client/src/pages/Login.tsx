@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { LogoLockup, AuthBackdrop } from '../components/Brand';
+import { LogoLockup, AuthBackdrop, AuthArt } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, PasswordInput, Spinner } from '../components/ui';
@@ -91,38 +91,58 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+    <div className="relative flex min-h-screen overflow-hidden">
       <AuthBackdrop />
-      <div className="relative z-10 w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10">
-        {/* Marca */}
-        <div className="flex flex-col items-center">
-          <LogoLockup width={200} />
+
+      {/* Panel de marca — solo en desktop (lg+), así el móvil/app nunca lo ve
+          y conserva la tarjeta centrada de siempre. */}
+      <div className="relative z-10 hidden flex-1 flex-col justify-center gap-10 p-16 lg:flex xl:p-20">
+        <LogoLockup width={200} />
+        <div className="max-w-md">
+          <AuthArt className="mb-10 h-52 w-52 text-primary drop-shadow-[0_0_60px_rgb(var(--primary)/0.35)]" />
+          <h2 className="font-display text-4xl font-bold leading-tight text-white xl:text-[2.75rem]">
+            Tu vida, ordenada en un solo lugar
+          </h2>
+          <p className="mt-4 text-base text-white/55">
+            Hábitos, finanzas, tareas y bienestar — todo sincronizado y siempre a mano.
+          </p>
         </div>
+        <p className="text-xs text-white/35">© {new Date().getFullYear()} Life OS</p>
+      </div>
 
-        <div className="mb-8 mt-6 text-center">
-          <h1 className="font-display text-2xl font-bold text-white sm:text-[1.7rem]">{title}</h1>
-          <p className="mt-1.5 text-sm text-white/55">{subtitle}</p>
+      {/* Panel del formulario */}
+      <div className="relative z-10 flex w-full items-center justify-center p-4 lg:w-[46%] lg:border-l lg:border-white/10 lg:bg-black/10 lg:p-16">
+        <div className="w-full max-w-md rounded-[32px] border border-white/15 bg-white/[0.06] p-8 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-10 lg:max-w-sm lg:p-0 lg:rounded-none lg:border-none lg:bg-transparent lg:shadow-none lg:backdrop-blur-none">
+          {/* Marca (móvil/tablet) */}
+          <div className="flex flex-col items-center lg:hidden">
+            <LogoLockup width={200} />
+          </div>
+
+          <div className="mb-8 mt-6 text-center lg:mt-0 lg:text-left">
+            <h1 className="font-display text-2xl font-bold text-white sm:text-[1.7rem]">{title}</h1>
+            <p className="mt-1.5 text-sm text-white/55">{subtitle}</p>
+          </div>
+
+          {children}
+
+          <p className="mt-8 text-center text-sm text-white/60 lg:text-left">
+            {mode === 'login' ? (
+              <>
+                ¿Nuevo por aquí?{' '}
+                <Link to="/register" className="font-bold text-white transition hover:text-primary">
+                  Regístrate
+                </Link>
+              </>
+            ) : (
+              <>
+                ¿Ya tienes cuenta?{' '}
+                <Link to="/login" className="font-bold text-white transition hover:text-primary">
+                  Inicia sesión
+                </Link>
+              </>
+            )}
+          </p>
         </div>
-
-        {children}
-
-        <p className="mt-8 text-center text-sm text-white/60">
-          {mode === 'login' ? (
-            <>
-              ¿Nuevo por aquí?{' '}
-              <Link to="/register" className="font-bold text-white transition hover:text-primary">
-                Regístrate
-              </Link>
-            </>
-          ) : (
-            <>
-              ¿Ya tienes cuenta?{' '}
-              <Link to="/login" className="font-bold text-white transition hover:text-primary">
-                Inicia sesión
-              </Link>
-            </>
-          )}
-        </p>
       </div>
     </div>
   );
