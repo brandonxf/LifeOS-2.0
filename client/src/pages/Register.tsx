@@ -57,7 +57,7 @@ export default function Register() {
         </Field>
         <button
           type="submit"
-          className="btn-primary w-full rounded-xl py-3 text-base shadow-glow lg:py-4 lg:text-lg"
+          className="btn-primary w-full rounded-xl py-3.5 text-base shadow-glow sm:py-4 lg:text-lg"
           disabled={loading}
         >
           {loading ? <Spinner /> : 'Crear cuenta'}
