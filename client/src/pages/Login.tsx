@@ -4,10 +4,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { LogoLockup, AuthBackdrop, AuthArt } from '../components/Brand';
+import { Wallet, Flame, Sparkles } from 'lucide-react';
+import { LogoLockup, AuthBackdrop } from '../components/Brand';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, PasswordInput, Spinner } from '../components/ui';
+
+const BRAND_FEATURES = [
+  { icon: Wallet, label: 'Finanzas, tareas y hábitos en un solo lugar' },
+  { icon: Flame, label: 'Rachas y hábitos compartidos con amigos' },
+  { icon: Sparkles, label: 'Un asistente de IA que conoce tus propios datos' },
+];
 
 const schema = z.object({
   email: z.string().email('Ingresa un correo válido'),
@@ -96,16 +103,27 @@ export function AuthShell({
 
       {/* Panel de marca — solo en desktop (lg+), así el móvil/app nunca lo ve
           y conserva la tarjeta centrada de siempre. */}
-      <div className="relative z-10 hidden flex-1 flex-col justify-center gap-10 p-16 lg:flex xl:p-20">
-        <LogoLockup width={200} />
-        <div className="max-w-md">
-          <AuthArt className="mb-10 h-52 w-52 text-primary drop-shadow-[0_0_60px_rgb(var(--primary)/0.35)]" />
-          <h2 className="font-display text-4xl font-bold leading-tight text-white xl:text-[2.75rem]">
-            Tu vida, ordenada en un solo lugar
-          </h2>
-          <p className="mt-4 text-base text-white/55">
-            Hábitos, finanzas, tareas y bienestar — todo sincronizado y siempre a mano.
-          </p>
+      <div className="relative z-10 hidden flex-1 flex-col p-12 lg:flex xl:p-16">
+        <LogoLockup width={240} className="xl:w-[260px]" />
+        <div className="flex flex-1 flex-col justify-center">
+          <div className="max-w-lg">
+            <h2 className="font-display text-4xl font-bold leading-[1.1] text-white xl:text-5xl">
+              Tu vida, ordenada en un solo lugar
+            </h2>
+            <p className="mt-4 max-w-md text-base text-white/55 xl:text-lg">
+              Hábitos, finanzas, tareas, metas y bienestar — todo sincronizado y siempre a mano.
+            </p>
+            <ul className="mt-9 space-y-4">
+              {BRAND_FEATURES.map(({ icon: Icon, label }) => (
+                <li key={label} className="flex items-center gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-primary shadow-glow">
+                    <Icon size={18} />
+                  </span>
+                  <span className="text-[0.95rem] text-white/75">{label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <p className="text-xs text-white/35">© {new Date().getFullYear()} Life OS</p>
       </div>
