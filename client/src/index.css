@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -148,14 +148,6 @@
     opacity: 0.8;
   }
 }
-@keyframes progress-slide {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(420%);
-  }
-}
 @keyframes blob-float {
   0%,
   100% {
@@ -184,7 +176,7 @@
 .loader-letter {
   display: inline-block;
   opacity: 0;
-  animation: letter-in 0.62s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation: letter-in 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
   animation-play-state: paused;
 }
 /* Ensamble del logo del splash (ver LogoAssemble en Brand.tsx): la barra,
@@ -194,34 +186,35 @@
    pequeño rebote de conjunto + el destello radial detrás, al estilo de la
    animación de marca de Netflix. El título letra-por-letra arranca justo
    cuando el punto está por encajar (ver el delay base en AppLoader).
+   Versión comprimida (~0.5x) de la secuencia original para que el splash
+   se sienta rápido sin perder la coreografía.
 
-   Todas estas animaciones (más las de logo-glow, loader-letter y
-   loader-progress más abajo) arrancan pausadas — `animation-play-state:
-   paused` frena incluso el conteo del delay — y solo corren dentro de
-   `.splash-armed`, clase que AppLoader agrega recién tras confirmar con
-   un doble requestAnimationFrame que el navegador ya pintó un frame real.
-   En el arranque en frío de la app en celular, el hilo principal puede
-   estar ocupado un instante y "comerse" en silencio los primeros frames
-   de una animación que ya arrancó por reloj al montarse — así se ve
-   recortada/rápida aunque en desktop (sin ese arranque en frío) se vea
-   bien. Este freno evita que eso pase. */
+   Todas estas animaciones (más las de logo-glow, loader-letter) arrancan
+   pausadas — `animation-play-state: paused` frena incluso el conteo del
+   delay — y solo corren dentro de `.splash-armed`, clase que AppLoader
+   agrega recién tras confirmar con un doble requestAnimationFrame que el
+   navegador ya pintó un frame real. En el arranque en frío de la app en
+   celular, el hilo principal puede estar ocupado un instante y "comerse"
+   en silencio los primeros frames de una animación que ya arrancó por
+   reloj al montarse — así se ve recortada/rápida aunque en desktop (sin
+   ese arranque en frío) se vea bien. Este freno evita que eso pase. */
 .logo-part {
   transform-box: fill-box;
   transform-origin: 50% 50%;
   opacity: 0;
 }
 .logo-part-bar {
-  animation: part-bar-in 1150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: part-bar-in 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-play-state: paused;
 }
 .logo-part-ring {
-  animation: part-ring-in 1150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: 150ms;
+  animation: part-ring-in 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 80ms;
   animation-play-state: paused;
 }
 .logo-part-dot {
-  animation: part-dot-in 650ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  animation-delay: 1050ms;
+  animation: part-dot-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 550ms;
   animation-play-state: paused;
 }
 @keyframes part-bar-in {
@@ -262,8 +255,8 @@
 .logo-assemble-bounce {
   transform-box: fill-box;
   transform-origin: 50% 50%;
-  animation: assemble-bounce 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  animation-delay: 1650ms;
+  animation: assemble-bounce 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 900ms;
   animation-play-state: paused;
 }
 @keyframes assemble-bounce {
@@ -293,16 +286,8 @@
 }
 .logo-glow {
   opacity: 0;
-  animation: logo-glow 900ms ease-out forwards;
-  animation-delay: 1500ms;
-  animation-play-state: paused;
-}
-/* Bloque de la barra de progreso + texto de ayuda: entra después del logo y
-   el título, para que la secuencia se lea de arriba a abajo en vez de
-   aparecer todo junto con el resto del splash. */
-.loader-progress {
-  opacity: 0;
-  animation: letter-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation: logo-glow 500ms ease-out forwards;
+  animation-delay: 780ms;
   animation-play-state: paused;
 }
 .splash-armed .logo-part-bar,
@@ -310,8 +295,7 @@
 .splash-armed .logo-part-dot,
 .splash-armed .logo-assemble-bounce,
 .splash-armed .logo-glow,
-.splash-armed .loader-letter,
-.splash-armed .loader-progress {
+.splash-armed .loader-letter {
   animation-play-state: running;
 }
 .animate-orbit {
@@ -325,15 +309,7 @@
 .animate-blob {
   animation: blob-float 14s ease-in-out infinite;
 }
-.progress-track {
-  @apply relative overflow-hidden rounded-full bg-white/10;
-}
-.progress-track::after {
-  content: '';
-  @apply absolute inset-y-0 left-0 w-1/3 rounded-full;
-  background: linear-gradient(90deg, transparent, rgb(var(--primary-600)), rgb(var(--primary)), transparent);
-  animation: progress-slide 1.15s ease-in-out infinite;
-}
+
 
 /* Entrada escalonada de cada item del menú flotante (FAB / hoja de móvil).
    Solo opacidad + scale hacia adentro: NO usar translateY, porque el
@@ -440,17 +416,14 @@
   .logo-part-dot,
   .logo-assemble-bounce,
   .logo-glow,
-  .loader-progress,
-  .fab-item,
-  .progress-track::after {
+  .fab-item {
     animation-duration: 0.001ms;
     animation-iteration-count: 1;
   }
   .loader-letter,
   .logo-part-bar,
   .logo-part-ring,
-  .logo-part-dot,
-  .loader-progress {
+  .logo-part-dot {
     opacity: 1;
   }
   .toast-bubble {
@@ -565,9 +538,7 @@
 .perf-mode .logo-part-dot,
 .perf-mode .logo-assemble-bounce,
 .perf-mode .logo-glow,
-.perf-mode .loader-progress,
-.perf-mode .fab-item,
-.perf-mode .progress-track::after {
+.perf-mode .fab-item {
   animation-duration: 0.001ms;
   animation-iteration-count: 1;
 }
@@ -577,8 +548,7 @@
 .perf-mode .loader-letter,
 .perf-mode .logo-part-bar,
 .perf-mode .logo-part-ring,
-.perf-mode .logo-part-dot,
-.perf-mode .loader-progress {
+.perf-mode .logo-part-dot {
   opacity: 1;
 }
 .perf-mode .toast-bubble {

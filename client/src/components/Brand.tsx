@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+﻿import { useEffect, useId, useState } from 'react';
 import { cn } from '../lib/utils';
 
 /** Marca de la app "Life OS": el isotipo oficial (mismo mark en toda la app
@@ -255,7 +255,7 @@ function useArmedAfterPaint() {
 }
 
 /** Pantalla de carga de marca a pantalla completa (transición al entrar a la app). */
-export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: string }) {
+export function AppLoader() {
   const word = 'Life OS';
   const armed = useArmedAfterPaint();
   return (
@@ -287,16 +287,12 @@ export function AppLoader({ label = 'Preparando tu espacio…' }: { label?: stri
                 key={i}
                 aria-hidden="true"
                 className="loader-letter"
-                style={{ animationDelay: `${1750 + i * 150}ms` }}
+                style={{ animationDelay: `${900 + i * 70}ms` }}
               >
-              {ch === ' ' ? ' ' : ch}
+              {ch === ' ' ? ' ' : ch}
               </span>
             ))}
           </h1>
-        </div>
-        <div className="loader-progress flex flex-col items-center gap-4" style={{ animationDelay: '3100ms' }}>
-          <div className="progress-track h-1.5 w-56" />
-          <p className="text-sm text-slate-400">{label}</p>
         </div>
       </div>
     </div>
