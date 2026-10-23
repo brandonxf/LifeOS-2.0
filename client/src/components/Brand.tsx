@@ -185,9 +185,9 @@ export function AuroraField({ className }: { className?: string }) {
 export function Ambient({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden', className)}>
-      <div className="animate-blob absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-      <div className="animate-blob absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-primary/15 blur-3xl [animation-delay:3s]" />
-      <div className="animate-blob absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-primary/10 blur-3xl [animation-delay:6s]" />
+      <div className="animate-blob absolute -left-24 -top-24 h-72 w-72 bg-[radial-gradient(circle,rgb(var(--primary)/0.35)_0%,transparent_72%)]" />
+      <div className="animate-blob absolute -right-16 top-1/3 h-64 w-64 bg-[radial-gradient(circle,rgb(var(--primary)/0.22)_0%,transparent_72%)] [animation-delay:3s]" />
+      <div className="animate-blob absolute -bottom-20 left-1/3 h-72 w-72 bg-[radial-gradient(circle,rgb(var(--primary)/0.16)_0%,transparent_72%)] [animation-delay:6s]" />
     </div>
   );
 }
