@@ -87,14 +87,30 @@
   .input-glass {
     @apply w-full rounded-2xl border border-white/20 bg-white/[0.04] px-4 py-3.5 text-base text-white outline-none transition placeholder:text-white/40 focus:border-primary/70 focus:ring-2 focus:ring-primary/20 sm:px-5 lg:py-4;
   }
-  /* Pad numérico del PIN (ver PinInput.tsx). .keypad-btn sigue el tema
-     (modales de Ajustes, fondo claro/oscuro); .keypad-btn-glass es para
-     pantallas con fondo oscuro fijo como DiaryLockGate. */
-  .keypad-btn {
-    @apply flex h-14 w-14 items-center justify-center rounded-full text-xl font-semibold text-slate-700 transition active:scale-95 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-100 dark:hover:bg-white/10;
+  /* Pantalla de PIN del Diario (ver PinScreen.tsx). El fondo es la misma
+     aurora estática que pinta `body` en móvil (bloque max-width: 900px más
+     abajo): sin filter/backdrop-filter, que en móvil está apagado y en
+     Safari se recorta. Si cambian esos gradientes, replicarlos aquí. */
+  .pin-screen {
+    @apply bg-ink-950;
+    background-image:
+      radial-gradient(60% 46% at 12% 8%, rgb(var(--primary) / 0.26), transparent 72%),
+      radial-gradient(55% 42% at 92% 28%, rgb(var(--primary) / 0.20), transparent 72%),
+      radial-gradient(62% 46% at 40% 78%, rgb(var(--primary) / 0.18), transparent 72%);
   }
-  .keypad-btn-glass {
-    @apply flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-xl font-semibold text-white backdrop-blur-md transition active:scale-95 hover:bg-white/[0.09] disabled:opacity-40;
+  .keypad-key {
+    @apply flex h-20 w-20 select-none flex-col items-center justify-center rounded-full bg-white/[0.13] text-white transition-colors duration-150 hover:bg-white/20 active:bg-white/40 disabled:opacity-40;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .keypad-text {
+    @apply flex h-20 w-20 select-none items-center justify-center text-base font-medium text-white transition-opacity active:opacity-50 disabled:opacity-40;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (max-width: 340px) {
+    .keypad-key,
+    .keypad-text {
+      @apply h-[4.5rem] w-[4.5rem];
+    }
   }
   .label {
     @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
@@ -167,6 +183,28 @@
   }
 }
 /* Aparición de cada letra deslizando desde la izquierda */
+/* Temblor de los puntos del PIN al fallar (PinScreen.tsx). */
+@keyframes pin-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-10px);
+  }
+  40% {
+    transform: translateX(10px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(6px);
+  }
+}
+.animate-pin-shake {
+  animation: pin-shake 0.4s ease-in-out;
+}
 @keyframes letter-in {
   0% {
     opacity: 0;

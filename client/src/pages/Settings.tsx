@@ -1,17 +1,17 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap, Lock, X } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { AvatarPicker } from '../components/AvatarPicker';
-import { PinInput } from '../components/PinInput';
-import { Logo } from '../components/Brand';
+import { PinScreen } from '../components/PinScreen';
+import { hapticWarning } from '../lib/haptics';
 import { avatarSrc } from '../lib/avatar';
 import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
@@ -584,27 +584,8 @@ function ChangePasswordModal({
   );
 }
 
-/** Botón de cerrar (X) para las pantallas completas de PIN, mismo estilo
- *  que el de Lightbox (ui.tsx): círculo translúcido arriba a la derecha,
- *  respetando el safe-area del notch. */
-function FullScreenCloseButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Cancelar"
-      className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-      style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
-    >
-      <X className="h-5 w-5" />
-    </button>
-  );
-}
-
-/** Pantalla completa (no modal) para crear el PIN del Diario: primero lo
- *  pide, luego lo confirma. Mismo lenguaje visual que DiaryLockGate
- *  (fondo oscuro fijo) para que se sienta parte del mismo flujo de
- *  seguridad en vez de un simple formulario de ajustes. */
+/** Crear el PIN del Diario a pantalla completa: primero lo pide, luego lo
+ *  confirma. */
 function SetDiaryPinScreen({
   onClose,
   onDone,
@@ -616,13 +597,20 @@ function SetDiaryPinScreen({
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorSignal, setErrorSignal] = useState(0);
+
+  function fail(message: string) {
+    setError(message);
+    setErrorSignal((n) => n + 1);
+    hapticWarning();
+  }
 
   const mutation = useMutation({
     mutationFn: (finalPin: string) =>
       api<{ user: AuthUser }>('/api/auth/diary-pin', { method: 'POST', body: { pin: finalPin } }),
     onSuccess: (res) => onDone(res.user),
     onError: (err) => {
-      setError(err instanceof ApiError ? err.message : 'No se pudo activar el bloqueo');
+      fail(err instanceof ApiError ? err.message : 'No se pudo activar el bloqueo');
       setStep('create');
       setPin('');
       setConfirmPin('');
@@ -642,34 +630,25 @@ function SetDiaryPinScreen({
     if (v === pin) {
       mutation.mutate(v);
     } else {
-      setError('Los PIN no coinciden');
+      fail('Los PIN no coinciden');
       setConfirmPin('');
     }
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-ink-950 px-6 text-center">
-      <FullScreenCloseButton onClick={onClose} />
-      <Logo size={56} />
-      <div className="flex flex-col items-center gap-2">
-        <Lock className="h-10 w-10 text-primary" />
-        <p className="text-sm text-white/60">
-          {step === 'create' ? 'Crea un PIN de 4 dígitos para el Diario' : 'Confirma el PIN'}
-        </p>
-      </div>
-      <PinInput
-        value={step === 'create' ? pin : confirmPin}
-        onChange={step === 'create' ? handleCreateChange : handleConfirmChange}
-        disabled={mutation.isPending}
-        glass
-      />
-      <p className="h-5 text-sm text-red-400">{error}</p>
-    </div>
+    <PinScreen
+      title={step === 'create' ? 'Crea un PIN para el diario' : 'Confirma el PIN'}
+      value={step === 'create' ? pin : confirmPin}
+      onChange={step === 'create' ? handleCreateChange : handleConfirmChange}
+      disabled={mutation.isPending}
+      error={error}
+      errorSignal={errorSignal}
+      onCancel={onClose}
+    />
   );
 }
 
-/** Pantalla completa (no modal) para pedir el PIN actual y quitar el
- *  bloqueo del Diario. */
+/** Pedir el PIN actual a pantalla completa para quitar el bloqueo del Diario. */
 function DisableDiaryPinScreen({
   onClose,
   onDone,
@@ -679,6 +658,7 @@ function DisableDiaryPinScreen({
 }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorSignal, setErrorSignal] = useState(0);
 
   const mutation = useMutation({
     mutationFn: (finalPin: string) =>
@@ -686,7 +666,9 @@ function DisableDiaryPinScreen({
     onSuccess: (res) => onDone(res.user),
     onError: (err) => {
       setError(err instanceof ApiError ? err.message : 'PIN incorrecto');
+      setErrorSignal((n) => n + 1);
       setPin('');
+      hapticWarning();
     },
   });
 
@@ -697,15 +679,14 @@ function DisableDiaryPinScreen({
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-ink-950 px-6 text-center">
-      <FullScreenCloseButton onClick={onClose} />
-      <Logo size={56} />
-      <div className="flex flex-col items-center gap-2">
-        <Lock className="h-10 w-10 text-primary" />
-        <p className="text-sm text-white/60">Ingresa el PIN actual para quitar el bloqueo</p>
-      </div>
-      <PinInput value={pin} onChange={handleChange} disabled={mutation.isPending} glass />
-      <p className="h-5 text-sm text-red-400">{error}</p>
-    </div>
+    <PinScreen
+      title="Introduce el PIN actual"
+      value={pin}
+      onChange={handleChange}
+      disabled={mutation.isPending}
+      error={error}
+      errorSignal={errorSignal}
+      onCancel={onClose}
+    />
   );
 }

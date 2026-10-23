@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/auth';
 import { api, ApiError } from '../lib/api';
-import { PinInput } from './PinInput';
-import { Logo } from './Brand';
+import { hapticWarning } from '../lib/haptics';
+import { PinScreen } from './PinScreen';
 
 /** Pide el PIN del Diario (activado en Ajustes > Seguridad) antes de
  *  mostrar ese módulo. A diferencia de BiometricGate (bloquea toda la app
@@ -13,12 +13,21 @@ import { Logo } from './Brand';
  *  vuelve a montar (al salir de /diary y volver a entrar). */
 export function DiaryLockGate({ children }: { children: React.ReactNode }) {
   const enabled = useAuth((s) => s.user?.diaryLockEnabled ?? false);
+  const navigate = useNavigate();
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorSignal, setErrorSignal] = useState(0);
   const [checking, setChecking] = useState(false);
 
   if (!enabled || unlocked) return <>{children}</>;
+
+  function fail(message: string) {
+    setError(message);
+    setErrorSignal((n) => n + 1);
+    setPin('');
+    hapticWarning();
+  }
 
   async function handleChange(v: string) {
     setError(null);
@@ -30,29 +39,24 @@ export function DiaryLockGate({ children }: { children: React.ReactNode }) {
         method: 'POST',
         body: { pin: v },
       });
-      if (res.ok) {
-        setUnlocked(true);
-      } else {
-        setError('PIN incorrecto');
-        setPin('');
-      }
+      if (res.ok) setUnlocked(true);
+      else fail('PIN incorrecto');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo verificar el PIN');
-      setPin('');
+      fail(err instanceof ApiError ? err.message : 'No se pudo verificar el PIN');
     } finally {
       setChecking(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-ink-950 px-6 text-center">
-      <Logo size={56} />
-      <div className="flex flex-col items-center gap-2">
-        <Lock className="h-10 w-10 text-primary" />
-        <p className="text-sm text-white/60">Tu diario está bloqueado</p>
-      </div>
-      <PinInput value={pin} onChange={handleChange} disabled={checking} glass />
-      <p className="h-5 text-sm text-red-400">{error}</p>
-    </div>
+    <PinScreen
+      title="Introduce el PIN del diario"
+      value={pin}
+      onChange={handleChange}
+      disabled={checking}
+      error={error}
+      errorSignal={errorSignal}
+      onCancel={() => navigate('/dashboard')}
+    />
   );
 }
