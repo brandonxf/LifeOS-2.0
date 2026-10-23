@@ -69,11 +69,26 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
+const setDiaryPinSchema = z.object({
+  pin: z.string().min(4, 'Mínimo 4 caracteres').max(20),
+  // Solo se exige si ya había un PIN puesto (para cambiarlo hay que saber el actual).
+  currentPin: z.string().optional(),
+});
+
+const verifyDiaryPinSchema = z.object({
+  pin: z.string().min(1),
+});
+
+const disableDiaryPinSchema = z.object({
+  pin: z.string().min(1),
+});
+
 function publicUser(u: typeof users.$inferSelect) {
   // avatarData/avatarMime nunca salen en JSON: la foto se sirve por
-  // GET /api/users/:id/avatar (ver lib/avatar.ts).
-  const { passwordHash, deletedAt, avatarData, avatarMime, avatarUpdatedAt, ...rest } = u;
-  return rest;
+  // GET /api/users/:id/avatar (ver lib/avatar.ts). diaryPinHash tampoco:
+  // solo se expone como el booleano diaryLockEnabled.
+  const { passwordHash, deletedAt, avatarData, avatarMime, avatarUpdatedAt, diaryPinHash, ...rest } = u;
+  return { ...rest, diaryLockEnabled: !!diaryPinHash };
 }
 
 async function uniqueFriendCode(): Promise<string> {
@@ -314,6 +329,70 @@ router.post(
     await db.delete(sessions).where(eq(sessions.userId, user.id));
 
     res.json({ ok: true });
+  }),
+);
+
+// POST /api/auth/diary-pin — set (or change) the PIN that locks the Diary module
+router.post(
+  '/diary-pin',
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(setDiaryPinSchema, req.body);
+
+    if (user.diaryPinHash) {
+      if (!body.currentPin) throw badRequest('Ingresa el PIN actual del diario');
+      const ok = await verifyPassword(body.currentPin, user.diaryPinHash);
+      if (!ok) throw badRequest('El PIN actual no es correcto');
+    }
+
+    const diaryPinHash = await hashPassword(body.pin);
+    const [updated] = await db
+      .update(users)
+      .set({ diaryPinHash })
+      .where(eq(users.id, user.id))
+      .returning();
+
+    res.json({ user: publicUser(updated) });
+  }),
+);
+
+// POST /api/auth/diary-pin/disable — remove the Diary lock (requires the current PIN)
+router.post(
+  '/diary-pin/disable',
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(disableDiaryPinSchema, req.body);
+
+    if (!user.diaryPinHash) throw badRequest('El diario no tiene bloqueo activado');
+    const ok = await verifyPassword(body.pin, user.diaryPinHash);
+    if (!ok) throw badRequest('El PIN no es correcto');
+
+    const [updated] = await db
+      .update(users)
+      .set({ diaryPinHash: null })
+      .where(eq(users.id, user.id))
+      .returning();
+
+    res.json({ user: publicUser(updated) });
+  }),
+);
+
+// POST /api/auth/diary-pin/verify — used by the Diary lock screen, not a session/token (ver DiaryLockGate.tsx)
+router.post(
+  '/diary-pin/verify',
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const user = currentUser(req);
+    const body = validate(verifyDiaryPinSchema, req.body);
+
+    if (!user.diaryPinHash) {
+      res.json({ ok: true });
+      return;
+    }
+    const ok = await verifyPassword(body.pin, user.diaryPinHash);
+    res.json({ ok });
   }),
 );
 

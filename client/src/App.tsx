@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './store/auth';
 import { AppLayout } from './components/AppLayout';
+import { DiaryLockGate } from './components/DiaryLockGate';
 import { Spinner } from './components/ui';
 
 // Cada página en su propio chunk: antes todas (+ recharts, tiptap, dnd)
@@ -62,7 +63,7 @@ export default function App() {
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/habits" element={<Habits />} />
           <Route path="/calendar" element={<Calendar />} />
-          <Route path="/diary" element={<Diary />} />
+          <Route path="/diary" element={<DiaryLockGate><Diary /></DiaryLockGate>} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/:userId" element={<FriendProfile />} />

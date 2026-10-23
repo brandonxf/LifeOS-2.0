@@ -16,6 +16,7 @@ export interface AuthUser {
   phone: string | null;
   pronouns: string | null;
   plan: 'free' | 'pro';
+  diaryLockEnabled: boolean;
   createdAt: string;
 }
 

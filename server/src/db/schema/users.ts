@@ -31,6 +31,10 @@ export const users = pgTable(
     plan: text('plan', { enum: ['free', 'pro'] })
       .notNull()
       .default('free'),
+    // Hash (bcrypt) del PIN que protege el módulo de Diario. NULL = sin
+    // bloqueo. Nunca sale en las respuestas JSON (ver publicUser), solo se
+    // expone como `diaryLockEnabled: boolean`.
+    diaryPinHash: text('diary_pin_hash'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },

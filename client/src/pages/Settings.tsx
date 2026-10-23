@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
@@ -61,6 +61,22 @@ const passwordSchema = z
     path: ['confirmPassword'],
   });
 type PasswordForm = z.infer<typeof passwordSchema>;
+
+const diaryPinSetSchema = z
+  .object({
+    pin: z.string().min(4, 'Mínimo 4 caracteres').max(20),
+    confirmPin: z.string(),
+  })
+  .refine((d) => d.pin === d.confirmPin, {
+    message: 'Las claves no coinciden',
+    path: ['confirmPin'],
+  });
+type DiaryPinSetForm = z.infer<typeof diaryPinSetSchema>;
+
+const diaryPinDisableSchema = z.object({
+  pin: z.string().min(1, 'Ingresa la clave del diario'),
+});
+type DiaryPinDisableForm = z.infer<typeof diaryPinDisableSchema>;
 
 /** Interruptor simple estilo iOS (usa los colores del theme). */
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -262,6 +278,8 @@ export default function Settings() {
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
+  const [diaryPinOpen, setDiaryPinOpen] = useState(false);
+  const [diaryPinDisableOpen, setDiaryPinDisableOpen] = useState(false);
 
   // Refresh profile from the server.
   useQuery({
@@ -383,6 +401,20 @@ export default function Settings() {
             <LogOut className="h-4 w-4" /> Cerrar sesión
           </button>
         </div>
+
+        <div className="mt-4 flex items-center justify-between gap-4 border-t pt-4">
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-slate-400" />
+            <div>
+              <p className="text-sm font-medium">Bloquear diario</p>
+              <p className="text-xs text-slate-400">Pide una clave cada vez que entras a Diario</p>
+            </div>
+          </div>
+          <Toggle
+            checked={!!user?.diaryLockEnabled}
+            onChange={(v) => (v ? setDiaryPinOpen(true) : setDiaryPinDisableOpen(true))}
+          />
+        </div>
       </Card>
 
       {editOpen && (
@@ -404,6 +436,28 @@ export default function Settings() {
             toast.success('Contraseña actualizada. Inicia sesión de nuevo.');
             clear();
             navigate('/login');
+          }}
+        />
+      )}
+
+      {diaryPinOpen && (
+        <SetDiaryPinModal
+          onClose={() => setDiaryPinOpen(false)}
+          onDone={(u) => {
+            setUser(u);
+            setDiaryPinOpen(false);
+            toast.success('Diario bloqueado con clave');
+          }}
+        />
+      )}
+
+      {diaryPinDisableOpen && (
+        <DisableDiaryPinModal
+          onClose={() => setDiaryPinDisableOpen(false)}
+          onDone={(u) => {
+            setUser(u);
+            setDiaryPinDisableOpen(false);
+            toast.success('Bloqueo del diario desactivado');
           }}
         />
       )}
@@ -537,6 +591,90 @@ function ChangePasswordModal({
           <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn-primary" disabled={mutation.isPending}>
             {mutation.isPending ? 'Guardando…' : 'Cambiar'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function SetDiaryPinModal({
+  onClose,
+  onDone,
+}: {
+  onClose: () => void;
+  onDone: (user: AuthUser) => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DiaryPinSetForm>({ resolver: zodResolver(diaryPinSetSchema) });
+
+  const mutation = useMutation({
+    mutationFn: (data: DiaryPinSetForm) =>
+      api<{ user: AuthUser }>('/api/auth/diary-pin', { method: 'POST', body: { pin: data.pin } }),
+    onSuccess: (res) => onDone(res.user),
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'No se pudo activar el bloqueo');
+    },
+  });
+
+  return (
+    <Modal open onClose={onClose} title="Bloquear diario">
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        <p className="text-sm text-slate-400">
+          Crea una clave para el Diario. Se pedirá cada vez que entres a ese módulo.
+        </p>
+        <Field label="Clave" error={errors.pin?.message}>
+          <input className="input" type="password" autoFocus {...register('pin')} />
+        </Field>
+        <Field label="Confirmar clave" error={errors.confirmPin?.message}>
+          <input className="input" type="password" {...register('confirmPin')} />
+        </Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn-primary" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Guardando…' : 'Activar'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function DisableDiaryPinModal({
+  onClose,
+  onDone,
+}: {
+  onClose: () => void;
+  onDone: (user: AuthUser) => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DiaryPinDisableForm>({ resolver: zodResolver(diaryPinDisableSchema) });
+
+  const mutation = useMutation({
+    mutationFn: (data: DiaryPinDisableForm) =>
+      api<{ user: AuthUser }>('/api/auth/diary-pin/disable', { method: 'POST', body: { pin: data.pin } }),
+    onSuccess: (res) => onDone(res.user),
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'No se pudo desactivar el bloqueo');
+    },
+  });
+
+  return (
+    <Modal open onClose={onClose} title="Quitar bloqueo del diario">
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        <Field label="Clave actual del diario" error={errors.pin?.message}>
+          <input className="input" type="password" autoFocus {...register('pin')} />
+        </Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn-danger" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Quitando…' : 'Quitar bloqueo'}
           </button>
         </div>
       </form>
