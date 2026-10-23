@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Lock } from 'lucide-react';
 import { ApiError } from '../lib/api';
 import { cn } from '../lib/utils';
 import { hapticSuccess, hapticTap, hapticWarning } from '../lib/haptics';
+import { Logo } from './Brand';
 
 const KEYS: [digit: string, letters: string][] = [
   ['1', ''], ['2', 'ABC'], ['3', 'DEF'],
@@ -13,8 +13,8 @@ const KEYS: [digit: string, letters: string][] = [
 
 // Tiempos de la secuencia de validación (ms).
 const ERROR_RESET = 650; // puntos en rojo + temblor, luego se limpian
-const SUCCESS_LEAVE = 850; // check verde visible antes de desvanecer
-const SUCCESS_DONE = 1100; // fin del desvanecido: se llama onSuccess
+const SUCCESS_LEAVE = 1300; // check verde visible antes de desvanecer
+const SUCCESS_DONE = 1550; // fin del desvanecido: se llama onSuccess
 
 type Phase = 'input' | 'checking' | 'error' | 'success' | 'leaving';
 
@@ -27,9 +27,10 @@ type Phase = 'input' | 'checking' | 'error' | 'success' | 'leaving';
  *  Al completar los dígitos llama `onComplete(pin)`, que devuelve `true` si
  *  es válido o un mensaje de error (si lanza un ApiError se usa su mensaje).
  *  Error: puntos en rojo + temblor + vibración, y se limpian para reintentar.
- *  Éxito: los puntos se van, entra un check verde, se desvanece la pantalla
- *  y recién ahí se llama `onSuccess`. Con `showSuccess={false}` (p. ej. el
- *  primer paso de "crear PIN", que no valida nada) se salta la animación. */
+ *  Éxito: todo menos el logo se encoge hacia él, un check verde sale por
+ *  debajo del logo, se desvanece la pantalla y recién ahí se llama
+ *  `onSuccess`. Con `showSuccess={false}` (p. ej. el primer paso de "crear
+ *  PIN", que no valida nada) se salta la animación. */
 export function PinScreen({
   title,
   length = 4,
@@ -133,21 +134,44 @@ export function PinScreen({
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      <div className={cn('flex flex-col items-center transition-opacity duration-200', done && 'opacity-0')}>
-        <Lock className="h-6 w-6 text-white/80" />
-        <p className="mt-4 text-xl font-medium">{title}</p>
+      <div className="relative">
+        <Logo size={64} />
+        {done && (
+          // Caja recortada cuyo borde de arriba es el borde de abajo del
+          // logo: el check arranca fuera de ella (arriba) y baja, así parece
+          // que sale de debajo del logo.
+          <div className="pointer-events-none absolute left-1/2 top-full z-10 flex h-32 w-32 -translate-x-1/2 items-start justify-center overflow-hidden pt-3">
+            <div className="animate-pin-check-emerge flex h-[5.5rem] w-[5.5rem] items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-11 w-11"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '0.6s' }} />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="relative mt-4 flex h-14 items-center justify-center">
+      <div
+        className={cn(
+          'flex origin-top flex-col items-center transition-all duration-300 ease-in',
+          done && 'pointer-events-none scale-50 opacity-0',
+        )}
+      >
+        <p className="mt-5 text-xl font-medium">{title}</p>
+
         <div
           key={shake}
           role="status"
           aria-label={done ? 'PIN correcto' : `${value.length} de ${length} dígitos`}
-          className={cn(
-            'flex gap-5 transition-all duration-200',
-            phase === 'error' && 'animate-pin-shake',
-            done && 'scale-50 opacity-0',
-          )}
+          className={cn('mt-6 flex gap-5', phase === 'error' && 'animate-pin-shake')}
         >
           {Array.from({ length }).map((_, i) => (
             <span
@@ -161,48 +185,26 @@ export function PinScreen({
           ))}
         </div>
 
-        {done && (
-          <div className="animate-pin-success absolute flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-7 w-7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={3}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '0.3s' }} />
-            </svg>
-          </div>
-        )}
-      </div>
+        <p className="mt-4 h-5 text-sm text-red-300">{error}</p>
 
-      <p className={cn('h-5 text-sm text-red-300 transition-opacity', done && 'opacity-0')}>{error}</p>
-
-      <div
-        className={cn(
-          'mt-6 grid grid-cols-3 gap-x-6 gap-y-4 transition-opacity duration-200',
-          done && 'pointer-events-none opacity-0',
-        )}
-      >
-        {KEYS.map(([digit, letters]) => (
-          <Key key={digit} digit={digit} letters={letters} onPress={press} />
-        ))}
-        <div />
-        <Key digit="0" letters="" onPress={press} />
-        {value.length > 0 ? (
-          <button type="button" className="keypad-text" onClick={backspace}>
-            Borrar
-          </button>
-        ) : onCancel ? (
-          <button type="button" className="keypad-text" onClick={onCancel}>
-            Cancelar
-          </button>
-        ) : (
+        <div className="mt-6 grid grid-cols-3 gap-x-6 gap-y-4">
+          {KEYS.map(([digit, letters]) => (
+            <Key key={digit} digit={digit} letters={letters} onPress={press} />
+          ))}
           <div />
-        )}
+          <Key digit="0" letters="" onPress={press} />
+          {value.length > 0 ? (
+            <button type="button" className="keypad-text" onClick={backspace}>
+              Borrar
+            </button>
+          ) : onCancel ? (
+            <button type="button" className="keypad-text" onClick={onCancel}>
+              Cancelar
+            </button>
+          ) : (
+            <div />
+          )}
+        </div>
       </div>
     </div>,
     document.body,
