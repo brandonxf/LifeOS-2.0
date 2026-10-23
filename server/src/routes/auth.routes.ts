@@ -69,10 +69,13 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
+// PIN numérico de exactamente 4 dígitos (ver PinInput.tsx en el cliente).
+const diaryPin = () => z.string().regex(/^\d{4}$/, 'El PIN debe ser de 4 dígitos');
+
 const setDiaryPinSchema = z.object({
-  pin: z.string().min(4, 'Mínimo 4 caracteres').max(20),
+  pin: diaryPin(),
   // Solo se exige si ya había un PIN puesto (para cambiarlo hay que saber el actual).
-  currentPin: z.string().optional(),
+  currentPin: diaryPin().optional(),
 });
 
 const verifyDiaryPinSchema = z.object({
@@ -80,7 +83,7 @@ const verifyDiaryPinSchema = z.object({
 });
 
 const disableDiaryPinSchema = z.object({
-  pin: z.string().min(1),
+  pin: diaryPin(),
 });
 
 function publicUser(u: typeof users.$inferSelect) {
