@@ -271,12 +271,9 @@ export function AppLoader() {
           <div className="relative flex items-center justify-center">
             <span
               aria-hidden="true"
-              className="logo-glow absolute h-40 w-40 rounded-full bg-primary blur-2xl"
+              className="logo-glow absolute h-40 w-40 bg-[radial-gradient(circle,rgb(var(--primary)/0.9)_0%,rgb(var(--primary)/0.35)_35%,transparent_72%)]"
             />
-            <LogoAssemble
-              size={144}
-              className="relative drop-shadow-[0_2px_30px_rgb(var(--primary)/0.55)]"
-            />
+            <LogoAssemble size={144} className="relative" />
           </div>
           <h1
             aria-label={word}
