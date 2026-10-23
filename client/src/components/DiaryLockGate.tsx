@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/auth';
-import { api, ApiError } from '../lib/api';
-import { hapticWarning } from '../lib/haptics';
+import { api } from '../lib/api';
 import { PinScreen } from './PinScreen';
 
 /** Pide el PIN del Diario (activado en Ajustes > Seguridad) antes de
@@ -15,47 +14,22 @@ export function DiaryLockGate({ children }: { children: React.ReactNode }) {
   const enabled = useAuth((s) => s.user?.diaryLockEnabled ?? false);
   const navigate = useNavigate();
   const [unlocked, setUnlocked] = useState(false);
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [errorSignal, setErrorSignal] = useState(0);
-  const [checking, setChecking] = useState(false);
 
   if (!enabled || unlocked) return <>{children}</>;
 
-  function fail(message: string) {
-    setError(message);
-    setErrorSignal((n) => n + 1);
-    setPin('');
-    hapticWarning();
-  }
-
-  async function handleChange(v: string) {
-    setError(null);
-    setPin(v);
-    if (v.length < 4) return;
-    setChecking(true);
-    try {
-      const res = await api<{ ok: boolean }>('/api/auth/diary-pin/verify', {
-        method: 'POST',
-        body: { pin: v },
-      });
-      if (res.ok) setUnlocked(true);
-      else fail('PIN incorrecto');
-    } catch (err) {
-      fail(err instanceof ApiError ? err.message : 'No se pudo verificar el PIN');
-    } finally {
-      setChecking(false);
-    }
+  async function verify(pin: string) {
+    const res = await api<{ ok: boolean }>('/api/auth/diary-pin/verify', {
+      method: 'POST',
+      body: { pin },
+    });
+    return res.ok || 'PIN incorrecto';
   }
 
   return (
     <PinScreen
       title="Introduce el PIN del diario"
-      value={pin}
-      onChange={handleChange}
-      disabled={checking}
-      error={error}
-      errorSignal={errorSignal}
+      onComplete={verify}
+      onSuccess={() => setUnlocked(true)}
       onCancel={() => navigate('/dashboard')}
     />
   );

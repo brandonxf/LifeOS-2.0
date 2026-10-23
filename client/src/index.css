@@ -205,6 +205,24 @@
 .animate-pin-shake {
   animation: pin-shake 0.4s ease-in-out;
 }
+/* Entrada del check verde al acertar el PIN (el trazo usa .draw-check). */
+@keyframes pin-success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-pin-success {
+  animation: pin-success-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
 @keyframes letter-in {
   0% {
     opacity: 0;

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,6 @@ import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { AvatarPicker } from '../components/AvatarPicker';
 import { PinScreen } from '../components/PinScreen';
-import { hapticWarning } from '../lib/haptics';
 import { avatarSrc } from '../lib/avatar';
 import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
@@ -584,8 +583,8 @@ function ChangePasswordModal({
   );
 }
 
-/** Crear el PIN del Diario a pantalla completa: primero lo pide, luego lo
- *  confirma. */
+/** Crear el PIN del Diario a pantalla completa: primero lo pide (sin
+ *  animación de éxito, solo avanza), luego lo confirma y lo guarda. */
 function SetDiaryPinScreen({
   onClose,
   onDone,
@@ -594,55 +593,36 @@ function SetDiaryPinScreen({
   onDone: (user: AuthUser) => void;
 }) {
   const [step, setStep] = useState<'create' | 'confirm'>('create');
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [errorSignal, setErrorSignal] = useState(0);
+  const firstPin = useRef('');
+  const savedUser = useRef<AuthUser | null>(null);
 
-  function fail(message: string) {
-    setError(message);
-    setErrorSignal((n) => n + 1);
-    hapticWarning();
-  }
-
-  const mutation = useMutation({
-    mutationFn: (finalPin: string) =>
-      api<{ user: AuthUser }>('/api/auth/diary-pin', { method: 'POST', body: { pin: finalPin } }),
-    onSuccess: (res) => onDone(res.user),
-    onError: (err) => {
-      fail(err instanceof ApiError ? err.message : 'No se pudo activar el bloqueo');
-      setStep('create');
-      setPin('');
-      setConfirmPin('');
-    },
-  });
-
-  function handleCreateChange(v: string) {
-    setError(null);
-    setPin(v);
-    if (v.length === 4) setStep('confirm');
-  }
-
-  function handleConfirmChange(v: string) {
-    setError(null);
-    setConfirmPin(v);
-    if (v.length < 4) return;
-    if (v === pin) {
-      mutation.mutate(v);
-    } else {
-      fail('Los PIN no coinciden');
-      setConfirmPin('');
-    }
+  if (step === 'create') {
+    return (
+      <PinScreen
+        key="create"
+        title="Crea un PIN para el diario"
+        onComplete={(pin) => {
+          firstPin.current = pin;
+          return true;
+        }}
+        showSuccess={false}
+        onSuccess={() => setStep('confirm')}
+        onCancel={onClose}
+      />
+    );
   }
 
   return (
     <PinScreen
-      title={step === 'create' ? 'Crea un PIN para el diario' : 'Confirma el PIN'}
-      value={step === 'create' ? pin : confirmPin}
-      onChange={step === 'create' ? handleCreateChange : handleConfirmChange}
-      disabled={mutation.isPending}
-      error={error}
-      errorSignal={errorSignal}
+      key="confirm"
+      title="Confirma el PIN"
+      onComplete={async (pin) => {
+        if (pin !== firstPin.current) return 'Los PIN no coinciden';
+        const res = await api<{ user: AuthUser }>('/api/auth/diary-pin', { method: 'POST', body: { pin } });
+        savedUser.current = res.user;
+        return true;
+      }}
+      onSuccess={() => onDone(savedUser.current!)}
       onCancel={onClose}
     />
   );
@@ -656,36 +636,17 @@ function DisableDiaryPinScreen({
   onClose: () => void;
   onDone: (user: AuthUser) => void;
 }) {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [errorSignal, setErrorSignal] = useState(0);
-
-  const mutation = useMutation({
-    mutationFn: (finalPin: string) =>
-      api<{ user: AuthUser }>('/api/auth/diary-pin/disable', { method: 'POST', body: { pin: finalPin } }),
-    onSuccess: (res) => onDone(res.user),
-    onError: (err) => {
-      setError(err instanceof ApiError ? err.message : 'PIN incorrecto');
-      setErrorSignal((n) => n + 1);
-      setPin('');
-      hapticWarning();
-    },
-  });
-
-  function handleChange(v: string) {
-    setError(null);
-    setPin(v);
-    if (v.length === 4) mutation.mutate(v);
-  }
+  const savedUser = useRef<AuthUser | null>(null);
 
   return (
     <PinScreen
       title="Introduce el PIN actual"
-      value={pin}
-      onChange={handleChange}
-      disabled={mutation.isPending}
-      error={error}
-      errorSignal={errorSignal}
+      onComplete={async (pin) => {
+        const res = await api<{ user: AuthUser }>('/api/auth/diary-pin/disable', { method: 'POST', body: { pin } });
+        savedUser.current = res.user;
+        return true as const;
+      }}
+      onSuccess={() => onDone(savedUser.current!)}
       onCancel={onClose}
     />
   );
