@@ -27,8 +27,9 @@ type Phase = 'input' | 'checking' | 'error' | 'success' | 'leaving';
  *  Al completar los dígitos llama `onComplete(pin)`, que devuelve `true` si
  *  es válido o un mensaje de error (si lanza un ApiError se usa su mensaje).
  *  Error: puntos en rojo + temblor + vibración, y se limpian para reintentar.
- *  Éxito: todo menos el logo se encoge hacia él, un check verde sale por
- *  debajo del logo, se desvanece la pantalla y recién ahí se llama
+ *  Éxito: todo menos el logo se encoge hacia él, un check verde crece de
+ *  chico a grande desde donde estaba la tecla 5, se desvanece la pantalla
+ *  y recién ahí se llama
  *  `onSuccess`. Con `showSuccess={false}` (p. ej. el primer paso de "crear
  *  PIN", que no valida nada) se salta la animación. */
 export function PinScreen({
@@ -50,6 +51,8 @@ export function PinScreen({
   const [phase, setPhase] = useState<Phase>('input');
   const [error, setError] = useState<string | null>(null);
   const [shake, setShake] = useState(0);
+  const [checkPos, setCheckPos] = useState<{ x: number; y: number } | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
 
   function later(fn: () => void, ms: number) {
@@ -79,6 +82,14 @@ export function PinScreen({
         later(onSuccess, 150);
         return;
       }
+      // Medir antes de cambiar de fase: después el pad ya empieza a encogerse.
+      // children[4] es la tecla 5 (el centro del pad).
+      const key5 = gridRef.current?.children[4]?.getBoundingClientRect();
+      setCheckPos(
+        key5
+          ? { x: key5.left + key5.width / 2, y: key5.top + key5.height / 2 }
+          : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      );
       setPhase('success');
       hapticSuccess();
       later(() => setPhase('leaving'), SUCCESS_LEAVE);
@@ -134,30 +145,32 @@ export function PinScreen({
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      <div className="relative">
-        <Logo size={104} />
-        {done && (
-          // Caja recortada cuyo borde de arriba es el borde de abajo del
-          // logo: el check arranca fuera de ella (arriba) y baja, así parece
-          // que sale de debajo del logo.
-          <div className="pointer-events-none absolute left-1/2 top-full z-10 flex h-24 w-24 -translate-x-1/2 items-start justify-center overflow-hidden pt-2">
-            <div className="animate-pin-check-emerge flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-8 w-8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={3}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '0.9s', animationDuration: '400ms' }} />
-              </svg>
-            </div>
+      <Logo size={104} />
+
+      {done && checkPos && (
+        // Posicionado donde estaba la tecla 5 (medido justo antes de que el
+        // pad se encoja): el wrapper lo centra y el hijo anima la escala, así
+        // el translate no pisa el transform de la animación.
+        <div
+          className="pointer-events-none fixed z-10"
+          style={{ left: checkPos.x, top: checkPos.y, transform: 'translate(-50%, -50%)' }}
+        >
+          <div className="animate-pin-check-grow flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-9 w-9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '0.6s', animationDuration: '400ms' }} />
+            </svg>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div
         className={cn(
@@ -187,7 +200,7 @@ export function PinScreen({
 
         <p className="mt-4 h-5 text-sm text-red-300">{error}</p>
 
-        <div className="mt-6 grid grid-cols-3 gap-x-6 gap-y-4">
+        <div ref={gridRef} className="mt-6 grid grid-cols-3 gap-x-6 gap-y-4">
           {KEYS.map(([digit, letters]) => (
             <Key key={digit} digit={digit} letters={letters} onPress={press} />
           ))}
