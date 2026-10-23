@@ -4,13 +4,14 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap, Lock } from 'lucide-react';
+import { LogOut, User, Crown, Shield, Pencil, KeyRound, MapPin, Phone, Cake, Bell, Fingerprint, Palette, Plus, Zap, Lock, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api, ApiError } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { AvatarPicker } from '../components/AvatarPicker';
 import { PinInput } from '../components/PinInput';
+import { Logo } from '../components/Brand';
 import { avatarSrc } from '../lib/avatar';
 import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
@@ -426,18 +427,18 @@ export default function Settings() {
       )}
 
       {diaryPinOpen && (
-        <SetDiaryPinModal
+        <SetDiaryPinScreen
           onClose={() => setDiaryPinOpen(false)}
           onDone={(u) => {
             setUser(u);
             setDiaryPinOpen(false);
-            toast.success('Diario bloqueado con clave');
+            toast.success('Diario bloqueado con PIN');
           }}
         />
       )}
 
       {diaryPinDisableOpen && (
-        <DisableDiaryPinModal
+        <DisableDiaryPinScreen
           onClose={() => setDiaryPinDisableOpen(false)}
           onDone={(u) => {
             setUser(u);
@@ -583,7 +584,28 @@ function ChangePasswordModal({
   );
 }
 
-function SetDiaryPinModal({
+/** Botón de cerrar (X) para las pantallas completas de PIN, mismo estilo
+ *  que el de Lightbox (ui.tsx): círculo translúcido arriba a la derecha,
+ *  respetando el safe-area del notch. */
+function FullScreenCloseButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Cancelar"
+      className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+      style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
+    >
+      <X className="h-5 w-5" />
+    </button>
+  );
+}
+
+/** Pantalla completa (no modal) para crear el PIN del Diario: primero lo
+ *  pide, luego lo confirma. Mismo lenguaje visual que DiaryLockGate
+ *  (fondo oscuro fijo) para que se sienta parte del mismo flujo de
+ *  seguridad en vez de un simple formulario de ajustes. */
+function SetDiaryPinScreen({
   onClose,
   onDone,
 }: {
@@ -626,26 +648,29 @@ function SetDiaryPinModal({
   }
 
   return (
-    <Modal open onClose={onClose} title="Bloquear diario">
-      <div className="flex flex-col items-center gap-4 py-2">
-        <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-          {step === 'create'
-            ? 'Crea un PIN de 4 dígitos para el Diario. Se pedirá cada vez que entres a ese módulo.'
-            : 'Confirma el PIN'}
+    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-ink-950 px-6 text-center">
+      <FullScreenCloseButton onClick={onClose} />
+      <Logo size={56} />
+      <div className="flex flex-col items-center gap-2">
+        <Lock className="h-10 w-10 text-primary" />
+        <p className="text-sm text-white/60">
+          {step === 'create' ? 'Crea un PIN de 4 dígitos para el Diario' : 'Confirma el PIN'}
         </p>
-        {step === 'create' ? (
-          <PinInput value={pin} onChange={handleCreateChange} disabled={mutation.isPending} />
-        ) : (
-          <PinInput value={confirmPin} onChange={handleConfirmChange} disabled={mutation.isPending} />
-        )}
-        <p className="h-5 text-sm text-danger">{error}</p>
-        <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
       </div>
-    </Modal>
+      <PinInput
+        value={step === 'create' ? pin : confirmPin}
+        onChange={step === 'create' ? handleCreateChange : handleConfirmChange}
+        disabled={mutation.isPending}
+        glass
+      />
+      <p className="h-5 text-sm text-red-400">{error}</p>
+    </div>
   );
 }
 
-function DisableDiaryPinModal({
+/** Pantalla completa (no modal) para pedir el PIN actual y quitar el
+ *  bloqueo del Diario. */
+function DisableDiaryPinScreen({
   onClose,
   onDone,
 }: {
@@ -672,13 +697,15 @@ function DisableDiaryPinModal({
   }
 
   return (
-    <Modal open onClose={onClose} title="Quitar bloqueo del diario">
-      <div className="flex flex-col items-center gap-4 py-2">
-        <p className="text-center text-sm text-slate-500 dark:text-slate-400">Ingresa el PIN actual del diario</p>
-        <PinInput value={pin} onChange={handleChange} disabled={mutation.isPending} />
-        <p className="h-5 text-sm text-danger">{error}</p>
-        <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
+    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-ink-950 px-6 text-center">
+      <FullScreenCloseButton onClick={onClose} />
+      <Logo size={56} />
+      <div className="flex flex-col items-center gap-2">
+        <Lock className="h-10 w-10 text-primary" />
+        <p className="text-sm text-white/60">Ingresa el PIN actual para quitar el bloqueo</p>
       </div>
-    </Modal>
+      <PinInput value={pin} onChange={handleChange} disabled={mutation.isPending} glass />
+      <p className="h-5 text-sm text-red-400">{error}</p>
+    </div>
   );
 }
