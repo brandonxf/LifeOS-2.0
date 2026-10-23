@@ -106,10 +106,10 @@
     @apply flex h-20 w-20 select-none items-center justify-center text-base font-medium text-white transition-opacity active:opacity-50 disabled:opacity-40;
     -webkit-tap-highlight-color: transparent;
   }
-  @media (max-width: 340px) {
+  @media (max-width: 340px), (max-height: 720px) {
     .keypad-key,
     .keypad-text {
-      @apply h-[4.5rem] w-[4.5rem];
+      @apply h-[4.25rem] w-[4.25rem];
     }
   }
   .label {
@@ -220,7 +220,7 @@
   }
 }
 .animate-pin-check-emerge {
-  animation: pin-check-emerge 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  animation: pin-check-emerge 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
 }
 @keyframes letter-in {
   0% {

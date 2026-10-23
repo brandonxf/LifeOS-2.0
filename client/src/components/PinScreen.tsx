@@ -13,8 +13,8 @@ const KEYS: [digit: string, letters: string][] = [
 
 // Tiempos de la secuencia de validación (ms).
 const ERROR_RESET = 650; // puntos en rojo + temblor, luego se limpian
-const SUCCESS_LEAVE = 1300; // check verde visible antes de desvanecer
-const SUCCESS_DONE = 1550; // fin del desvanecido: se llama onSuccess
+const SUCCESS_LEAVE = 2400; // check verde visible antes de desvanecer
+const SUCCESS_DONE = 2700; // fin del desvanecido: se llama onSuccess
 
 type Phase = 'input' | 'checking' | 'error' | 'success' | 'leaving';
 
@@ -135,16 +135,16 @@ export function PinScreen({
       }}
     >
       <div className="relative">
-        <Logo size={64} />
+        <Logo size={104} />
         {done && (
           // Caja recortada cuyo borde de arriba es el borde de abajo del
           // logo: el check arranca fuera de ella (arriba) y baja, así parece
           // que sale de debajo del logo.
-          <div className="pointer-events-none absolute left-1/2 top-full z-10 flex h-32 w-32 -translate-x-1/2 items-start justify-center overflow-hidden pt-3">
-            <div className="animate-pin-check-emerge flex h-[5.5rem] w-[5.5rem] items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40">
+          <div className="pointer-events-none absolute left-1/2 top-full z-10 flex h-24 w-24 -translate-x-1/2 items-start justify-center overflow-hidden pt-2">
+            <div className="animate-pin-check-emerge flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40">
               <svg
                 viewBox="0 0 24 24"
-                className="h-11 w-11"
+                className="h-8 w-8"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={3}
@@ -152,7 +152,7 @@ export function PinScreen({
                 strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '0.6s' }} />
+                <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '1.25s', animationDuration: '520ms' }} />
               </svg>
             </div>
           </div>
@@ -161,7 +161,7 @@ export function PinScreen({
 
       <div
         className={cn(
-          'flex origin-top flex-col items-center transition-all duration-300 ease-in',
+          'flex origin-top flex-col items-center transition-all duration-500 ease-in',
           done && 'pointer-events-none scale-50 opacity-0',
         )}
       >
