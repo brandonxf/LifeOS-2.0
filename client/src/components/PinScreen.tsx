@@ -13,8 +13,8 @@ const KEYS: [digit: string, letters: string][] = [
 
 // Tiempos de la secuencia de validación (ms).
 const ERROR_RESET = 650; // puntos en rojo + temblor, luego se limpian
-const SUCCESS_LEAVE = 2400; // check verde visible antes de desvanecer
-const SUCCESS_DONE = 2700; // fin del desvanecido: se llama onSuccess
+const SUCCESS_LEAVE = 1700; // check verde visible antes de desvanecer
+const SUCCESS_DONE = 1950; // fin del desvanecido: se llama onSuccess
 
 type Phase = 'input' | 'checking' | 'error' | 'success' | 'leaving';
 
@@ -152,7 +152,7 @@ export function PinScreen({
                 strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '1.25s', animationDuration: '520ms' }} />
+                <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} className="draw-check" style={{ animationDelay: '0.9s', animationDuration: '400ms' }} />
               </svg>
             </div>
           </div>
@@ -161,7 +161,7 @@ export function PinScreen({
 
       <div
         className={cn(
-          'flex origin-top flex-col items-center transition-all duration-500 ease-in',
+          'flex origin-top flex-col items-center transition-all duration-[350ms] ease-in',
           done && 'pointer-events-none scale-50 opacity-0',
         )}
       >

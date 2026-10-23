@@ -159,7 +159,13 @@ function AppearanceCard() {
   );
 }
 
-function PreferencesCard() {
+function PreferencesCard({
+  diaryLockEnabled,
+  onToggleDiaryLock,
+}: {
+  diaryLockEnabled: boolean;
+  onToggleDiaryLock: (v: boolean) => void;
+}) {
   const native = Capacitor.isNativePlatform();
   const {
     taskRemindersEnabled, setTaskRemindersEnabled,
@@ -203,56 +209,73 @@ function PreferencesCard() {
     toast.success(v ? 'Bloqueo biométrico activado' : 'Bloqueo biométrico desactivado');
   }
 
-  if (!native) {
-    return (
-      <Card>
-        <h3 className="mb-1 flex items-center gap-2 font-semibold"><Bell className="h-4 w-4" /> Notificaciones y seguridad</h3>
-        <p className="text-sm text-slate-400">Estas opciones solo están disponibles en la app de Android.</p>
-      </Card>
-    );
-  }
+  // El bloqueo del diario es del servidor (PIN por cuenta), así que sale en
+  // web y en la app; lo demás de esta tarjeta es solo nativo.
+  const diaryRow = (
+    <div className={cn('flex items-center justify-between gap-4', native && 'border-t pt-4')}>
+      <div className="flex items-center gap-2">
+        <Lock className="h-4 w-4 text-slate-400" />
+        <div>
+          <p className="text-sm font-medium">Bloquear diario</p>
+          <p className="text-xs text-slate-400">Pide un PIN de 4 dígitos cada vez que entras a Diario</p>
+        </div>
+      </div>
+      <Toggle checked={diaryLockEnabled} onChange={onToggleDiaryLock} />
+    </div>
+  );
 
   return (
     <Card>
       <h3 className="mb-4 flex items-center gap-2 font-semibold"><Bell className="h-4 w-4" /> Notificaciones y seguridad</h3>
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Recordatorios de tareas</p>
-            <p className="text-xs text-slate-400">Aviso a las 9am el día que vence una tarea</p>
-          </div>
-          <Toggle checked={taskRemindersEnabled} onChange={onToggleTaskReminders} />
-        </div>
+        {!native && (
+          <p className="text-sm text-slate-400">
+            Los recordatorios y el bloqueo biométrico solo están disponibles en la app de Android.
+          </p>
+        )}
+        {native && (
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Recordatorios de tareas</p>
+                <p className="text-xs text-slate-400">Aviso a las 9am el día que vence una tarea</p>
+              </div>
+              <Toggle checked={taskRemindersEnabled} onChange={onToggleTaskReminders} />
+            </div>
 
-        <div className="flex items-center justify-between gap-4 border-t pt-4">
-          <div>
-            <p className="text-sm font-medium">Recordatorio diario de hábitos</p>
-            <p className="text-xs text-slate-400">Un aviso para revisar tu checklist de hábitos</p>
-          </div>
-          <Toggle checked={habitReminderEnabled} onChange={onToggleHabitReminder} />
-        </div>
-        {habitReminderEnabled && (
-          <div className="flex items-center justify-between gap-4 pl-1">
-            <p className="text-xs text-slate-400">Hora del recordatorio</p>
-            <input
-              type="time"
-              className="input w-auto py-1.5"
-              value={habitReminderTime}
-              onChange={(e) => onChangeHabitTime(e.target.value)}
-            />
-          </div>
+            <div className="flex items-center justify-between gap-4 border-t pt-4">
+              <div>
+                <p className="text-sm font-medium">Recordatorio diario de hábitos</p>
+                <p className="text-xs text-slate-400">Un aviso para revisar tu checklist de hábitos</p>
+              </div>
+              <Toggle checked={habitReminderEnabled} onChange={onToggleHabitReminder} />
+            </div>
+            {habitReminderEnabled && (
+              <div className="flex items-center justify-between gap-4 pl-1">
+                <p className="text-xs text-slate-400">Hora del recordatorio</p>
+                <input
+                  type="time"
+                  className="input w-auto py-1.5"
+                  value={habitReminderTime}
+                  onChange={(e) => onChangeHabitTime(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-4 border-t pt-4">
+              <div className="flex items-center gap-2">
+                <Fingerprint className="h-4 w-4 text-slate-400" />
+                <div>
+                  <p className="text-sm font-medium">Bloqueo biométrico</p>
+                  <p className="text-xs text-slate-400">Pide huella/rostro al abrir la app</p>
+                </div>
+              </div>
+              <Toggle checked={biometricLockEnabled} onChange={onToggleBiometric} />
+            </div>
+          </>
         )}
 
-        <div className="flex items-center justify-between gap-4 border-t pt-4">
-          <div className="flex items-center gap-2">
-            <Fingerprint className="h-4 w-4 text-slate-400" />
-            <div>
-              <p className="text-sm font-medium">Bloqueo biométrico</p>
-              <p className="text-xs text-slate-400">Pide huella/rostro al abrir la app</p>
-            </div>
-          </div>
-          <Toggle checked={biometricLockEnabled} onChange={onToggleBiometric} />
-        </div>
+        {diaryRow}
       </div>
     </Card>
   );
@@ -370,7 +393,10 @@ export default function Settings() {
         </div>
       </Card>
 
-      <PreferencesCard />
+      <PreferencesCard
+        diaryLockEnabled={!!user?.diaryLockEnabled}
+        onToggleDiaryLock={(v) => (v ? setDiaryPinOpen(true) : setDiaryPinDisableOpen(true))}
+      />
 
       {/* Security / session */}
       <Card>
@@ -385,20 +411,6 @@ export default function Settings() {
           <button onClick={logout} className="btn-danger w-full">
             <LogOut className="h-4 w-4" /> Cerrar sesión
           </button>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between gap-4 border-t pt-4">
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-slate-400" />
-            <div>
-              <p className="text-sm font-medium">Bloquear diario</p>
-              <p className="text-xs text-slate-400">Pide un PIN de 4 dígitos cada vez que entras a Diario</p>
-            </div>
-          </div>
-          <Toggle
-            checked={!!user?.diaryLockEnabled}
-            onChange={(v) => (v ? setDiaryPinOpen(true) : setDiaryPinDisableOpen(true))}
-          />
         </div>
       </Card>
 

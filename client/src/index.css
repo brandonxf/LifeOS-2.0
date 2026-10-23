@@ -220,7 +220,7 @@
   }
 }
 .animate-pin-check-emerge {
-  animation: pin-check-emerge 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
+  animation: pin-check-emerge 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
 }
 @keyframes letter-in {
   0% {
