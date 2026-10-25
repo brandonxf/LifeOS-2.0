@@ -270,7 +270,7 @@ function MobileFab({ onLogout }: { onLogout: () => void }) {
         aria-hidden={!open}
         className={cn(
           'fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] border-t border-slate-200 shadow-glass-lg transition-[transform,opacity] dark:border-white/10',
-          perfMode ? 'bg-white dark:bg-ink-900' : 'bg-white/90 dark:bg-ink-900/80',
+          perfMode ? 'bg-white dark:bg-ink-900' : 'bg-white/70 dark:bg-ink-900/55',
           open
             ? 'translate-y-0 opacity-100 duration-[380ms] ease-[cubic-bezier(0.22,1.4,0.36,1)]'
             : 'pointer-events-none translate-y-10 opacity-0 duration-150 ease-[cubic-bezier(0.4,0,1,1)]',
