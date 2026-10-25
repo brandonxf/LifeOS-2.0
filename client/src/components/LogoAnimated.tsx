@@ -11,7 +11,9 @@ import { cn } from '../lib/utils';
  *  frame pintado: sin la clase `play` queda invisible, con ella corren las
  *  animaciones (definidas en index.css bajo `.logo-anim`). Las letras llevan
  *  un contorno del mismo color (`stroke`, ancho en `.ltr` de index.css) para
- *  verse más gruesas que en el diseño original. */
+ *  verse más gruesas que en el diseño original. `overflow-visible`: el círculo
+ *  del resplandor sube por encima del viewBox y el SVG lo recortaba con una
+ *  línea recta. */
 export function LogoAnimated({ play, className }: { play: boolean; className?: string }) {
   return (
     <svg
@@ -19,7 +21,7 @@ export function LogoAnimated({ play, className }: { play: boolean; className?: s
       viewBox="225 75 1080 885"
       role="img"
       aria-label="Life OS"
-      className={cn('logo-anim text-primary', play ? 'play' : 'opacity-0', className)}
+      className={cn('logo-anim overflow-visible text-primary', play ? 'play' : 'opacity-0', className)}
     >
       <defs>
         <radialGradient id="logo-anim-glow">
