@@ -493,13 +493,17 @@ export function AppLayout() {
         </header>
 
         <main className="min-h-0 flex-1 overflow-hidden">
+          {/* key={pathname}: al cambiar de módulo el contenedor se remonta y
+              repite el fundido de entrada (.page-enter). */}
           {fullBleed ? (
-            <Suspense fallback={<RouteFallback />}>
-              <Outlet />
-            </Suspense>
+            <div key={pathname} className="page-enter h-full">
+              <Suspense fallback={<RouteFallback />}>
+                <Outlet />
+              </Suspense>
+            </div>
           ) : (
             <div className="h-full overflow-y-auto">
-              <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
+              <div key={pathname} className="page-enter mx-auto w-full max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
                 <Suspense fallback={<RouteFallback />}>
                   <Outlet />
                 </Suspense>

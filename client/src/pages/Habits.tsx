@@ -13,6 +13,8 @@ import type { Habit, Goal, GoalMilestone, HabitInvite, Friendship } from '../lib
 import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
 import { confirm } from '../store/confirm';
+import { ProgressBar } from '../components/motion';
+import { SwipeRow } from '../components/SwipeRow';
 import { bogotaISODate, shiftIsoDate } from '../lib/date';
 import { currentStreak as streak } from '../lib/streak';
 
@@ -260,6 +262,20 @@ export default function Habits() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['goals'] }); toast.success('Meta eliminada'); },
   });
 
+  // Marca/desmarca el hábito de hoy (botón del checklist y swipe a la derecha).
+  function toggleHabit(h: Habit) {
+    if (!h.logs.includes(today)) {
+      hapticSuccess();
+      const before = streak(h.logs);
+      const after = streak([...h.logs, today]);
+      const hit = STREAK_MILESTONES.find((m) => after === m && before < m);
+      if (hit) toast.success(`🔥 ¡${hit} días de racha en ${h.name}!`, { duration: 4000 });
+    } else {
+      hapticTap();
+    }
+    toggle.mutate(h.id);
+  }
+
   async function confirmDeleteHabit(h: Habit) {
     const ok = await confirm({
       title: 'Eliminar hábito',
@@ -324,19 +340,7 @@ export default function Habits() {
               <div className="flex flex-wrap gap-2">
                 {habits.data.map((h) => {
                   const done = h.logs.includes(today);
-                  function onToggle() {
-                    if (!done) {
-                      hapticSuccess();
-                      const before = streak(h.logs);
-                      const after = streak([...h.logs, today]);
-                      const hit = STREAK_MILESTONES.find((m) => after === m && before < m);
-                      if (hit) toast.success(`🔥 ¡${hit} días de racha en ${h.name}!`, { duration: 4000 });
-                    } else {
-                      hapticTap();
-                    }
-                    toggle.mutate(h.id);
-                  }
-                  return <HabitChecklistButton key={h.id} habit={h} done={done} onToggle={onToggle} />;
+                  return <HabitChecklistButton key={h.id} habit={h} done={done} onToggle={() => toggleHabit(h)} />;
                 })}
               </div>
             </Card>
@@ -345,7 +349,13 @@ export default function Habits() {
               {habits.data.map((h) => {
                 const badge = achievementBadge(streak(h.logs), h.logs.length);
                 return (
-                  <Card key={h.id}>
+                  <SwipeRow
+                    key={h.id}
+                    className="rounded-3xl"
+                    right={{ icon: <Check className="h-6 w-6" />, className: 'bg-success text-white', onTrigger: () => toggleHabit(h) }}
+                    left={h.isOwner ? { icon: <Trash2 className="h-6 w-6" />, className: 'bg-danger text-white', onTrigger: () => confirmDeleteHabit(h) } : undefined}
+                  >
+                  <Card>
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: `${h.color}22`, color: h.color }}>
@@ -404,6 +414,7 @@ export default function Habits() {
                       </div>
                     )}
                   </Card>
+                  </SwipeRow>
                 );
               })}
             </div>
@@ -440,9 +451,7 @@ export default function Habits() {
                     <span className="font-medium">{Number(g.currentValue)} / {Number(g.targetValue)} {g.unit}</span>
                     <span className="text-slate-400">{pct}%</span>
                   </div>
-                  <div className="h-2.5 rounded-full bg-slate-200 dark:bg-slate-800">
-                    <div className={cn('h-2.5 rounded-full', completed ? 'bg-success' : 'bg-primary')} style={{ width: `${pct}%` }} />
-                  </div>
+                  <ProgressBar pct={pct} className="h-2.5 bg-slate-200 dark:bg-slate-800" barClassName={completed ? 'bg-success' : 'bg-primary'} />
                   <div className="mt-3 flex items-center justify-between">
                     {daysLeft !== null ? (
                       <span className={cn('text-xs', daysLeft < 0 ? 'text-danger' : 'text-slate-400')}>

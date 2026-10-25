@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { format, parseISO, isPast, isToday } from 'date-fns';
-import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag, Check, X, UserPlus } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag, Check, X, UserPlus, Undo2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText, Avatar, FriendPickerModal } from '../components/ui';
 import { AnimatedCheckbox } from '../components/AnimatedCheck';
+import { SwipeRow } from '../components/SwipeRow';
 import { cn, PRIORITY_STYLES } from '../lib/utils';
 import type { Task, Friendship, TaskInvite } from '../lib/types';
 import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
@@ -239,7 +240,16 @@ export default function Tasks() {
         <Card>
           <div className="divide-y">
             {filtered.map((task) => (
-              <div key={task.id} className="flex items-center gap-3 py-3">
+              <SwipeRow
+                key={task.id}
+                right={{
+                  icon: task.status === 'done' ? <Undo2 className="h-5 w-5" /> : <Check className="h-5 w-5" />,
+                  className: 'bg-success text-white',
+                  onTrigger: () => changeStatus(task, task.status === 'done' ? 'todo' : 'done'),
+                }}
+                left={{ icon: <Trash2 className="h-5 w-5" />, className: 'bg-danger text-white', onTrigger: () => confirmDelete(task) }}
+              >
+              <div className="flex items-center gap-3 py-3">
                 <AnimatedCheckbox
                   checked={task.status === 'done'}
                   onChange={() => changeStatus(task, task.status === 'done' ? 'todo' : 'done')}
@@ -260,6 +270,7 @@ export default function Tasks() {
                 )}
                 <button onClick={() => confirmDelete(task)} className="text-slate-400 hover:text-danger"><Trash2 className="h-4 w-4" /></button>
               </div>
+              </SwipeRow>
             ))}
           </div>
         </Card>

@@ -8,6 +8,8 @@ import { AiMark } from '../components/Brand';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { Card, Skeleton } from '../components/ui';
+import { AnimatedNumber, ProgressBar } from '../components/motion';
+import { useAnimatedValue } from '../lib/useAnimatedValue';
 import { cn, formatCurrency } from '../lib/utils';
 import { bogotaISODate } from '../lib/date';
 import type { FinanceSummary, Task, Habit, Goal, CalendarEvent } from '../lib/types';
@@ -155,6 +157,7 @@ export default function Dashboard() {
   }
 
   const ringDeg = habitRing.pct * 3.6;
+  const animatedRingDeg = useAnimatedValue(ringDeg);
 
   return (
     <div className={cn(justLoggedIn && 'animate-page-in')}>
@@ -193,7 +196,7 @@ export default function Dashboard() {
           ) : (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="num text-4xl font-bold text-primary sm:text-5xl">{formatCurrency(finance.data?.balance ?? 0)}</p>
+                <p className="num text-4xl font-bold text-primary sm:text-5xl"><AnimatedNumber value={finance.data?.balance ?? 0} format={formatCurrency} /></p>
                 <p className="mt-1 text-xs text-slate-400 dark:text-white/40">balance de este periodo</p>
               </div>
               <div className="w-full space-y-1.5 sm:max-w-[52%]">
@@ -218,12 +221,12 @@ export default function Dashboard() {
               <div className="flex gap-4">
                 <div>
                   <p className={cn('num text-3xl font-bold', taskStats.overdue ? 'text-danger' : 'text-slate-400 dark:text-white/40')}>
-                    {taskStats.overdue}
+                    <AnimatedNumber value={taskStats.overdue} />
                   </p>
                   <p className="text-xs text-slate-400 dark:text-white/40">vencidas</p>
                 </div>
                 <div>
-                  <p className="num text-3xl font-bold text-primary">{taskStats.dueToday.length}</p>
+                  <p className="num text-3xl font-bold text-primary"><AnimatedNumber value={taskStats.dueToday.length} /></p>
                   <p className="text-xs text-slate-400 dark:text-white/40">para hoy</p>
                 </div>
               </div>
@@ -249,10 +252,10 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div
                 className="relative flex h-24 w-24 items-center justify-center rounded-full"
-                style={{ background: `conic-gradient(rgb(var(--primary)) ${ringDeg}deg, rgb(var(--primary) / 0.14) 0deg)` }}
+                style={{ background: `conic-gradient(rgb(var(--primary)) ${animatedRingDeg}deg, rgb(var(--primary) / 0.14) 0deg)` }}
               >
                 <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-slate-50 dark:bg-ink-900">
-                  <span className="num text-2xl font-bold">{habitRing.pct}%</span>
+                  <span className="num text-2xl font-bold"><AnimatedNumber value={habitRing.pct} format={(n) => `${Math.round(n)}%`} /></span>
                 </div>
               </div>
               <div>
@@ -279,9 +282,7 @@ export default function Dashboard() {
                       <span className="truncate">{g.title}</span>
                       <span className="text-slate-400 dark:text-white/40">{pct}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-200 dark:bg-white/[0.08]">
-                      <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                    </div>
+                    <ProgressBar pct={pct} className="h-2 bg-slate-200 dark:bg-white/[0.08]" barClassName="bg-primary" />
                   </div>
                 );
               })}

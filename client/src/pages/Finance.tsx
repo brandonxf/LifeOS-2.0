@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { useSettings } from '../store/settings';
 import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from '../components/ui';
+import { AnimatedNumber, ProgressBar } from '../components/motion';
 import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
 import { confirm } from '../store/confirm';
 import { bogotaISODate } from '../lib/date';
@@ -94,9 +95,9 @@ export default function Finance() {
           </>
         ) : (
           <>
-            <StatTile label="Ingresos" value={formatCurrency(summary.data?.totalIncome ?? 0)} accent="text-success" />
-            <StatTile label="Gastos" value={formatCurrency(summary.data?.totalExpenses ?? 0)} accent="text-danger" />
-            <StatTile label="Balance" value={formatCurrency(summary.data?.balance ?? 0)} accent="text-primary" />
+            <StatTile label="Ingresos" value={<AnimatedNumber value={summary.data?.totalIncome ?? 0} format={formatCurrency} />} accent="text-success" />
+            <StatTile label="Gastos" value={<AnimatedNumber value={summary.data?.totalExpenses ?? 0} format={formatCurrency} />} accent="text-danger" />
+            <StatTile label="Balance" value={<AnimatedNumber value={summary.data?.balance ?? 0} format={formatCurrency} />} accent="text-primary" />
           </>
         )}
       </div>
@@ -170,9 +171,7 @@ export default function Finance() {
                     <span className="font-medium">{b.category}</span>
                     <span className={cn(over && 'text-danger')}>{pct}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800">
-                    <div className={cn('h-2 rounded-full', over ? 'bg-danger' : 'bg-success')} style={{ width: `${pct}%` }} />
-                  </div>
+                  <ProgressBar pct={pct} className="h-2 bg-slate-200 dark:bg-slate-800" barClassName={over ? 'bg-danger' : 'bg-success'} />
                   <p className="mt-1 text-xs text-slate-400">
                     {formatCurrency(spent)} / {formatCurrency(limit)}
                   </p>
