@@ -61,6 +61,12 @@ const updateProfileSchema = z
     location: optionalText(120),
     phone: optionalText(40),
     pronouns: optionalText(40),
+    // Mismas claves que ACCENTS en client/src/lib/accents.ts.
+    accent: z.enum(['lime', 'sky', 'violet', 'orange', 'pink']).nullish(),
+    customAccentHex: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/, 'Color no válido')
+      .nullish(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'No fields to update' });
 
@@ -296,6 +302,8 @@ router.patch(
     if (body.location !== undefined) updates.location = body.location ? body.location : null;
     if (body.phone !== undefined) updates.phone = body.phone ? body.phone : null;
     if (body.pronouns !== undefined) updates.pronouns = body.pronouns ? body.pronouns : null;
+    if (body.accent !== undefined) updates.accent = body.accent ?? null;
+    if (body.customAccentHex !== undefined) updates.customAccentHex = body.customAccentHex ?? null;
 
     // Puede quedar vacío si lo único que llegó fue el avatar que ya tenía:
     // `.set({})` sería un UPDATE inválido.

@@ -17,6 +17,9 @@ export interface AuthUser {
   pronouns: string | null;
   plan: 'free' | 'pro';
   diaryLockEnabled: boolean;
+  // Acento elegido (sincronizado entre dispositivos). null = nunca lo eligió.
+  accent: string | null;
+  customAccentHex: string | null;
   createdAt: string;
 }
 

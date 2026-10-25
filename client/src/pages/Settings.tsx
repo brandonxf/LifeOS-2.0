@@ -11,6 +11,7 @@ import { useAuth, type AuthUser } from '../store/auth';
 import { SectionTitle, Card, Modal, Field } from '../components/ui';
 import { AvatarPicker } from '../components/AvatarPicker';
 import { PinScreen } from '../components/PinScreen';
+import { pushAccent } from '../components/AccentSync';
 import { avatarSrc } from '../lib/avatar';
 import { ColorWheel } from '../components/ColorWheel';
 import { cn } from '../lib/utils';
@@ -101,7 +102,10 @@ function AppearanceCard() {
           <button
             key={a.key}
             type="button"
-            onClick={() => setAccent(a.key)}
+            onClick={() => {
+              setAccent(a.key);
+              pushAccent({ accent: a.key, customAccentHex: null });
+            }}
             aria-label={a.label}
             aria-pressed={!customAccentHex && accent === a.key}
             title={a.label}
@@ -135,7 +139,10 @@ function AppearanceCard() {
       <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Color personalizado">
         <ColorWheel
           initialValue={customAccentHex ?? '#37e779'}
-          onChangeEnd={setCustomAccent}
+          onChangeEnd={(hex) => {
+            setCustomAccent(hex);
+            pushAccent({ customAccentHex: hex });
+          }}
         />
       </Modal>
 
