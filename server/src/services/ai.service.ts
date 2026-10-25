@@ -260,17 +260,22 @@ export async function streamChat(
 
   try {
     if (AI_PROVIDER === 'nvidia' && nvidia) {
-      const stream = await nvidia.chat.completions.create({
+      const params = {
         model: env.AI_MODEL,
         temperature: 0.3,
         top_p: 0.9,
-        max_tokens: 900,
-        stream: true,
+        // gpt-oss "razona" antes de responder y esos tokens cuentan aquí.
+        max_tokens: 1200,
+        stream: true as const,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system' as const, content: systemPrompt },
           ...messages.map((m) => ({ role: m.role, content: m.content })),
         ],
-      });
+        // Razonamiento corto: baja el tiempo al primer texto de ~3-5s a <1s.
+        // Solo para gpt-oss: otros modelos rechazan el parámetro.
+        ...(env.AI_MODEL.includes('gpt-oss') ? { reasoning_effort: 'low' as const } : {}),
+      };
+      const stream = await nvidia.chat.completions.create(params);
       for await (const chunk of stream) {
         const text = chunk.choices[0]?.delta?.content ?? '';
         if (text) cb.onDelta(text);
@@ -294,6 +299,14 @@ export async function streamChat(
 
     cb.onError('No hay proveedor de IA disponible');
   } catch (err) {
+    // 404/410: el proveedor retiró el modelo (pasó con llama-3.1-8b-instruct).
+    // "410 status code (no body)" no le dice nada al usuario.
+    const status = (err as { status?: number }).status;
+    if (status === 404 || status === 410) {
+      console.error(`[ai] el modelo "${env.AI_MODEL}" ya no está disponible (HTTP ${status})`);
+      cb.onError('El modelo de IA ya no está disponible. Avísale al administrador para que lo actualice.');
+      return;
+    }
     cb.onError((err as Error).message ?? 'La solicitud a la IA falló');
   }
 }
