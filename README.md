@@ -2,7 +2,7 @@
 
 Un **sistema operativo personal** full-stack y multi-tenant — un panel privado para manejar tus finanzas, tareas, hábitos, metas, calendario, diario, notas y salud, con un **asistente de IA** que conoce tus propios datos. Agrega amigos para compartir hábitos y hacer tareas en equipo.
 
-![stack](https://img.shields.io/badge/React-18-61dafb) ![stack](https://img.shields.io/badge/Node-Express-3c873a) ![stack](https://img.shields.io/badge/Neon-Postgres-00e599) ![stack](https://img.shields.io/badge/Drizzle-ORM-c5f74f) ![stack](https://img.shields.io/badge/AI-NVIDIA%20%2F%20Claude-76b900)
+![stack](https://img.shields.io/badge/React-18-61dafb) ![stack](https://img.shields.io/badge/Node-Express-3c873a) ![stack](https://img.shields.io/badge/Neon-Postgres-00e599) ![stack](https://img.shields.io/badge/Drizzle-ORM-c5f74f) ![stack](https://img.shields.io/badge/AI-Groq%20%2F%20Claude-f55036)
 
 ---
 
@@ -21,7 +21,7 @@ Un **sistema operativo personal** full-stack y multi-tenant — un panel privado
 | **Amigos y Social** | Agrega amigos con un código corto de invitación (sin directorio/búsqueda pública); invita amigos a un hábito o tarea — cada quien acepta antes de que le aparezca |
 | **Hábitos compartidos** | El heatmap del hábito se rellena cada día según *qué fracción del equipo* lo completó, no todo-o-nada; se ve la racha actual de cada miembro junto a su avatar |
 | **Tareas en equipo** | Asigna una tarea a uno o varios amigos; cualquier asignado activo la puede mover en el tablero, solo el dueño la edita/borra |
-| **Asistente de IA** | Chat en streaming (SSE), insignia de contexto que muestra exactamente qué datos se enviaron — corre en NVIDIA NIM (gratis) por defecto, con respaldo en Anthropic Claude, y modo demo sin conexión si no hay ninguna clave configurada |
+| **Asistente de IA** | Chat en streaming (SSE), insignia de contexto que muestra exactamente qué datos se enviaron — corre en Groq por defecto, con respaldo en Anthropic Claude, y modo demo sin conexión si no hay ninguna clave configurada |
 
 Además: autenticación JWT con **rotación de refresh tokens**, borrado suave, límite de peticiones, modo oscuro, PWA, esqueletos de carga, notificaciones toast, refresco casi en tiempo real (por polling) en todas las pantallas de amigos/hábitos/tareas, y tipado completo en TypeScript.
 
@@ -33,7 +33,7 @@ Además: autenticación JWT con **rotación de refresh tokens**, borrado suave, 
 - **Backend:** Node.js + Express (API REST, streaming SSE)
 - **Base de datos:** [Neon](https://neon.tech) Postgres serverless + Drizzle ORM + Drizzle Kit, con **pgvector** para búsqueda semántica de notas
 - **Caché/Sesiones:** Redis ([Upstash](https://upstash.com) recomendado) — con respaldo automático en memoria para desarrollo local
-- **IA:** [NVIDIA NIM](https://build.nvidia.com) (gratis, compatible con OpenAI) por defecto, con respaldo en Anthropic Claude si solo esa clave está configurada
+- **IA:** [Groq](https://console.groq.com) (compatible con OpenAI, inferencia muy rápida) por defecto, con respaldo en Anthropic Claude si solo esa clave está configurada
 - **Auth:** Tokens de acceso JWT + bcrypt + refresh tokens rotativos
 
 ---
@@ -77,7 +77,7 @@ life-os/
 - Node.js 20+
 - Un proyecto de **Neon** (el plan gratis alcanza) → copia el connection string agrupado (pooled)
 - *(Opcional)* Una base de datos de **Upstash Redis** → URL `rediss://…`
-- *(Opcional)* Una clave de **NVIDIA** (gratis, [build.nvidia.com](https://build.nvidia.com)) o una clave de **Anthropic** → el chat de IA corre en modo demo sin conexión si no configuras ninguna
+- *(Opcional)* Una clave de **Groq** ([console.groq.com](https://console.groq.com/keys)) o una clave de **Anthropic** → el chat de IA corre en modo demo sin conexión si no configuras ninguna
 
 ### 2. Clonar e instalar
 ```bash
@@ -92,7 +92,7 @@ cp .env.example server/.env
 cp .env.example client/.env     # el cliente solo necesita VITE_API_URL
 ```
 Edita `server/.env` y define al menos `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`
-(y `NVIDIA_API_KEY` o `ANTHROPIC_API_KEY` para respuestas de IA reales en vez del mock de demo).
+(y `GROQ_API_KEY` o `ANTHROPIC_API_KEY` para respuestas de IA reales en vez del mock de demo).
 
 Genera secretos fuertes:
 ```bash
@@ -131,10 +131,10 @@ Abre **http://localhost:5173** e inicia sesión con la cuenta demo:
 | `REDIS_URL` | server | URL de Upstash Redis (opcional — cae a memoria) |
 | `JWT_SECRET` | server | Secreto para firmar los tokens de acceso |
 | `JWT_REFRESH_SECRET` | server | Secreto reservado para el flujo de refresh |
-| `NVIDIA_API_KEY` | server | Clave de NVIDIA NIM — proveedor de IA principal (modelos gratis) |
-| `NVIDIA_BASE_URL` | server | Por defecto `https://integrate.api.nvidia.com/v1` |
-| `AI_MODEL` | server | Id del modelo de NVIDIA (ver `.env.example`) |
-| `ANTHROPIC_API_KEY` | server | Clave de la API de Claude — se usa solo si `NVIDIA_API_KEY` está vacía |
+| `GROQ_API_KEY` | server | Clave de Groq — proveedor de IA principal |
+| `GROQ_BASE_URL` | server | Por defecto `https://api.groq.com/openai/v1` |
+| `AI_MODEL` | server | Id del modelo de Groq (ver `.env.example`) |
+| `ANTHROPIC_API_KEY` | server | Clave de la API de Claude — se usa solo si `GROQ_API_KEY` está vacía |
 | `CLIENT_URL` | server | Lista blanca de CORS, separada por comas (defensa en profundidad — ver abajo) |
 | `PORT` | server | Puerto de la API solo para desarrollo local (por defecto `4000`) |
 | `VITE_API_URL` | client | Solo hace falta para el build de Android (`.env.android`) — el build web usa `/api` relativo |
@@ -155,7 +155,7 @@ servidor aparte que esté siempre encendido como Render.
    reescritura de `/api/*` y el `maxDuration` de la función.
 2. Agrega las variables de entorno del servidor de arriba como **Environment
    Variables** del proyecto (`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`,
-   `NVIDIA_API_KEY` como mínimo). **No** definas `VITE_API_URL` en este proyecto —
+   `GROQ_API_KEY` como mínimo). **No** definas `VITE_API_URL` en este proyecto —
    dejarla sin definir es justo lo que hace que el cliente llame a `/api` en el
    mismo origen.
 3. Despliega. `/health` y `/api/*` los maneja la función; cualquier otra ruta cae
@@ -187,7 +187,7 @@ foto en vivo — últimas 10 tareas, hábitos completados hoy, resumen financier
 fundamentado en esos datos, y transmite la respuesta de vuelta por **Server-Sent
 Events**. La interfaz muestra una **insignia de contexto** con exactamente qué se envió.
 El proveedor se elige en el momento de la petición (`server/src/services/ai.service.ts`):
-NVIDIA NIM si `NVIDIA_API_KEY` está configurada, si no Anthropic Claude si
+Groq si `GROQ_API_KEY` está configurada, si no Anthropic Claude si
 `ANTHROPIC_API_KEY` está configurada, y si no una respuesta de demo enlatada para que
 la función siga sirviendo aunque no haya ninguna clave.
 

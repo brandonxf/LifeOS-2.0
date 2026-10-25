@@ -16,9 +16,9 @@ export const env = {
   JWT_SECRET: required('JWT_SECRET', 'dev-access-secret-change-me'),
   JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET', 'dev-refresh-secret-change-me'),
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
-  // NVIDIA NIM (OpenAI-compatible, free models). https://build.nvidia.com
-  NVIDIA_API_KEY: process.env.NVIDIA_API_KEY ?? '',
-  NVIDIA_BASE_URL: process.env.NVIDIA_BASE_URL ?? 'https://integrate.api.nvidia.com/v1',
+  // Groq (API compatible con OpenAI). https://console.groq.com
+  GROQ_API_KEY: process.env.GROQ_API_KEY ?? '',
+  GROQ_BASE_URL: process.env.GROQ_BASE_URL ?? 'https://api.groq.com/openai/v1',
   AI_MODEL: process.env.AI_MODEL ?? 'openai/gpt-oss-20b',
   // Uno o varios orígenes permitidos por CORS, separados por comas.
   // Ej: "https://lifeos.vercel.app,https://lifeos-git-main-tu.vercel.app"

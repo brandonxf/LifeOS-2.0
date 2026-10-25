@@ -10,8 +10,8 @@ app.listen(env.PORT, () => {
   console.log(`   Environment: ${env.NODE_ENV}`);
   console.log(
     `   AI: ${
-      AI_PROVIDER === 'nvidia'
-        ? `NVIDIA (${env.AI_MODEL})`
+      AI_PROVIDER === 'groq'
+        ? `Groq (${env.AI_MODEL})`
         : AI_PROVIDER === 'anthropic'
           ? `Claude (${CLAUDE_MODEL})`
           : 'offline demo mode'

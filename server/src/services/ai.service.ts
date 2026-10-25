@@ -18,17 +18,25 @@ import { bogotaISODate } from '../lib/date.js';
 
 export const CLAUDE_MODEL = 'claude-sonnet-5';
 
-// Provider selection: NVIDIA (free, OpenAI-compatible) takes priority, then Anthropic.
-type Provider = 'nvidia' | 'anthropic' | 'none';
-export const AI_PROVIDER: Provider = env.NVIDIA_API_KEY
-  ? 'nvidia'
+// Provider selection: Groq (API compatible con OpenAI) takes priority, then Anthropic.
+type Provider = 'groq' | 'anthropic' | 'none';
+export const AI_PROVIDER: Provider = env.GROQ_API_KEY
+  ? 'groq'
   : env.ANTHROPIC_API_KEY
     ? 'anthropic'
     : 'none';
 
-const nvidia = env.NVIDIA_API_KEY
-  ? new OpenAI({ apiKey: env.NVIDIA_API_KEY, baseURL: env.NVIDIA_BASE_URL })
+// maxRetries: 0 — el SDK reintentaría los 429 esperando varios segundos; es
+// mejor pasar enseguida al siguiente modelo (ver streamChat), que tiene su
+// propio cupo de tokens por minuto.
+const groq = env.GROQ_API_KEY
+  ? new OpenAI({ apiKey: env.GROQ_API_KEY, baseURL: env.GROQ_BASE_URL, maxRetries: 0 })
   : null;
+
+// Respaldos si el modelo principal (AI_MODEL) da 429 o deja de existir. En el
+// plan gratis cada modelo tiene su propio cupo (8.000 tokens/min), y la clave
+// es una sola para todos los usuarios de la app.
+const GROQ_FALLBACK_MODELS = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
 
 const anthropic = env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
@@ -189,8 +197,14 @@ Ejemplo:
 Puedes incluir varios bloques \`\`\`action si el usuario pide crear varias cosas.
 Reglas: si faltan datos OBLIGATORIOS (*), NO generes el bloque; pide brevemente
 lo que necesitas indicando el formato (ej.: si solo dicen "añade una tarea",
-pide el título y, opcional, prioridad y fecha). Nunca inventes datos que el
-usuario no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action
+pide el título y, opcional, prioridad y fecha). Los campos SIN asterisco son
+OPCIONALES: NUNCA preguntes por ellos ni pidas confirmación — si el usuario ya
+dio los obligatorios, genera el bloque de inmediato y omite lo demás (se usan
+los valores por defecto). Ejemplos: "agrega una tarea: revisar el correo" ya
+alcanza (sin fecha ni prioridad); "reunión con Juan el lunes a las 3pm" ya
+alcanza (título "Reunión con Juan", fecha del lunes, startTime "15:00", sin
+hora de fin); "registra un ingreso de 1200000 por salario" ya alcanza. Nunca
+inventes datos que el usuario no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action
 no se muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
 NUNCA digas que ya creaste/agregaste algo a menos que hayas incluido el bloque
 \`\`\`action correspondiente en esa misma respuesta — si no lo incluiste, no pasó.
@@ -233,9 +247,9 @@ export interface StreamCallbacks {
 }
 
 /**
- * Stream an assistant completion. Uses NVIDIA NIM (free, OpenAI-compatible) when
- * a key is present, otherwise Anthropic Claude, otherwise a demo mock so the
- * chat UI is fully usable offline.
+ * Stream an assistant completion. Uses Groq (OpenAI-compatible) when a key is
+ * present, otherwise Anthropic Claude, otherwise a demo mock so the chat UI is
+ * fully usable offline.
  */
 export async function streamChat(
   systemPrompt: string,
@@ -248,7 +262,7 @@ export async function streamChat(
   if (AI_PROVIDER === 'none') {
     const mock =
       "Estoy en **modo demo sin conexión** porque no hay una clave de IA configurada. " +
-      "Agrega `NVIDIA_API_KEY` (modelos gratuitos) o `ANTHROPIC_API_KEY` al `.env` del servidor.\n\n" +
+      "Agrega `GROQ_API_KEY` o `ANTHROPIC_API_KEY` al `.env` del servidor.\n\n" +
       "Con tus datos ya puedo ver tus tareas, hábitos, finanzas y ánimos del diario conectados — configura la clave y pídeme *\"Resume mi semana\"*.";
     for (const chunk of mock.match(/.{1,4}/g) ?? [mock]) {
       cb.onDelta(chunk);
@@ -259,29 +273,47 @@ export async function streamChat(
   }
 
   try {
-    if (AI_PROVIDER === 'nvidia' && nvidia) {
-      const params = {
-        model: env.AI_MODEL,
-        temperature: 0.3,
-        top_p: 0.9,
-        // gpt-oss "razona" antes de responder y esos tokens cuentan aquí.
-        max_tokens: 1200,
-        stream: true as const,
-        messages: [
-          { role: 'system' as const, content: systemPrompt },
-          ...messages.map((m) => ({ role: m.role, content: m.content })),
-        ],
-        // Razonamiento corto: baja el tiempo al primer texto de ~3-5s a <1s.
-        // Solo para gpt-oss: otros modelos rechazan el parámetro.
-        ...(env.AI_MODEL.includes('gpt-oss') ? { reasoning_effort: 'low' as const } : {}),
-      };
-      const stream = await nvidia.chat.completions.create(params);
-      for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content ?? '';
-        if (text) cb.onDelta(text);
+    if (AI_PROVIDER === 'groq' && groq) {
+      const models = [env.AI_MODEL, ...GROQ_FALLBACK_MODELS.filter((m) => m !== env.AI_MODEL)];
+      let lastErr: unknown;
+      for (const model of models) {
+        let started = false;
+        try {
+          const stream = await groq.chat.completions.create({
+            model,
+            temperature: 0.3,
+            top_p: 0.9,
+            // gpt-oss "razona" antes de responder y esos tokens cuentan aquí.
+            max_tokens: 1200,
+            stream: true,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...messages.map((m) => ({ role: m.role, content: m.content })),
+            ],
+            // Razonamiento corto: baja el tiempo al primer texto de ~3-5s a
+            // <1s. Solo para gpt-oss: otros modelos rechazan el parámetro.
+            ...(model.includes('gpt-oss') ? { reasoning_effort: 'low' as const } : {}),
+          });
+          for await (const chunk of stream) {
+            const text = chunk.choices[0]?.delta?.content ?? '';
+            if (text) {
+              started = true;
+              cb.onDelta(text);
+            }
+          }
+          cb.onDone();
+          return;
+        } catch (err) {
+          lastErr = err;
+          const status = (err as { status?: number }).status;
+          // Se pasa al siguiente modelo solo si todavía no se le mandó texto
+          // al usuario y el fallo es de cupo (429) o del modelo (404/410/5xx).
+          const retryable = status === 429 || status === 404 || status === 410 || (status ?? 0) >= 500;
+          if (started || !retryable) throw err;
+          console.error(`[ai] "${model}" falló (HTTP ${status}); probando el siguiente modelo`);
+        }
       }
-      cb.onDone();
-      return;
+      throw lastErr;
     }
 
     if (anthropic) {
@@ -299,12 +331,23 @@ export async function streamChat(
 
     cb.onError('No hay proveedor de IA disponible');
   } catch (err) {
-    // 404/410: el proveedor retiró el modelo (pasó con llama-3.1-8b-instruct).
-    // "410 status code (no body)" no le dice nada al usuario.
+    // Mensajes entendibles en vez de "410 status code (no body)".
     const status = (err as { status?: number }).status;
     if (status === 404 || status === 410) {
+      // El proveedor retiró o renombró el modelo (pasó con llama-3.1-8b-instruct).
       console.error(`[ai] el modelo "${env.AI_MODEL}" ya no está disponible (HTTP ${status})`);
       cb.onError('El modelo de IA ya no está disponible. Avísale al administrador para que lo actualice.');
+      return;
+    }
+    if (status === 429) {
+      // Límite de uso/tokens por minuto del plan de Groq.
+      console.error(`[ai] límite de uso del proveedor alcanzado (HTTP 429) con "${env.AI_MODEL}"`);
+      cb.onError('La IA está recibiendo muchas solicitudes. Espera unos segundos e inténtalo de nuevo.');
+      return;
+    }
+    if (status === 401 || status === 403) {
+      console.error(`[ai] la clave de IA fue rechazada (HTTP ${status})`);
+      cb.onError('La clave de la IA no es válida. Avísale al administrador.');
       return;
     }
     cb.onError((err as Error).message ?? 'La solicitud a la IA falló');
@@ -325,7 +368,7 @@ export interface ActionResult {
 const ACTION_RE = /```action\s*([\s\S]*?)```/g;
 
 // Salvaguarda de servidor: incluso si el modelo genera un bloque ```action
-// sin que se lo hayan pedido (pasa a veces con el modelo gratuito de NVIDIA),
+// sin que se lo hayan pedido (pasa a veces con los modelos pequeños/gratuitos),
 // nunca lo ejecutamos a menos que el propio mensaje del usuario contenga
 // intención explícita de crear/agregar algo.
 const CREATION_INTENT_RE =
