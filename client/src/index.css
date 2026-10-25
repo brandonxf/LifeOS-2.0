@@ -269,6 +269,13 @@
   transform-origin: center;
   opacity: 0.35;
 }
+/* Letras más gruesas: contorno del mismo color que el relleno (el color va
+   como atributo stroke en LogoAnimated.tsx). Unidades del grupo escalado
+   0.1, así que 90 = 9px del viewBox. Con 120+ se cierra el ojo de la "e". */
+.logo-anim .ltr {
+  stroke-width: 90;
+  stroke-linejoin: round;
+}
 @keyframes lg-trace {
   0% {
     stroke-dashoffset: 1;

@@ -228,7 +228,7 @@ export function AppLoader() {
   return (
     <div className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-ink-950 px-6">
       <Ambient />
-      <LogoAnimated play={armed} className="relative z-10 w-[min(82vw,460px)]" />
+      <LogoAnimated play={armed} className="relative z-10 w-[min(82vw,460px)] md:w-[340px]" />
     </div>
   );
 }
