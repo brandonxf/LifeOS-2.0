@@ -35,6 +35,12 @@ export const users = pgTable(
     // bloqueo. Nunca sale en las respuestas JSON (ver publicUser), solo se
     // expone como `diaryLockEnabled: boolean`.
     diaryPinHash: text('diary_pin_hash'),
+    // Recuperación de contraseña: hash SHA-256 (no bcrypt — a diferencia de
+    // una contraseña, el token ya es aleatorio de alta entropía, y necesita
+    // ser determinístico para poder buscarlo con WHERE). NULL = sin solicitud
+    // pendiente. Se limpia al usarse o al vencer.
+    resetTokenHash: text('reset_token_hash'),
+    resetTokenExpiresAt: timestamp('reset_token_expires_at', { withTimezone: true }),
     // Color de acento elegido en Ajustes (clave de ACCENTS en el cliente) y,
     // si usó la rueda de color, su hex. NULL = nunca lo eligió. Viven aquí
     // (no solo en localStorage) para que se sincronicen entre dispositivos.

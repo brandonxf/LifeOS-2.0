@@ -11,6 +11,8 @@ import { Spinner } from './components/ui';
 // una se descarga la primera vez que se visita esa ruta.
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Finance = lazy(() => import('./pages/Finance'));
 const Tasks = lazy(() => import('./pages/Tasks'));
@@ -50,6 +52,8 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
         <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+        <Route path="/forgot-password" element={<PublicOnly><ForgotPassword /></PublicOnly>} />
+        <Route path="/reset-password" element={<PublicOnly><ResetPassword /></PublicOnly>} />
 
         <Route
           element={

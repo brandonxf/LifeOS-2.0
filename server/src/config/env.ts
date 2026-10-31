@@ -23,6 +23,16 @@ export const env = {
   // Uno o varios orígenes permitidos por CORS, separados por comas.
   // Ej: "https://lifeos.vercel.app,https://lifeos-git-main-tu.vercel.app"
   CLIENT_URL: process.env.CLIENT_URL ?? 'http://localhost:5173',
+  // Dominio del cliente web donde vive /reset-password — se usa para armar el
+  // link del correo de recuperación. Un solo origen (no lista), a diferencia
+  // de CLIENT_URL. En prod, ponlo al dominio real del cliente desplegado.
+  APP_URL: (process.env.APP_URL ?? process.env.CLIENT_URL ?? 'http://localhost:5173').split(',')[0].trim(),
+  // Gmail con "contraseña de aplicación" (myaccount.google.com/apppasswords)
+  // para mandar el correo de recuperación de contraseña. Si cualquiera de
+  // las dos falta, ese correo simplemente no se manda (se loguea el error),
+  // el resto de la app sigue funcionando igual.
+  GMAIL_USER: process.env.GMAIL_USER ?? '',
+  GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD ?? '',
   ACCESS_TOKEN_TTL: '15m',
   REFRESH_TOKEN_TTL_DAYS: 30,
 } as const;

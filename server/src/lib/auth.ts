@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../config/env.js';
 
 export interface AccessTokenPayload {
@@ -37,6 +37,22 @@ export function refreshTokenExpiry(): Date {
   const d = new Date();
   d.setDate(d.getDate() + env.REFRESH_TOKEN_TTL_DAYS);
   return d;
+}
+
+/** Token plano que va en el link del correo — nunca se guarda tal cual. */
+export function generateResetToken(): string {
+  return randomBytes(32).toString('hex');
+}
+
+export function resetTokenExpiry(): Date {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() + 30);
+  return d;
+}
+
+/** Hash determinístico (no bcrypt) para poder buscar el token con WHERE. */
+export function hashResetToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }
 
 // Sin 0/O/1/I para que no se confundan al transcribirlo a mano.

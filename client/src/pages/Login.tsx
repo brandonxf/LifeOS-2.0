@@ -64,13 +64,12 @@ export default function Login() {
         <Field label="Contraseña" error={errors.password?.message}>
           <PasswordInput className="input-glass" placeholder="••••••••" {...register('password')} />
         </Field>
-        <button
-          type="button"
-          onClick={() => toast('Función próximamente')}
-          className="text-sm text-white/60 transition hover:text-primary sm:text-base"
+        <Link
+          to="/forgot-password"
+          className="inline-block text-sm text-white/60 transition hover:text-primary sm:text-base"
         >
           ¿Olvidaste tu contraseña?
-        </button>
+        </Link>
         <button
           type="submit"
           className="btn-primary w-full rounded-xl py-3.5 text-base shadow-glow sm:py-4 lg:text-lg"
@@ -94,7 +93,7 @@ export function AuthShell({
 }: {
   title: string;
   subtitle: string;
-  mode: 'login' | 'register';
+  mode: 'login' | 'register' | 'none';
   children: React.ReactNode;
 }) {
   return (
@@ -144,6 +143,7 @@ export function AuthShell({
 
           {children}
 
+          {mode !== 'none' && (
           <p className="mt-8 text-center text-sm text-white/60 sm:text-base lg:text-left">
             {mode === 'login' ? (
               <>
@@ -161,6 +161,7 @@ export function AuthShell({
               </>
             )}
           </p>
+          )}
         </div>
       </div>
     </div>

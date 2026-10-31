@@ -10,15 +10,21 @@ import {
   generateRefreshToken,
   refreshTokenExpiry,
   generateFriendCode,
+  generateResetToken,
+  resetTokenExpiry,
+  hashResetToken,
 } from '../lib/auth.js';
 import { asyncHandler, badRequest, unauthorized, validate } from '../lib/http.js';
 import { authMiddleware, currentUser } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/rateLimit.js';
 import {
   AVATAR_MAX_BYTES,
   avatarUrl,
   isOwnAvatarUrl,
   parseAvatarDataUri,
 } from '../lib/avatar.js';
+import { sendPasswordResetEmail } from '../services/email.service.js';
+import { env } from '../config/env.js';
 
 const router = Router();
 
@@ -69,6 +75,15 @@ const updateProfileSchema = z
       .nullish(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'No fields to update' });
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -207,6 +222,69 @@ router.post(
   asyncHandler(async (req, res) => {
     const token = req.body?.refreshToken;
     if (token) await db.delete(sessions).where(eq(sessions.refreshToken, token));
+    res.json({ ok: true });
+  }),
+);
+
+// POST /api/auth/forgot-password — siempre responde ok (no revela si el correo existe).
+// Rate limit propio y más estricto que el general de /api/auth: es la ruta
+// que manda correos, así que abusarla tiene un costo real (spam a terceros).
+router.post(
+  '/forgot-password',
+  rateLimiter(5, 15 * 60),
+  asyncHandler(async (req, res) => {
+    const body = validate(forgotPasswordSchema, req.body);
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.email, body.email.toLowerCase()), isNull(users.deletedAt)))
+      .limit(1);
+
+    if (user) {
+      const token = generateResetToken();
+      await db
+        .update(users)
+        .set({ resetTokenHash: hashResetToken(token), resetTokenExpiresAt: resetTokenExpiry() })
+        .where(eq(users.id, user.id));
+
+      const resetUrl = `${env.APP_URL}/reset-password?token=${token}`;
+      // No se espera (await) adrede: que un correo lento no retrase la
+      // respuesta genérica, que debe salir igual de rápido exista o no la cuenta.
+      void sendPasswordResetEmail(user.email, resetUrl);
+    }
+
+    res.json({ ok: true });
+  }),
+);
+
+// POST /api/auth/reset-password
+router.post(
+  '/reset-password',
+  rateLimiter(10, 15 * 60),
+  asyncHandler(async (req, res) => {
+    const body = validate(resetPasswordSchema, req.body);
+    const tokenHash = hashResetToken(body.token);
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.resetTokenHash, tokenHash), isNull(users.deletedAt)))
+      .limit(1);
+
+    if (!user || !user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
+      throw badRequest('Ese link ya no es válido. Pide uno nuevo.');
+    }
+
+    const passwordHash = await hashPassword(body.newPassword);
+    await db
+      .update(users)
+      .set({ passwordHash, resetTokenHash: null, resetTokenExpiresAt: null })
+      .where(eq(users.id, user.id));
+
+    // Igual que change-password: fuera de todas las sesiones activas.
+    await db.delete(sessions).where(eq(sessions.userId, user.id));
+
     res.json({ ok: true });
   }),
 );

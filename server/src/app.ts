@@ -21,6 +21,11 @@ import usersRoutes from './routes/users.routes.js';
 
 const app = express();
 
+// Vercel pone la app detrás de un proxy: sin esto, `req.ip` es la IP interna
+// del proxy (siempre la misma), no la del cliente real — lo que rompía de
+// facto el rate limit por IP en /api/auth (login, forgot-password).
+app.set('trust proxy', 1);
+
 // Lista blanca de orígenes. OJO: aunque cliente y API vivan en el mismo
 // dominio en el despliegue unificado de Vercel, el navegador SÍ manda el
 // header `Origin` en peticiones same-origin (POST/fetch no-GET), así que
