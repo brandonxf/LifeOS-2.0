@@ -31,6 +31,7 @@ import { cn } from '../lib/utils';
 import { Logo, AiMark, AuroraField } from './Brand';
 import { Spinner } from './ui';
 import { confirm } from '../store/confirm';
+import { UpdateCheck } from './UpdateCheck';
 
 /** Fallback de Suspense para el contenido de cada ruta: un spinner simple,
  *  no el AppLoader de marca (ese anima un fondo aurora + texto letra por
@@ -391,6 +392,7 @@ export function AppLayout() {
 
   return (
     <div className="relative flex h-screen overflow-hidden text-slate-900 dark:text-slate-100">
+      <UpdateCheck />
       <AuroraField />
       {/* Rail flotante de navegación */}
       <aside
