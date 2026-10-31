@@ -300,7 +300,7 @@ export default function AIChat() {
               <p className="eyebrow mb-2">Asistente IA</p>
               <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">¿En qué puedo ayudarte?</h2>
               <p className="mb-8 mt-2 text-sm text-slate-500 dark:text-white/50">
-                Veo tus tareas, hábitos, finanzas, diario y salud en vivo.
+                Veo tus tareas, hábitos, finanzas y diario en vivo.
               </p>
               <div className="grid w-full max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (

@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>Tu vida, organizada en un solo lugar.</b><br>
-  Finanzas, tareas, hábitos, calendario, diario, notas y salud — con un asistente de IA
+  Finanzas, tareas, hábitos, calendario, diario y notas — con un asistente de IA
   que conoce tus propios datos. Comparte hábitos y tareas con tus amigos.
 </p>
 
@@ -51,7 +51,6 @@
   protégelo con un PIN para que solo tú lo leas.
 - 🗒️ **Notas** — guarda ideas y búscalas luego, incluso si no recuerdas la palabra
   exacta que usaste.
-- ❤️ **Salud** — lleva el control de tu ejercicio, agua, sueño y peso.
 - 👥 **Amigos** — agrega amigos con un código de invitación, comparte hábitos y
   asígnense tareas en equipo.
 - 🤖 **Asistente de IA** — pregúntale lo que sea sobre tu propia información: te
@@ -180,7 +179,7 @@ docker run -p 4000:4000 --env-file .env life-os-server
 ### Cómo funciona el contexto de la IA
 
 En cada `POST /api/ai/chat` el servidor arma una foto en vivo de tus datos (últimas
-tareas, hábitos de hoy, resumen financiero, ánimos recientes, salud) y la manda como
+tareas, hábitos de hoy, resumen financiero, ánimos recientes) y la manda como
 contexto antes de transmitir la respuesta por Server-Sent Events. La interfaz muestra
 una insignia con exactamente qué se envió. La búsqueda semántica de notas usa un
 embedding local de 1536 dimensiones guardado en pgvector (HNSW/coseno) —
