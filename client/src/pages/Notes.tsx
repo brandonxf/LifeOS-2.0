@@ -132,7 +132,7 @@ export default function Notes() {
           {visible.map((n) => (
             <div key={n.id} className="mb-4 break-inside-avoid rounded-2xl border p-4 text-white shadow-sm" style={{ backgroundColor: n.color }}>
               <div className={cn('mb-2 flex items-start justify-between gap-2', FONT_CLASS[n.font])}>
-                <h3 className={cn('font-semibold leading-tight', ALIGN_CLASS[n.align], n.align !== 'left' && 'flex-1')}>{n.title}</h3>
+                <h3 className={cn('min-w-0 flex-1 break-words font-semibold leading-tight', ALIGN_CLASS[n.align])}>{n.title}</h3>
                 <div className="flex shrink-0 gap-1">
                   <button onClick={() => togglePin.mutate(n)} className="text-white/60 hover:text-white">
                     {n.pinned ? <Pin className="h-4 w-4 fill-current" /> : <PinOff className="h-4 w-4" />}
@@ -142,7 +142,7 @@ export default function Notes() {
               </div>
               <div
                 className={cn(
-                  'prose prose-invert max-w-none whitespace-pre-wrap text-white/80 [&_a]:text-white cursor-pointer',
+                  'prose prose-invert max-w-none whitespace-pre-wrap break-words text-white/80 [&_a]:text-white cursor-pointer',
                   FONT_CLASS[n.font], SIZE_CLASS[n.fontSize], ALIGN_CLASS[n.align],
                 )}
                 onClick={() => setViewing(n)}
@@ -179,7 +179,7 @@ function NoteViewModal({ note, onClose, onEdit }: { note: Note | null; onClose: 
         <div className="space-y-4">
           <div
             className={cn(
-              'prose prose-invert max-w-none whitespace-pre-wrap rounded-2xl p-4 text-white/90 [&_a]:text-white',
+              'prose prose-invert max-w-none whitespace-pre-wrap break-words rounded-2xl p-4 text-white/90 [&_a]:text-white',
               FONT_CLASS[note.font], SIZE_CLASS[note.fontSize], ALIGN_CLASS[note.align],
             )}
             style={{ backgroundColor: note.color }}
@@ -316,7 +316,7 @@ function NoteModal({ open, onClose, editing }: { open: boolean; onClose: () => v
           <Field label="Vista previa">
             <div
               className={cn(
-                'prose prose-invert max-w-none whitespace-pre-wrap rounded-2xl border border-white/10 p-4 text-white/80',
+                'prose prose-invert max-w-none whitespace-pre-wrap break-words rounded-2xl border border-white/10 p-4 text-white/80',
                 FONT_CLASS[font], SIZE_CLASS[fontSize], ALIGN_CLASS[align],
               )}
               style={{ backgroundColor: color }}
