@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
-import { format, parseISO, isPast, isToday } from 'date-fns';
+import { format, parseISO, isPast, isToday, isThisWeek } from 'date-fns';
 import { Plus, Trash2, LayoutGrid, List, CheckSquare, Calendar, Flag, Check, X, UserPlus, Undo2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText, Avatar, FriendPickerModal } from '../components/ui';
+import { SectionTitle, Skeleton, Modal, Field, EmptyState, Card, ExpandableText, Avatar, FriendPickerModal, SearchBox } from '../components/ui';
 import { AnimatedCheckbox } from '../components/AnimatedCheck';
 import { SwipeRow } from '../components/SwipeRow';
-import { cn, PRIORITY_STYLES } from '../lib/utils';
+import { cn, PRIORITY_STYLES, matchesQuery } from '../lib/utils';
 import type { Task, Friendship, TaskInvite } from '../lib/types';
 import { LIVE_FAST, LIVE_SLOW } from '../lib/live';
 import { hapticSuccess, hapticTap } from '../lib/haptics';
@@ -36,6 +36,8 @@ export default function Tasks() {
   const [assignTask, setAssignTask] = useState<Task | null>(null);
   const [filterPriority, setFilterPriority] = useState('');
   const [filterTag, setFilterTag] = useState('');
+  const [filterDue, setFilterDue] = useState('');
+  const [search, setSearch] = useState('');
 
   const tasks = useQuery({ queryKey: ['tasks'], queryFn: () => api<Task[]>('/api/tasks'), ...LIVE_FAST });
   const friends = useQuery({ queryKey: ['friends'], queryFn: () => api<Friendship[]>('/api/friends'), ...LIVE_SLOW });
@@ -118,12 +120,29 @@ export default function Tasks() {
   }, [tasks.data]);
 
   const filtered = useMemo(() => {
-    return (tasks.data ?? []).filter(
-      (t) =>
-        (!filterPriority || t.priority === filterPriority) &&
-        (!filterTag || t.tags.includes(filterTag)),
-    );
-  }, [tasks.data, filterPriority, filterTag]);
+    return (tasks.data ?? []).filter((t) => {
+      if (filterPriority && t.priority !== filterPriority) return false;
+      if (filterTag && !t.tags.includes(filterTag)) return false;
+      if (filterDue) {
+        const due = t.dueDate ? parseISO(t.dueDate) : null;
+        if (filterDue === 'none') return !due;
+        if (!due) return false;
+        if (filterDue === 'overdue') {
+          if (t.status === 'done' || !isPast(due) || isToday(due)) return false;
+        } else if (filterDue === 'today') {
+          if (!isToday(due)) return false;
+        } else if (filterDue === 'week') {
+          if (!isThisWeek(due, { weekStartsOn: 1 })) return false;
+        }
+      }
+      return matchesQuery(search, t.title, t.description, t.tags.join(' '));
+    });
+  }, [tasks.data, filterPriority, filterTag, filterDue, search]);
+
+  const hasFilters = !!(search || filterPriority || filterTag || filterDue);
+  function clearFilters() {
+    setSearch(''); setFilterPriority(''); setFilterTag(''); setFilterDue('');
+  }
 
   function onDragEnd(result: DropResult) {
     const { destination, draggableId, source } = result;
@@ -147,14 +166,23 @@ export default function Tasks() {
         }
       />
 
+      <SearchBox value={search} onChange={setSearch} placeholder="Buscar tareas por título, descripción o etiqueta…" />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <select className="input w-auto" value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
             <option value="">Todas las prioridades</option>
             <option value="urgent">Urgente</option>
             <option value="high">Alta</option>
             <option value="medium">Media</option>
             <option value="low">Baja</option>
+          </select>
+          <select className="input w-auto" value={filterDue} onChange={(e) => setFilterDue(e.target.value)}>
+            <option value="">Cualquier fecha</option>
+            <option value="overdue">Vencidas</option>
+            <option value="today">Para hoy</option>
+            <option value="week">Esta semana</option>
+            <option value="none">Sin fecha</option>
           </select>
           {allTags.length > 0 && (
             <select className="input w-auto" value={filterTag} onChange={(e) => setFilterTag(e.target.value)}>
@@ -193,6 +221,17 @@ export default function Tasks() {
             ))}
           </div>
         </Card>
+      )}
+
+      {hasFilters && !!tasks.data?.length && (
+        <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
+          <span>
+            {filtered.length === 0
+              ? 'Ninguna tarea coincide con tu búsqueda'
+              : `${filtered.length} de ${tasks.data.length} ${tasks.data.length === 1 ? 'tarea' : 'tareas'}`}
+          </span>
+          <button onClick={clearFilters} className="font-medium text-primary hover:underline">Limpiar filtros</button>
+        </div>
       )}
 
       {tasks.isLoading ? (

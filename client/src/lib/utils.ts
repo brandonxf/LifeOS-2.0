@@ -25,3 +25,17 @@ export const PRIORITY_STYLES: Record<string, string> = {
   high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   urgent: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
 };
+
+
+/** Minúsculas y sin tildes: "Café" y "cafe" coinciden al buscar. */
+export function normalizeText(s: string | null | undefined): string {
+  return (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+/** true si TODAS las palabras de `query` aparecen en alguno de los textos. */
+export function matchesQuery(query: string, ...texts: (string | null | undefined)[]): boolean {
+  const words = normalizeText(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const hay = normalizeText(texts.join(' '));
+  return words.every((w) => hay.includes(w));
+}

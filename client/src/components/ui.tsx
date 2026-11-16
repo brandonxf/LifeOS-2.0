@@ -1,8 +1,38 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Eye, EyeOff, Search } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { avatarSrc } from '../lib/avatar';
+
+/** Caja de búsqueda con lupa y botón para limpiar. */
+export function SearchBox({
+  value, onChange, placeholder = 'Buscar…', className,
+}: {
+  value: string; onChange: (v: string) => void; placeholder?: string; className?: string;
+}) {
+  return (
+    <div className={cn('relative min-w-[200px] flex-1', className)}>
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <input
+        className="input pl-9 pr-9"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={placeholder}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:text-slate-600"
+          aria-label="Limpiar búsqueda"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return <div className={cn('card', className)}>{children}</div>;

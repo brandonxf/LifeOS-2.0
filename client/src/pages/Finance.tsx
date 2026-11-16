@@ -18,9 +18,9 @@ import { Plus, Trash2, Wallet, TrendingUp, TrendingDown, Repeat, Pause, Play } f
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { useSettings } from '../store/settings';
-import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile } from '../components/ui';
+import { Card, SectionTitle, Skeleton, Modal, Field, EmptyState, StatTile, SearchBox } from '../components/ui';
 import { AnimatedNumber, ProgressBar } from '../components/motion';
-import { cn, formatCurrency, formatCurrencyPrecise } from '../lib/utils';
+import { cn, formatCurrency, formatCurrencyPrecise, matchesQuery } from '../lib/utils';
 import { confirm } from '../store/confirm';
 import { bogotaISODate } from '../lib/date';
 import type { FinanceEntry, FinanceBudget, FinanceSummary, FinanceRecurring } from '../lib/types';
@@ -38,10 +38,22 @@ export default function Finance() {
   const [editing, setEditing] = useState<FinanceEntry | null>(null);
   const [filterType, setFilterType] = useState('');
   const [filterCat, setFilterCat] = useState('');
+  const [filterFrom, setFilterFrom] = useState('');
+  const [filterTo, setFilterTo] = useState('');
+  const [search, setSearch] = useState('');
 
   const entries = useQuery({
-    queryKey: ['finance', 'entries', filterType, filterCat],
-    queryFn: () => api<FinanceEntry[]>('/api/finance/entries', { query: { type: filterType, category: filterCat } }),
+    queryKey: ['finance', 'entries', filterType, filterCat, filterFrom, filterTo],
+    queryFn: () =>
+      api<FinanceEntry[]>('/api/finance/entries', {
+        query: { type: filterType, category: filterCat, start: filterFrom, end: filterTo },
+      }),
+  });
+  // Los presupuestos se miden contra TODOS los gastos, no contra lo filtrado
+  // en la lista (misma key que `entries` sin filtros: no duplica la petición).
+  const allEntries = useQuery({
+    queryKey: ['finance', 'entries', '', '', '', ''],
+    queryFn: () => api<FinanceEntry[]>('/api/finance/entries'),
   });
   const summary = useQuery({ queryKey: ['finance', 'summary'], queryFn: () => api<FinanceSummary>('/api/finance/summary') });
   const budgets = useQuery({ queryKey: ['finance', 'budgets'], queryFn: () => api<FinanceBudget[]>('/api/finance/budgets') });
@@ -66,11 +78,25 @@ export default function Finance() {
 
   const spentByCategory = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const e of entries.data ?? []) {
+    for (const e of allEntries.data ?? []) {
       if (e.type === 'expense') map[e.category] = (map[e.category] ?? 0) + Number(e.amount);
     }
     return map;
-  }, [entries.data]);
+  }, [allEntries.data]);
+
+  const visible = useMemo(
+    () => (entries.data ?? []).filter((e) => matchesQuery(search, e.description, e.category, String(e.amount))),
+    [entries.data, search],
+  );
+  const hasFilters = !!(search || filterType || filterCat || filterFrom || filterTo);
+  const visibleTotals = useMemo(() => {
+    let income = 0, expense = 0;
+    for (const e of visible) (e.type === 'income' ? (income += Number(e.amount)) : (expense += Number(e.amount)));
+    return { income, expense };
+  }, [visible]);
+  function clearFilters() {
+    setSearch(''); setFilterType(''); setFilterCat(''); setFilterFrom(''); setFilterTo('');
+  }
 
   return (
     <div className="space-y-6">
@@ -186,7 +212,7 @@ export default function Finance() {
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-semibold">Movimientos</h3>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
             <select className="input w-full sm:w-auto" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="">Todos los tipos</option>
               <option value="income">Ingreso</option>
@@ -199,11 +225,37 @@ export default function Finance() {
           </div>
         </div>
 
+        <div className="mb-4 space-y-3">
+          <SearchBox value={search} onChange={setSearch} placeholder="Buscar por descripción, categoría o monto…" />
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-slate-500">
+              Desde
+              <input className="input w-auto" type="date" value={filterFrom} max={filterTo || undefined} onChange={(e) => setFilterFrom(e.target.value)} />
+            </label>
+            <label className="flex items-center gap-2 text-slate-500">
+              Hasta
+              <input className="input w-auto" type="date" value={filterTo} min={filterFrom || undefined} onChange={(e) => setFilterTo(e.target.value)} />
+            </label>
+            {hasFilters && (
+              <button onClick={clearFilters} className="ml-auto font-medium text-primary hover:underline">Limpiar filtros</button>
+            )}
+          </div>
+          {hasFilters && !entries.isLoading && (
+            <p className="text-xs text-slate-500">
+              {visible.length} {visible.length === 1 ? 'movimiento' : 'movimientos'}
+              {visible.length > 0 && (
+                <> · ingresos <span className="font-medium text-success">{formatCurrencyPrecise(visibleTotals.income)}</span>
+                · gastos <span className="font-medium">{formatCurrencyPrecise(visibleTotals.expense)}</span></>
+              )}
+            </p>
+          )}
+        </div>
+
         {entries.isLoading ? (
           <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-        ) : entries.data?.length ? (
+        ) : visible.length ? (
           <div className="divide-y">
-            {entries.data.map((e) => (
+            {visible.map((e) => (
               <div key={e.id} className="flex items-center gap-3 py-3">
                 <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', e.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger')}>
                   {e.type === 'income' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -226,7 +278,9 @@ export default function Finance() {
             ))}
           </div>
         ) : (
-          <EmptyState icon={Wallet} title="Sin movimientos" description="Agrega tu primer ingreso o gasto para empezar." />
+          hasFilters
+            ? <EmptyState icon={Wallet} title="Sin resultados" description="Ningún movimiento coincide con tu búsqueda o filtros." />
+            : <EmptyState icon={Wallet} title="Sin movimientos" description="Agrega tu primer ingreso o gasto para empezar." />
         )}
       </Card>
 

@@ -18,8 +18,8 @@ import {
 import { ChevronLeft, ChevronRight, Plus, Trash2, MapPin, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
-import { SectionTitle, Modal, Field } from '../components/ui';
-import { cn } from '../lib/utils';
+import { SectionTitle, Modal, Field, SearchBox } from '../components/ui';
+import { cn, matchesQuery } from '../lib/utils';
 import { confirm } from '../store/confirm';
 import type { CalendarEvent } from '../lib/types';
 
@@ -35,6 +35,8 @@ export default function Calendar() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
+  const [search, setSearch] = useState('');
+  const searching = search.trim().length > 0;
 
   const monthRange = view === 'month' || view === 'agenda';
   const rangeStart = monthRange ? startOfWeek(startOfMonth(cursor)) : startOfWeek(cursor);
@@ -48,6 +50,21 @@ export default function Calendar() {
         query: { start: rangeStart.toISOString(), end: addDays(rangeEnd, 1).toISOString() },
       }),
   });
+
+  // Con texto en la búsqueda se miran los eventos de TODAS las fechas
+  // (no solo el mes visible) y se filtra aquí, sin tildes ni mayúsculas.
+  const allEvents = useQuery({
+    queryKey: ['events', 'all'],
+    queryFn: () => api<CalendarEvent[]>('/api/calendar/events'),
+    enabled: searching,
+  });
+  const results = useMemo(
+    () =>
+      (allEvents.data ?? [])
+        .filter((e) => matchesQuery(search, e.title, e.location, e.description))
+        .sort((a, b) => b.startTime.localeCompare(a.startTime)),
+    [allEvents.data, search],
+  );
 
   const del = useMutation({
     mutationFn: (id: string) => api(`/api/calendar/events/${id}`, { method: 'DELETE' }),
@@ -92,6 +109,45 @@ export default function Calendar() {
         }
       />
 
+      <SearchBox value={search} onChange={setSearch} placeholder="Buscar eventos por título, lugar o descripción…" />
+
+      {searching ? (
+        <div className="space-y-2">
+          <p className="text-sm text-slate-500">
+            {allEvents.isLoading
+              ? 'Buscando…'
+              : results.length
+                ? `${results.length} ${results.length === 1 ? 'evento' : 'eventos'} en todas las fechas`
+                : 'Ningún evento coincide con tu búsqueda'}
+          </p>
+          {results.length > 0 && (
+            <div className="divide-y overflow-hidden rounded-2xl border bg-white dark:bg-slate-900">
+              {results.map((e) => {
+                const start = parseISO(e.startTime);
+                return (
+                  <button
+                    key={e.id}
+                    onClick={() => { setEditing(e); setSelectedDay(start); setModalOpen(true); }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  >
+                    <span className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{e.title}</p>
+                      {e.location && (
+                        <p className="flex items-center gap-1 truncate text-xs text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{e.location}</p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-right text-xs text-slate-400">
+                      <span className="block capitalize">{format(start, 'd MMM yyyy')}</span>
+                      <span className="flex items-center justify-end gap-1"><Clock className="h-3 w-3" />{e.allDay ? 'Todo el día' : format(start, 'HH:mm')}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (<>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button onClick={() => setCursor(view === 'week' ? addDays(cursor, -7) : subMonths(cursor, 1))} className="btn-ghost border"><ChevronLeft className="h-4 w-4" /></button>
@@ -195,6 +251,7 @@ export default function Calendar() {
         </div>
       </div>
       )}
+      </>)}
 
       <EventModal
         open={modalOpen}
