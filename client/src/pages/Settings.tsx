@@ -178,8 +178,23 @@ function PreferencesCard({
     taskRemindersEnabled, setTaskRemindersEnabled,
     habitReminderEnabled, setHabitReminderEnabled,
     habitReminderTime, setHabitReminderTime,
+    eventReminderEnabled, setEventReminderEnabled,
+    eventReminderMinutes, setEventReminderMinutes,
+    budgetAlertEnabled, setBudgetAlertEnabled,
+    streakAlertEnabled, setStreakAlertEnabled,
+    streakAlertTime, setStreakAlertTime,
     biometricLockEnabled, setBiometricLockEnabled,
   } = useSettings();
+
+  /** Activa una alerta pidiendo antes el permiso de notificaciones. */
+  function permissionToggle(set: (v: boolean) => void) {
+    return async (v: boolean) => {
+      if (v && !(await ensureNotificationPermission())) {
+        return toast.error('Necesitas dar permiso de notificaciones');
+      }
+      set(v); // alertsSync escucha los ajustes y reprograma solo
+    };
+  }
 
   async function onToggleTaskReminders(v: boolean) {
     if (v) {
@@ -265,6 +280,57 @@ function PreferencesCard({
                   className="input w-auto py-1.5"
                   value={habitReminderTime}
                   onChange={(e) => onChangeHabitTime(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-4 border-t pt-4">
+              <div>
+                <p className="text-sm font-medium">Aviso antes de eventos</p>
+                <p className="text-xs text-slate-400">Te avisa antes de que empiece un evento del calendario</p>
+              </div>
+              <Toggle checked={eventReminderEnabled} onChange={permissionToggle(setEventReminderEnabled)} />
+            </div>
+            {eventReminderEnabled && (
+              <div className="flex items-center justify-between gap-4 pl-1">
+                <p className="text-xs text-slate-400">Anticipación</p>
+                <select
+                  className="input w-auto py-1.5"
+                  value={eventReminderMinutes}
+                  onChange={(e) => setEventReminderMinutes(Number(e.target.value))}
+                >
+                  {[5, 10, 15, 30, 60, 120, 1440].map((m) => (
+                    <option key={m} value={m}>
+                      {m === 1440 ? '1 día antes' : m >= 60 ? `${m / 60} h antes` : `${m} min antes`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-4 border-t pt-4">
+              <div>
+                <p className="text-sm font-medium">Alerta de presupuestos</p>
+                <p className="text-xs text-slate-400">Aviso al llegar al 80% y al superar un presupuesto</p>
+              </div>
+              <Toggle checked={budgetAlertEnabled} onChange={permissionToggle(setBudgetAlertEnabled)} />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 border-t pt-4">
+              <div>
+                <p className="text-sm font-medium">Racha en riesgo</p>
+                <p className="text-xs text-slate-400">Si te falta un hábito con racha, te avisa antes de que acabe el día</p>
+              </div>
+              <Toggle checked={streakAlertEnabled} onChange={permissionToggle(setStreakAlertEnabled)} />
+            </div>
+            {streakAlertEnabled && (
+              <div className="flex items-center justify-between gap-4 pl-1">
+                <p className="text-xs text-slate-400">Hora del aviso</p>
+                <input
+                  type="time"
+                  className="input w-auto py-1.5"
+                  value={streakAlertTime}
+                  onChange={(e) => setStreakAlertTime(e.target.value)}
                 />
               </div>
             )}

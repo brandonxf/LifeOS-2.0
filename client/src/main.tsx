@@ -18,9 +18,11 @@ import { PerfModeSync } from './components/PerfModeSync';
 setDefaultOptions({ locale: es });
 import { queryClient } from './lib/queryClient';
 import { initWidgetSync } from './lib/widgetSync';
+import { initAlertsSync } from './lib/alertsSync';
 import './index.css';
 
 initWidgetSync(queryClient);
+initAlertsSync(queryClient);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
