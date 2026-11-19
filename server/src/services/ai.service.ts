@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-import { and, desc, eq, gte, isNull } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, ne } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import {
   tasks,
@@ -69,7 +69,7 @@ export async function buildUserContext(userId: string): Promise<UserContext> {
   const today = todayISO();
   const monthStart = monthStartISO();
 
-  const [taskRows, habitRows, todaysLogs, financeRows, diaryRows] =
+  const [taskRows, pendingRows, habitRows, todaysLogs, financeRows, diaryRows] =
     await Promise.all([
       // Last 10 tasks: overdue or due today, most urgent first
       db
@@ -78,6 +78,14 @@ export async function buildUserContext(userId: string): Promise<UserContext> {
         .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
         .orderBy(desc(tasks.dueDate))
         .limit(10),
+      // Tareas pendientes (para que el asistente pueda completarlas/editarlas
+      // por nombre aunque no estén entre las 10 más recientes).
+      db
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt), ne(tasks.status, 'done')))
+        .orderBy(tasks.dueDate)
+        .limit(25),
       db
         .select()
         .from(habits)
@@ -115,7 +123,7 @@ export async function buildUserContext(userId: string): Promise<UserContext> {
   }
 
   return {
-    tasks: taskRows.map((t) => ({
+    tasks: [...new Map([...pendingRows, ...taskRows].map((t) => [t.id, t])).values()].map((t) => ({
       title: t.title,
       status: t.status,
       priority: t.priority,
@@ -204,7 +212,22 @@ los valores por defecto). Ejemplos: "agrega una tarea: revisar el correo" ya
 alcanza (sin fecha ni prioridad); "reunión con Juan el lunes a las 3pm" ya
 alcanza (título "Reunión con Juan", fecha del lunes, startTime "15:00", sin
 hora de fin); "registra un ingreso de 1200000 por salario" ya alcanza. Nunca
-inventes datos que el usuario no dio. Solo puedes crear (no editar ni borrar). El bloque \`\`\`action
+inventes datos que el usuario no dio.
+
+TAMBIÉN puedes ACTUAR sobre elementos que ya existen, cuando el usuario lo pida
+("completa...", "marca...", "mueve...", "pospón...", "ya hice...", "avanza mi meta..."):
+- update_task — match* (título o parte del título de la tarea); status ("todo"|"in_progress"|"done"); priority; dueDate ("YYYY-MM-DD"). Incluye al menos un campo a cambiar.
+- log_habit — match* (nombre o parte del nombre del hábito); date ("YYYY-MM-DD", hoy por defecto); done (bool, true por defecto; false para desmarcar).
+- update_goal — match* (título o parte del título de la meta); currentValue (número, valor total nuevo) o addValue (número a sumar al actual).
+Ejemplos:
+\`\`\`action
+{"type":"update_task","match":"comprar leche","status":"done"}
+\`\`\`
+\`\`\`action
+{"type":"log_habit","match":"leer"}
+\`\`\`
+Usa en "match" las palabras del usuario, no inventes títulos. NO puedes borrar nada:
+si te lo piden, di que eso se hace manualmente desde la app. El bloque \`\`\`action
 no se muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
 NUNCA digas que ya creaste/agregaste algo a menos que hayas incluido el bloque
 \`\`\`action correspondiente en esa misma respuesta — si no lo incluiste, no pasó.
@@ -374,9 +397,34 @@ const ACTION_RE = /```action\s*([\s\S]*?)```/g;
 const CREATION_INTENT_RE =
   /\b(agrega|agregar|agrégame|añad|crea|crear|créa|créame|registra|registrar|anota|anotar|apunta|apuntar|apúntame|guarda|guardar|guárdame|programa|programar|recuérdame|recordar|hazme|haz una|has una|súmame|ponme|pon una)\b/i;
 
-/** true si el mensaje del usuario (no la respuesta del modelo) pide crear algo. */
+// Verbos de acción sobre elementos existentes, comparados sin tildes.
+const UPDATE_INTENT_RE =
+  /\b(complet\w*|termin\w*|marca\w*|mueve|mover|muevela|cambia\w*|actualiza\w*|posp\w*|aplaza\w*|reprograma\w*|hice|hecho|cumpli\w*|avanza\w*|sube|suma\w*|lleva|lleg[ue]\w*|desmarca\w*|quita la marca|ya (lo )?(hice|termine|complete)|cerr\w*)\b/;
+
+const stripAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** true si el mensaje del usuario (no la respuesta del modelo) pide crear o
+ *  modificar algo. */
 export function hasCreationIntent(userMessage: string): boolean {
-  return CREATION_INTENT_RE.test(userMessage);
+  return CREATION_INTENT_RE.test(userMessage) || UPDATE_INTENT_RE.test(stripAccents(userMessage));
+}
+
+/** Búsqueda por texto aproximado: exacta primero, luego "contiene". Devuelve
+ *  el único candidato, o un error legible si no hay o hay varios. */
+function pickOne<T>(
+  rows: T[],
+  title: (r: T) => string,
+  query: unknown,
+  noun: string,
+): { row: T } | { error: string } {
+  const q = stripAccents(String(query ?? '')).trim();
+  if (!q) return { error: `falta indicar qué ${noun}` };
+  const norm = rows.map((r) => ({ r, t: stripAccents(title(r)) }));
+  const exact = norm.filter((x) => x.t === q);
+  const hits = exact.length ? exact : norm.filter((x) => x.t.includes(q) || (x.t.length > 3 && q.includes(x.t)));
+  if (hits.length === 1) return { row: hits[0].r };
+  if (!hits.length) return { error: `no encontré ${noun} "${query}"` };
+  return { error: `hay varias coincidencias: ${hits.slice(0, 4).map((x) => `"${title(x.r)}"`).join(', ')}` };
 }
 
 /** Quita los bloques de acción del texto (para no mostrarlos ni guardarlos). */
@@ -505,6 +553,76 @@ async function executeOne(userId: string, p: any): Promise<ActionResult> {
       });
       return { ok: true, kind: 'diary', label: 'Entrada de diario' };
     }
+    case 'update_task': {
+      const rows = await db
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)));
+      // Al completar, se prefiere buscar entre las que siguen pendientes.
+      const pool = p.status === 'done' && rows.some((t) => t.status !== 'done') ? rows.filter((t) => t.status !== 'done') : rows;
+      const found = pickOne(pool, (t) => t.title, p.match, 'tarea');
+      if ('error' in found) return { ok: false, kind: 'task', label: 'tarea', error: found.error };
+      const t = found.row;
+
+      const patch: Partial<typeof tasks.$inferInsert> = {};
+      if (['todo', 'in_progress', 'done'].includes(p.status)) {
+        patch.status = p.status;
+        patch.completedAt = p.status === 'done' ? new Date() : null;
+      }
+      if (['low', 'medium', 'high', 'urgent'].includes(p.priority)) patch.priority = p.priority;
+      if (ISO_DATE.test(p.dueDate ?? '')) patch.dueDate = new Date(p.dueDate);
+      if (!Object.keys(patch).length) return { ok: false, kind: 'task', label: t.title, error: 'no indicaste qué cambiar' };
+
+      await db.update(tasks).set(patch).where(and(eq(tasks.id, t.id), eq(tasks.userId, userId)));
+      const what =
+        patch.status === 'done' ? 'completada' : patch.status === 'in_progress' ? 'en progreso' : patch.status === 'todo' ? 'por hacer' : 'actualizada';
+      return { ok: true, kind: 'task', label: `Tarea ${what}: ${t.title}` };
+    }
+    case 'log_habit': {
+      const rows = await db
+        .select()
+        .from(habits)
+        .where(and(eq(habits.userId, userId), isNull(habits.deletedAt)));
+      const found = pickOne(rows, (h) => h.name, p.match, 'hábito');
+      if ('error' in found) return { ok: false, kind: 'habit', label: 'hábito', error: found.error };
+      const h = found.row;
+      const day = ISO_DATE.test(p.date ?? '') ? p.date : today;
+      const wantDone = p.done !== false;
+
+      const [existing] = await db
+        .select()
+        .from(habitLogs)
+        .where(and(eq(habitLogs.habitId, h.id), eq(habitLogs.userId, userId), eq(habitLogs.date, day)))
+        .limit(1);
+      // Idempotente (no alterna como el toggle de la app): pedirlo dos veces no lo desmarca.
+      if (wantDone && !existing) await db.insert(habitLogs).values({ habitId: h.id, userId, date: day });
+      if (!wantDone && existing) await db.delete(habitLogs).where(eq(habitLogs.id, existing.id));
+      return { ok: true, kind: 'habit', label: `Hábito ${wantDone ? 'marcado' : 'desmarcado'}: ${h.name}` };
+    }
+    case 'update_goal': {
+      const rows = await db
+        .select()
+        .from(goals)
+        .where(and(eq(goals.userId, userId), isNull(goals.deletedAt)));
+      const found = pickOne(rows, (g) => g.title, p.match, 'meta');
+      if ('error' in found) return { ok: false, kind: 'goal', label: 'meta', error: found.error };
+      const g = found.row;
+
+      let next: number;
+      if (p.currentValue !== undefined && Number(p.currentValue) >= 0) next = Number(p.currentValue);
+      else if (p.addValue !== undefined && Number.isFinite(Number(p.addValue))) next = Math.max(0, Number(g.currentValue) + Number(p.addValue));
+      else return { ok: false, kind: 'goal', label: g.title, error: 'no indicaste el nuevo progreso' };
+
+      const completed = next >= Number(g.targetValue);
+      await db
+        .update(goals)
+        .set({
+          currentValue: next.toString(),
+          status: completed ? 'completed' : g.status === 'completed' ? 'active' : g.status,
+        })
+        .where(and(eq(goals.id, g.id), eq(goals.userId, userId)));
+      return { ok: true, kind: 'goal', label: `Meta ${completed ? 'completada' : 'actualizada'}: ${g.title} (${next}/${Number(g.targetValue)} ${g.unit ?? ''})`.trim() };
+    }
     default:
       return { ok: false, kind: 'unknown', label: 'acción', error: `tipo desconocido: ${p?.type}` };
   }
@@ -524,7 +642,7 @@ export async function runAssistantActions(userId: string, text: string): Promise
     try {
       results.push(await executeOne(userId, payload));
     } catch (e: any) {
-      results.push({ ok: false, kind: payload?.type?.includes('task') ? 'task' : 'unknown', label: 'acción', error: e?.message ?? 'error al ejecutar' });
+      results.push({ ok: false, kind: payload?.type?.includes('task') ? 'task' : payload?.type?.includes('habit') ? 'habit' : payload?.type?.includes('goal') ? 'goal' : 'unknown', label: 'acción', error: e?.message ?? 'error al ejecutar' });
     }
   }
   return results;

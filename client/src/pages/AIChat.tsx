@@ -169,7 +169,7 @@ export default function AIChat() {
                 const key = KEY[r.kind];
                 if (key) qc.invalidateQueries({ queryKey: [key] });
               } else {
-                toast.error(`No se pudo crear ${r.label}${r.error ? `: ${r.error}` : ''}`);
+                toast.error(`No se pudo: ${r.label}${r.error ? ` — ${r.error}` : ''}`);
               }
             }
           } else if (event === 'error') {
