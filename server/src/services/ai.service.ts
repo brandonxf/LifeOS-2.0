@@ -13,6 +13,7 @@ import {
   diaryEntries,
 } from '../db/schema/index.js';
 import { embed } from './embedding.service.js';
+import { executeAdvanced, pickOne, stripAccents, bogotaDateTime, ISO_DATE, type ActionResult } from './ai-actions.service.js';
 import { env } from '../config/env.js';
 import { bogotaISODate } from '../lib/date.js';
 
@@ -182,55 +183,65 @@ repetir la pregunta.
   está en los datos, dilo con honestidad. Amplía con más detalle solo si
   el usuario lo pide.
 
-ACCIONES: puedes CREAR elementos en cualquier módulo de la app, pero SOLO
-cuando el usuario lo pida explícitamente (ej. "agrega...", "crea...",
-"registra...", "anota..."). Una pregunta o petición de información (qué,
-cuáles, cuántas, resume, muéstrame...) NUNCA debe generar un bloque
-\`\`\`action, aunque menciones o sugieras tareas pendientes en tu respuesta.
-Ante la duda de si el usuario quiere crear algo, no lo crees: pregunta
-primero. Cuando sí corresponda y tengas los datos obligatorios, incluye AL
-FINAL de tu respuesta un bloque con el formato exacto (fenced \`\`\`action)
-y antes una sola frase de confirmación. Tipos y campos (obligatorios marcados *):
-- create_task — title*; priority ("low"|"medium"|"high"|"urgent"); dueDate ("YYYY-MM-DD"); description.
-- create_finance_entry — entryType* ("income"|"expense"); amount* (número); category*; date ("YYYY-MM-DD", hoy por defecto); description.
-- create_event — title*; date* ("YYYY-MM-DD"); startTime ("HH:mm"); endTime ("HH:mm"); allDay (bool); location.
-- create_habit — name*; frequency ("daily"|"weekly"); targetPerWeek (1-7); description.
-- create_goal — title*; targetValue (número); currentValue (número); unit; category; deadline ("YYYY-MM-DD"); description.
-- create_note — content* (o title); title; tags (array); pinned (bool).
-- create_diary_entry — content*; mood (1-5); title; tags (array); date ("YYYY-MM-DD", hoy por defecto).
-Ejemplo:
+ACCIONES: puedes hacer en la app todo lo que el usuario haría a mano — crear,
+editar, completar y borrar — pero SOLO cuando lo pida explícitamente
+("agrega", "crea", "registra", "completa", "marca", "cambia", "borra"...). Una
+pregunta o petición de información (qué, cuáles, cuántas, resume, muéstrame...)
+NUNCA genera un bloque de acción, aunque sugieras cosas en tu respuesta.
+Si no está claro que quiere actuar, pregunta primero.
+
+Para actuar, escribe UNA frase corta y AL FINAL un bloque (fenced \`\`\`action)
+con un JSON por bloque (puedes poner varios bloques). El bloque no se muestra.
+Campos obligatorios con *; los demás son opcionales: NUNCA los preguntes, omítelos
+(se usan valores por defecto). Si falta un obligatorio, pídelo en una línea.
+Usa la fecha de hoy para "mañana", "el viernes", etc. Fechas "YYYY-MM-DD", horas "HH:mm".
+
+CREAR:
+- create_task — title*; priority (low|medium|high|urgent); dueDate; description; tags[].
+- create_finance_entry — entryType* (income|expense); amount*; category*; date; description.
+- create_budget — category*; limit*; period (monthly|weekly|yearly).
+- create_recurring — entryType*; amount*; category*; frequency* (weekly|monthly|yearly); startDate; endDate; description.
+- create_event — title*; date*; startTime; endTime; allDay; location; description.
+- create_habit — name*; frequency (daily|weekly); targetPerWeek (1-7); description.
+- create_goal — title*; targetValue; currentValue; unit; category; deadline; description.
+- add_milestone — match* (meta); title*.
+- create_note — content* (o title); title; tags[]; pinned.
+- create_diary_entry — content*; mood (1-5); title; tags[]; date.
+
+EDITAR / COMPLETAR (en "match"* pon las palabras del usuario para identificar el elemento; incluye al menos un campo a cambiar):
+- update_task — match*; status (todo|in_progress|done); priority; dueDate; title; description; tags[].
+- update_event — match*; title; date; startTime; endTime; allDay; location; description.
+- update_habit — match*; name; frequency; targetPerWeek; description.
+- log_habit — match*; date; done (false para desmarcar). Para "ya hice/cumplí X hoy".
+- update_goal — match*; title; targetValue; unit; deadline; status (active|completed|archived); currentValue (total nuevo) o addValue (suma).
+- complete_milestone — match* (meta); milestone*; done.
+- update_note — match*; title; content (reemplaza) o append (añade al final); tags[]; pinned.
+- update_finance_entry — match* (texto de descripción/categoría); amount o matchDate (para elegir entre parecidos); newAmount; category; description; date; entryType.
+- update_budget — match* (categoría); limit; period.
+- update_recurring — match*; newAmount; category; frequency; endDate; active (false = pausar).
+
+BORRAR (solo si el usuario dice "borra/elimina/quita..." o confirma): delete_task, delete_event,
+delete_habit, delete_goal, delete_note, delete_budget, delete_recurring, delete_finance_entry
+— todos con match* (delete_finance_entry admite además amount/matchDate). Borra UN elemento por
+bloque. Si el pedido es ambiguo ("borra mis tareas") NO borres: pregunta cuál. Para borrados
+amplios o dudosos pide confirmación antes ("¿Borro X?"); si el usuario ya fue claro, hazlo.
+
+Ejemplos:
 \`\`\`action
 {"type":"create_task","title":"Comprar leche","priority":"medium","dueDate":"${todayISO()}"}
 \`\`\`
-Puedes incluir varios bloques \`\`\`action si el usuario pide crear varias cosas.
-Reglas: si faltan datos OBLIGATORIOS (*), NO generes el bloque; pide brevemente
-lo que necesitas indicando el formato (ej.: si solo dicen "añade una tarea",
-pide el título y, opcional, prioridad y fecha). Los campos SIN asterisco son
-OPCIONALES: NUNCA preguntes por ellos ni pidas confirmación — si el usuario ya
-dio los obligatorios, genera el bloque de inmediato y omite lo demás (se usan
-los valores por defecto). Ejemplos: "agrega una tarea: revisar el correo" ya
-alcanza (sin fecha ni prioridad); "reunión con Juan el lunes a las 3pm" ya
-alcanza (título "Reunión con Juan", fecha del lunes, startTime "15:00", sin
-hora de fin); "registra un ingreso de 1200000 por salario" ya alcanza. Nunca
-inventes datos que el usuario no dio.
-
-TAMBIÉN puedes ACTUAR sobre elementos que ya existen, cuando el usuario lo pida
-("completa...", "marca...", "mueve...", "pospón...", "ya hice...", "avanza mi meta..."):
-- update_task — match* (título o parte del título de la tarea); status ("todo"|"in_progress"|"done"); priority; dueDate ("YYYY-MM-DD"). Incluye al menos un campo a cambiar.
-- log_habit — match* (nombre o parte del nombre del hábito); date ("YYYY-MM-DD", hoy por defecto); done (bool, true por defecto; false para desmarcar).
-- update_goal — match* (título o parte del título de la meta); currentValue (número, valor total nuevo) o addValue (número a sumar al actual).
-Ejemplos:
 \`\`\`action
 {"type":"update_task","match":"comprar leche","status":"done"}
 \`\`\`
 \`\`\`action
-{"type":"log_habit","match":"leer"}
+{"type":"create_habit","name":"Leer 20 minutos"}
 \`\`\`
-Usa en "match" las palabras del usuario, no inventes títulos. NO puedes borrar nada:
-si te lo piden, di que eso se hace manualmente desde la app. El bloque \`\`\`action
-no se muestra al usuario. Usa la fecha de hoy para interpretar "mañana", "el viernes", etc.
-NUNCA digas que ya creaste/agregaste algo a menos que hayas incluido el bloque
-\`\`\`action correspondiente en esa misma respuesta — si no lo incluiste, no pasó.
+Casos: "agrega una tarea: revisar el correo" ya alcanza (sin fecha ni prioridad);
+"reunión con Juan el lunes a las 3pm" ya alcanza; "ingreso de 1200000 por salario" ya alcanza.
+No inventes datos que el usuario no dio. NUNCA digas que ya hiciste algo (creaste,
+completaste, borraste...) si no incluiste el bloque \`\`\`action en esa misma respuesta:
+si no lo incluiste, no pasó. No puedes: enviar solicitudes de amistad, asignar tareas a
+otros, cambiar la contraseña ni el perfil; si te lo piden, indica dónde hacerlo en la app.
 
 ## DATOS (contexto interno tuyo, NO es la respuesta)
 Todo lo de abajo es solo información de referencia para que respondas con
@@ -381,12 +392,7 @@ export async function streamChat(
 // El modelo puede pedir crear elementos mediante bloques ```action {json}```.
 // Aquí los parseamos y ejecutamos de forma segura (solo creación).
 
-export interface ActionResult {
-  ok: boolean;
-  kind: 'task' | 'finance' | 'event' | 'habit' | 'goal' | 'note' | 'diary' | 'unknown';
-  label: string;
-  error?: string;
-}
+export type { ActionResult };
 
 const ACTION_RE = /```action\s*([\s\S]*?)```/g;
 
@@ -401,31 +407,25 @@ const CREATION_INTENT_RE =
 const UPDATE_INTENT_RE =
   /\b(complet\w*|termin\w*|marca\w*|mueve|mover|muevela|cambia\w*|actualiza\w*|posp\w*|aplaza\w*|reprograma\w*|hice|hecho|cumpli\w*|avanza\w*|sube|suma\w*|lleva|lleg[ue]\w*|desmarca\w*|quita la marca|ya (lo )?(hice|termine|complete)|cerr\w*)\b/;
 
-const stripAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const EXTRA_CREATE_RE = /\b(nuev[oa]s?|quiero (un|una|que|empezar|comenzar)|necesito (un|una)|empez\w*|comenz\w*|inici\w*|me gustaria|ayudame a|configura\w*|pon(er)?me|establece\w*|define|fija)\b/;
+const DELETE_INTENT_RE = /\b(borr\w*|elimin\w*|quita\w*|saca\w*|cancela\w*|desactiva\w*|descarta\w*|remueve|remover|deshaz\w*|suprim\w*|bota\w*)\b/;
+// "sí", "dale", "ok"… como respuesta a una confirmación del asistente.
+const AFFIRM_RE = /^(si|dale|ok|okay|vale|claro|confirmo|hazlo|adelante|de una|por favor|correcto|exacto)\b/;
 
 /** true si el mensaje del usuario (no la respuesta del modelo) pide crear o
  *  modificar algo. */
 export function hasCreationIntent(userMessage: string): boolean {
-  return CREATION_INTENT_RE.test(userMessage) || UPDATE_INTENT_RE.test(stripAccents(userMessage));
+  const m = stripAccents(userMessage).trim();
+  return CREATION_INTENT_RE.test(userMessage) || UPDATE_INTENT_RE.test(m) || EXTRA_CREATE_RE.test(m) || AFFIRM_RE.test(m);
 }
 
-/** Búsqueda por texto aproximado: exacta primero, luego "contiene". Devuelve
- *  el único candidato, o un error legible si no hay o hay varios. */
-function pickOne<T>(
-  rows: T[],
-  title: (r: T) => string,
-  query: unknown,
-  noun: string,
-): { row: T } | { error: string } {
-  const q = stripAccents(String(query ?? '')).trim();
-  if (!q) return { error: `falta indicar qué ${noun}` };
-  const norm = rows.map((r) => ({ r, t: stripAccents(title(r)) }));
-  const exact = norm.filter((x) => x.t === q);
-  const hits = exact.length ? exact : norm.filter((x) => x.t.includes(q) || (x.t.length > 3 && q.includes(x.t)));
-  if (hits.length === 1) return { row: hits[0].r };
-  if (!hits.length) return { error: `no encontré ${noun} "${query}"` };
-  return { error: `hay varias coincidencias: ${hits.slice(0, 4).map((x) => `"${title(x.r)}"`).join(', ')}` };
+/** true si el usuario pidió borrar (o confirmó con "sí") — el servidor nunca
+ *  ejecuta un delete_* sin esto. */
+export function hasDeleteIntent(userMessage: string): boolean {
+  const m = stripAccents(userMessage).trim();
+  return DELETE_INTENT_RE.test(m) || AFFIRM_RE.test(m);
 }
+
 
 /** Quita los bloques de acción del texto (para no mostrarlos ni guardarlos). */
 export function stripActionBlocks(text: string): string {
@@ -435,10 +435,10 @@ export function stripActionBlocks(text: string): string {
     .trim();
 }
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
-async function executeOne(userId: string, p: any): Promise<ActionResult> {
+async function executeOne(userId: string, p: any, canDelete: boolean): Promise<ActionResult> {
   const today = todayISO();
+  const advanced = await executeAdvanced(userId, p, canDelete);
+  if (advanced) return advanced;
   switch (p?.type) {
     case 'create_task': {
       if (!p.title) return { ok: false, kind: 'task', label: 'tarea', error: 'falta el título' };
@@ -477,16 +477,16 @@ async function executeOne(userId: string, p: any): Promise<ActionResult> {
       const allDay = Boolean(p.allDay);
       const startHM = /^\d{2}:\d{2}$/.test(p.startTime ?? '') ? p.startTime : '09:00';
       const endHM = /^\d{2}:\d{2}$/.test(p.endTime ?? '') ? p.endTime : startHM;
-      const start = allDay ? `${date}T00:00:00` : `${date}T${startHM}:00`;
-      const end = allDay ? `${date}T23:59:00` : `${date}T${endHM}:00`;
+      const start = bogotaDateTime(date, allDay ? '00:00' : startHM);
+      const end = bogotaDateTime(date, allDay ? '23:59' : endHM);
       await db.insert(calendarEvents).values({
         userId,
         title: String(p.title),
         description: p.description ? String(p.description) : null,
         location: p.location ? String(p.location) : null,
         color: typeof p.color === 'string' ? p.color : '#7C3AED',
-        startTime: new Date(start),
-        endTime: new Date(end),
+        startTime: start,
+        endTime: end,
         allDay,
       });
       return { ok: true, kind: 'event', label: `Evento: ${p.title}` };
@@ -571,6 +571,9 @@ async function executeOne(userId: string, p: any): Promise<ActionResult> {
       }
       if (['low', 'medium', 'high', 'urgent'].includes(p.priority)) patch.priority = p.priority;
       if (ISO_DATE.test(p.dueDate ?? '')) patch.dueDate = new Date(p.dueDate);
+      if (p.title) patch.title = String(p.title);
+      if (p.description !== undefined) patch.description = p.description ? String(p.description) : null;
+      if (Array.isArray(p.tags)) patch.tags = p.tags.map(String);
       if (!Object.keys(patch).length) return { ok: false, kind: 'task', label: t.title, error: 'no indicaste qué cambiar' };
 
       await db.update(tasks).set(patch).where(and(eq(tasks.id, t.id), eq(tasks.userId, userId)));
@@ -599,50 +602,69 @@ async function executeOne(userId: string, p: any): Promise<ActionResult> {
       if (!wantDone && existing) await db.delete(habitLogs).where(eq(habitLogs.id, existing.id));
       return { ok: true, kind: 'habit', label: `Hábito ${wantDone ? 'marcado' : 'desmarcado'}: ${h.name}` };
     }
-    case 'update_goal': {
-      const rows = await db
-        .select()
-        .from(goals)
-        .where(and(eq(goals.userId, userId), isNull(goals.deletedAt)));
-      const found = pickOne(rows, (g) => g.title, p.match, 'meta');
-      if ('error' in found) return { ok: false, kind: 'goal', label: 'meta', error: found.error };
-      const g = found.row;
-
-      let next: number;
-      if (p.currentValue !== undefined && Number(p.currentValue) >= 0) next = Number(p.currentValue);
-      else if (p.addValue !== undefined && Number.isFinite(Number(p.addValue))) next = Math.max(0, Number(g.currentValue) + Number(p.addValue));
-      else return { ok: false, kind: 'goal', label: g.title, error: 'no indicaste el nuevo progreso' };
-
-      const completed = next >= Number(g.targetValue);
-      await db
-        .update(goals)
-        .set({
-          currentValue: next.toString(),
-          status: completed ? 'completed' : g.status === 'completed' ? 'active' : g.status,
-        })
-        .where(and(eq(goals.id, g.id), eq(goals.userId, userId)));
-      return { ok: true, kind: 'goal', label: `Meta ${completed ? 'completada' : 'actualizada'}: ${g.title} (${next}/${Number(g.targetValue)} ${g.unit ?? ''})`.trim() };
-    }
     default:
       return { ok: false, kind: 'unknown', label: 'acción', error: `tipo desconocido: ${p?.type}` };
   }
 }
 
-/** Parsea y ejecuta todas las acciones presentes en la respuesta del modelo. */
-export async function runAssistantActions(userId: string, text: string): Promise<ActionResult[]> {
+/** Extrae objetos JSON de un bloque: tolera un objeto, un array, varios
+ *  objetos seguidos, comas finales y comillas "tipográficas" (los modelos
+ *  pequeños a veces se salen del formato exacto). */
+export function parseActionPayloads(raw: string): any[] {
+  const clean = raw
+    .trim()
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/,\s*([}\]])/g, '$1');
+  try {
+    const v = JSON.parse(clean);
+    return Array.isArray(v) ? v : [v];
+  } catch {
+    /* sigue: probar objeto por objeto */
+  }
+  const out: any[] = [];
+  let depth = 0;
+  let start = -1;
+  let inStr = false;
+  for (let i = 0; i < clean.length; i++) {
+    const c = clean[i];
+    if (inStr) {
+      if (c === '\\') i++;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') {
+      if (depth++ === 0) start = i;
+    } else if (c === '}' && --depth === 0 && start >= 0) {
+      try {
+        out.push(JSON.parse(clean.slice(start, i + 1)));
+      } catch {
+        /* objeto roto: se ignora */
+      }
+    }
+  }
+  return out;
+}
+
+/** Parsea y ejecuta todas las acciones presentes en la respuesta del modelo.
+ *  `canDelete` solo es true si el usuario pidió borrar explícitamente. */
+export async function runAssistantActions(userId: string, text: string, canDelete = false): Promise<ActionResult[]> {
   const results: ActionResult[] = [];
   for (const m of text.matchAll(ACTION_RE)) {
-    let payload: any;
-    try {
-      payload = JSON.parse(m[1].trim());
-    } catch {
+    const payloads = parseActionPayloads(m[1]);
+    if (!payloads.length) {
       results.push({ ok: false, kind: 'unknown', label: 'acción', error: 'JSON inválido' });
       continue;
     }
-    try {
-      results.push(await executeOne(userId, payload));
-    } catch (e: any) {
-      results.push({ ok: false, kind: payload?.type?.includes('task') ? 'task' : payload?.type?.includes('habit') ? 'habit' : payload?.type?.includes('goal') ? 'goal' : 'unknown', label: 'acción', error: e?.message ?? 'error al ejecutar' });
+    for (const payload of payloads) {
+      try {
+        results.push(await executeOne(userId, payload, canDelete));
+      } catch (e: any) {
+        const t = String(payload?.type ?? '');
+        const kind = t.includes('task') ? 'task' : t.includes('habit') ? 'habit' : t.includes('goal') || t.includes('milestone') ? 'goal' : t.includes('note') ? 'note' : t.includes('event') ? 'event' : t.includes('finance') || t.includes('budget') || t.includes('recurring') ? 'finance' : 'unknown';
+        console.error('[ai] acción falló', t, e?.message);
+        results.push({ ok: false, kind, label: 'acción', error: e?.message ?? 'error al ejecutar' });
+      }
     }
   }
   return results;

@@ -13,6 +13,7 @@ import {
   streamChat,
   runAssistantActions,
   hasCreationIntent,
+  hasDeleteIntent,
   stripActionBlocks,
   type ChatMessage,
 } from '../services/ai.service.js';
@@ -185,9 +186,11 @@ router.post(
           // solo si el propio mensaje del usuario pedía crear algo -- si el
           // modelo metió un bloque ```action sin que se lo pidieran, se ignora.
           let results: Awaited<ReturnType<typeof runAssistantActions>> = [];
-          if (hasCreationIntent(body.message)) {
+          const canWrite = hasCreationIntent(body.message);
+          const canDelete = hasDeleteIntent(body.message);
+          if (canWrite || canDelete) {
             try {
-              results = await runAssistantActions(user.id, assistantText);
+              results = await runAssistantActions(user.id, assistantText, canDelete);
             } catch {
               /* si falla la ejecución, no rompemos el chat */
             }

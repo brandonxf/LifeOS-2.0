@@ -168,6 +168,7 @@ export default function AIChat() {
                 toast.success(`✓ ${r.label}`);
                 const key = KEY[r.kind];
                 if (key) qc.invalidateQueries({ queryKey: [key] });
+                if (r.kind === 'goal') qc.invalidateQueries({ queryKey: ['goal-milestones'] });
               } else {
                 toast.error(`No se pudo: ${r.label}${r.error ? ` — ${r.error}` : ''}`);
               }
