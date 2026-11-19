@@ -121,14 +121,14 @@ export default function Calendar() {
                 : 'Ningún evento coincide con tu búsqueda'}
           </p>
           {results.length > 0 && (
-            <div className="divide-y overflow-hidden rounded-2xl border bg-white dark:bg-slate-900">
+            <div className="divide-y overflow-hidden rounded-2xl border bg-white dark:bg-white/[0.035] dark:backdrop-blur-xl">
               {results.map((e) => {
                 const start = parseISO(e.startTime);
                 return (
                   <button
                     key={e.id}
                     onClick={() => { setEditing(e); setSelectedDay(start); setModalOpen(true); }}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-primary/10"
                   >
                     <span className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
                     <div className="min-w-0 flex-1">
@@ -168,14 +168,14 @@ export default function Calendar() {
           {(() => {
             const withEvents = days.filter((d) => (eventsByDay[d.toISOString().slice(0, 10)] ?? []).length);
             if (!withEvents.length) {
-              return <p className="rounded-2xl border bg-white p-8 text-center text-sm text-slate-400 dark:bg-slate-900">No hay eventos este mes.</p>;
+              return <p className="rounded-2xl border bg-white p-8 text-center text-sm text-slate-400 dark:bg-white/[0.035] dark:backdrop-blur-xl">No hay eventos este mes.</p>;
             }
             return withEvents.map((day) => {
               const key = day.toISOString().slice(0, 10);
               const dayEvents = [...(eventsByDay[key] ?? [])].sort((a, b) => a.startTime.localeCompare(b.startTime));
               return (
-                <div key={key} className="overflow-hidden rounded-2xl border bg-white dark:bg-slate-900">
-                  <div className={cn('flex items-center justify-between px-4 py-2.5 text-sm font-semibold capitalize', isToday(day) ? 'bg-primary/10 text-primary' : 'bg-slate-50 dark:bg-slate-800/50')}>
+                <div key={key} className="overflow-hidden rounded-2xl border bg-white dark:bg-white/[0.035] dark:backdrop-blur-xl">
+                  <div className={cn('flex items-center justify-between px-4 py-2.5 text-sm font-semibold capitalize', isToday(day) ? 'bg-primary/10 text-primary' : 'bg-slate-50 dark:bg-white/[0.05]')}>
                     <span>{format(day, "EEEE d 'de' MMMM")}</span>
                     <button onClick={() => openDay(day)} className="text-xs font-medium opacity-70 hover:opacity-100">+ Agregar</button>
                   </div>
@@ -184,7 +184,7 @@ export default function Calendar() {
                       <button
                         key={e.id}
                         onClick={() => { setEditing(e); setSelectedDay(day); setModalOpen(true); }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-primary/10"
                       >
                         <span className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
                         <div className="min-w-0 flex-1">
@@ -205,8 +205,8 @@ export default function Calendar() {
           })()}
         </div>
       ) : (
-      <div className="overflow-hidden rounded-2xl border bg-white dark:bg-slate-900">
-        <div className="grid grid-cols-7 border-b bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800/50">
+      <div className="overflow-hidden rounded-2xl border bg-white dark:bg-white/[0.035] dark:backdrop-blur-xl">
+        <div className="grid grid-cols-7 border-b bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/[0.05]">
           {WEEKDAYS.map((d) => <div key={d} className="py-2">{d}</div>)}
         </div>
         <div className={cn('grid grid-cols-7', view === 'month' ? 'grid-rows-6' : 'grid-rows-1')}>
@@ -219,8 +219,8 @@ export default function Calendar() {
                 key={key}
                 onClick={() => openDay(day)}
                 className={cn(
-                  'group relative min-h-[96px] cursor-pointer border-b border-r p-1.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50',
-                  outside && 'bg-slate-50/50 text-slate-400 dark:bg-slate-950/30',
+                  'group relative min-h-[96px] cursor-pointer border-b border-r p-1.5 transition hover:bg-slate-50 dark:hover:bg-primary/10',
+                  outside && 'bg-slate-50/50 text-slate-400 dark:bg-black/25',
                   view === 'week' && 'min-h-[400px]',
                 )}
               >
@@ -319,7 +319,7 @@ function EventModal({
         <Field label="Color">
           <div className="flex gap-2">
             {EVENT_COLORS.map((c) => (
-              <button key={c} type="button" onClick={() => setColor(c)} className={cn('h-8 w-8 rounded-full ring-offset-2 dark:ring-offset-slate-900', color === c && 'ring-2 ring-primary')} style={{ backgroundColor: c }} />
+              <button key={c} type="button" onClick={() => setColor(c)} className={cn('h-8 w-8 rounded-full ring-offset-2 dark:ring-offset-ink-900', color === c && 'ring-2 ring-primary')} style={{ backgroundColor: c }} />
             ))}
           </div>
         </Field>
