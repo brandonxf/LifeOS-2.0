@@ -20,7 +20,7 @@ export function formatCurrencyPrecise(n: number): string {
 export const MOOD_COLORS = ['', '#DC2626', '#D97706', '#eab308', '#22c55e', '#0D9488'];
 
 export const PRIORITY_STYLES: Record<string, string> = {
-  low: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  low: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
   medium: 'bg-primary/15 text-primary-600 dark:bg-primary/15 dark:text-primary',
   high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   urgent: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',

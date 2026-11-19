@@ -248,11 +248,11 @@ export default function Tasks() {
               <Droppable droppableId={col.id} key={col.id}>
                 {(provided, snapshot) => (
                   <div ref={provided.innerRef} {...provided.droppableProps}
-                    className={cn('rounded-2xl border bg-slate-100/50 p-3 transition-colors dark:bg-slate-900/50', snapshot.isDraggingOver && 'bg-primary/5 ring-2 ring-primary/30')}>
+                    className={cn('rounded-2xl border bg-slate-100/50 p-3 transition-colors dark:bg-white/[0.03]', snapshot.isDraggingOver && 'bg-primary/5 ring-2 ring-primary/30')}>
                     <div className="mb-3 flex items-center gap-2 px-1">
                       <span className={cn('h-2.5 w-2.5 rounded-full', col.accent)} />
                       <h3 className="text-sm font-semibold">{col.label}</h3>
-                      <span className="ml-auto rounded-full bg-slate-200 px-2 text-xs font-medium dark:bg-slate-800">{byColumn(col.id).length}</span>
+                      <span className="ml-auto rounded-full bg-slate-200 px-2 text-xs font-medium dark:bg-white/10">{byColumn(col.id).length}</span>
                     </div>
                     <div className="space-y-2">
                       {byColumn(col.id).map((task, index) => (
@@ -260,7 +260,7 @@ export default function Tasks() {
                           {(prov, snap) => (
                             <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
                               onClick={() => setViewing(task)}
-                              className={cn('cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition dark:bg-slate-900', snap.isDragging && 'rotate-1 shadow-lg')}>
+                              className={cn('cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition dark:bg-white/[0.05]', snap.isDragging && 'rotate-1 shadow-lg')}>
                               <TaskCard task={task} onDelete={() => confirmDelete(task)} onMove={(status) => changeStatus(task, status)} />
                             </div>
                           )}
@@ -358,7 +358,7 @@ function TaskViewModal({
               <Flag className="h-3 w-3" /> {PRIORITY_LABELS[task.priority]}
             </span>
             {task.dueDate && (
-              <span className={cn('chip', overdue ? 'bg-danger/10 text-danger' : 'bg-slate-100 text-slate-500 dark:bg-slate-800')}>
+              <span className={cn('chip', overdue ? 'bg-danger/10 text-danger' : 'bg-slate-100 text-slate-500 dark:bg-white/10')}>
                 <Calendar className="h-3 w-3" /> {format(parseISO(task.dueDate), "MMM d, yyyy")}
               </span>
             )}
@@ -369,7 +369,7 @@ function TaskViewModal({
               <p className="mb-1.5 text-xs font-semibold text-slate-400">Asignados</p>
               <div className="flex flex-wrap gap-2">
                 {task.assignees!.map((a) => (
-                  <div key={a.id} className="flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-1 pr-3 dark:bg-slate-800">
+                  <div key={a.id} className="flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-1 pr-3 dark:bg-white/10">
                     <Avatar name={a.name} avatar={a.avatar} size={22} />
                     <span className="text-xs font-medium">{a.name}</span>
                   </div>
@@ -407,7 +407,7 @@ function TaskCard({ task, onDelete, onMove }: { task: Task; onDelete: () => void
           <Flag className="h-3 w-3" /> {PRIORITY_LABELS[task.priority]}
         </span>
         {task.dueDate && (
-          <span className={cn('chip', overdue ? 'bg-danger/10 text-danger' : 'bg-slate-100 text-slate-500 dark:bg-slate-800')}>
+          <span className={cn('chip', overdue ? 'bg-danger/10 text-danger' : 'bg-slate-100 text-slate-500 dark:bg-white/10')}>
             <Calendar className="h-3 w-3" /> {format(parseISO(task.dueDate), 'MMM d')}
           </span>
         )}
