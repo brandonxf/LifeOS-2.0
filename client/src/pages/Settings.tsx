@@ -166,13 +166,7 @@ function AppearanceCard() {
   );
 }
 
-function PreferencesCard({
-  diaryLockEnabled,
-  onToggleDiaryLock,
-}: {
-  diaryLockEnabled: boolean;
-  onToggleDiaryLock: (v: boolean) => void;
-}) {
+function PreferencesCard() {
   const native = Capacitor.isNativePlatform();
   const {
     taskRemindersEnabled, setTaskRemindersEnabled,
@@ -183,7 +177,6 @@ function PreferencesCard({
     budgetAlertEnabled, setBudgetAlertEnabled,
     streakAlertEnabled, setStreakAlertEnabled,
     streakAlertTime, setStreakAlertTime,
-    biometricLockEnabled, setBiometricLockEnabled,
   } = useSettings();
 
   /** Activa una alerta pidiendo antes el permiso de notificaciones. */
@@ -220,39 +213,13 @@ function PreferencesCard({
     if (habitReminderEnabled) await scheduleDailyHabitReminder(time);
   }
 
-  async function onToggleBiometric(v: boolean) {
-    if (v) {
-      const available = await isBiometricAvailable();
-      if (!available) return toast.error('Este dispositivo no tiene huella/rostro configurado');
-      const ok = await verifyBiometric();
-      if (!ok) return toast.error('No se pudo verificar tu identidad');
-    }
-    setBiometricLockEnabled(v);
-    toast.success(v ? 'Bloqueo biométrico activado' : 'Bloqueo biométrico desactivado');
-  }
-
-  // El bloqueo del diario es del servidor (PIN por cuenta), así que sale en
-  // web y en la app; lo demás de esta tarjeta es solo nativo.
-  const diaryRow = (
-    <div className={cn('flex items-center justify-between gap-4', native && 'border-t pt-4')}>
-      <div className="flex items-center gap-2">
-        <Lock className="h-4 w-4 text-slate-400" />
-        <div>
-          <p className="text-sm font-medium">Bloquear diario</p>
-          <p className="text-xs text-slate-400">Pide un PIN de 4 dígitos cada vez que entras a Diario</p>
-        </div>
-      </div>
-      <Toggle checked={diaryLockEnabled} onChange={onToggleDiaryLock} />
-    </div>
-  );
-
   return (
     <Card>
-      <h3 className="mb-4 flex items-center gap-2 font-semibold"><Bell className="h-4 w-4" /> Notificaciones y seguridad</h3>
+      <h3 className="mb-4 flex items-center gap-2 font-semibold"><Bell className="h-4 w-4" /> Notificaciones</h3>
       <div className="space-y-4">
         {!native && (
           <p className="text-sm text-slate-400">
-            Los recordatorios y el bloqueo biométrico solo están disponibles en la app de Android.
+            Los recordatorios solo están disponibles en la app de Android.
           </p>
         )}
         {native && (
@@ -334,27 +301,27 @@ function PreferencesCard({
                 />
               </div>
             )}
-
-            <div className="flex items-center justify-between gap-4 border-t pt-4">
-              <div className="flex items-center gap-2">
-                <Fingerprint className="h-4 w-4 text-slate-400" />
-                <div>
-                  <p className="text-sm font-medium">Bloqueo biométrico</p>
-                  <p className="text-xs text-slate-400">Pide huella/rostro al abrir la app</p>
-                </div>
-              </div>
-              <Toggle checked={biometricLockEnabled} onChange={onToggleBiometric} />
-            </div>
           </>
         )}
-
-        {diaryRow}
       </div>
     </Card>
   );
 }
 
 export default function Settings() {
+  const { biometricLockEnabled, setBiometricLockEnabled } = useSettings();
+
+  async function onToggleBiometric(v: boolean) {
+    if (v) {
+      const available = await isBiometricAvailable();
+      if (!available) return toast.error('Este dispositivo no tiene huella/rostro configurado');
+      const ok = await verifyBiometric();
+      if (!ok) return toast.error('No se pudo verificar tu identidad');
+    }
+    setBiometricLockEnabled(v);
+    toast.success(v ? 'Bloqueo biométrico activado' : 'Bloqueo biométrico desactivado');
+  }
+
   const { user, clear, refreshToken, setUser } = useAuth();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
@@ -466,15 +433,39 @@ export default function Settings() {
         </div>
       </Card>
 
-      <PreferencesCard
-        diaryLockEnabled={!!user?.diaryLockEnabled}
-        onToggleDiaryLock={(v) => (v ? setDiaryPinOpen(true) : setDiaryPinDisableOpen(true))}
-      />
+      <PreferencesCard />
 
       {/* Security / session */}
       <Card>
         <h3 className="mb-4 flex items-center gap-2 font-semibold"><Shield className="h-4 w-4" /> Seguridad</h3>
-        <p className="mb-4 text-sm text-slate-400">
+        <div className="mb-4 space-y-4">
+          {Capacitor.isNativePlatform() && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Fingerprint className="h-4 w-4 text-slate-400" />
+                <div>
+                  <p className="text-sm font-medium">Bloqueo biométrico</p>
+                  <p className="text-xs text-slate-400">Pide huella/rostro al abrir la app</p>
+                </div>
+              </div>
+              <Toggle checked={biometricLockEnabled} onChange={onToggleBiometric} />
+            </div>
+          )}
+          <div className={cn('flex items-center justify-between gap-4', Capacitor.isNativePlatform() && 'border-t pt-4')}>
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-slate-400" />
+              <div>
+                <p className="text-sm font-medium">Bloquear diario</p>
+                <p className="text-xs text-slate-400">Pide un PIN de 4 dígitos cada vez que entras a Diario</p>
+              </div>
+            </div>
+            <Toggle
+              checked={!!user?.diaryLockEnabled}
+              onChange={(v) => (v ? setDiaryPinOpen(true) : setDiaryPinDisableOpen(true))}
+            />
+          </div>
+        </div>
+        <p className="mb-4 border-t pt-4 text-sm text-slate-400">
           Iniciaste sesión con un token de refresco rotativo. Cambiar la contraseña cierra la sesión en todos los dispositivos.
         </p>
         <div className="space-y-2">
