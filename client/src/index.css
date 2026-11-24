@@ -85,7 +85,11 @@
     @apply w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/25 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-primary/70 dark:focus:ring-primary/20;
   }
   .input-glass {
-    @apply w-full rounded-2xl border border-white/20 bg-white/[0.04] px-4 py-3.5 text-base text-white outline-none transition placeholder:text-white/40 focus:border-primary/70 focus:ring-2 focus:ring-primary/20 sm:px-5 lg:py-4;
+    @apply w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-base text-white outline-none transition duration-200 placeholder:text-white/40 hover:border-white/20 focus:border-primary/70 focus:bg-white/[0.07] sm:px-5 lg:py-4;
+    min-height: 52px;
+  }
+  .input-glass:focus-visible {
+    box-shadow: 0 0 0 3px rgb(var(--primary) / 0.22), 0 8px 28px -10px rgb(var(--primary) / 0.45);
   }
   /* Pantalla de PIN del Diario (ver PinScreen.tsx). El fondo es la misma
      aurora estática que pinta `body` en móvil (bloque max-width: 900px más
@@ -625,3 +629,103 @@
 .ProseMirror h2 { @apply text-xl font-bold; }
 .ProseMirror ul { @apply list-disc pl-5; }
 .ProseMirror ol { @apply list-decimal pl-5; }
+
+
+/* ── Auth (login / registro / recuperar) ────────────────────────────
+   Diseño minimalista: fondo sobrio, formulario sin tarjeta, entrada suave.
+   El movimiento va solo en `prefers-reduced-motion: no-preference`; sin esa
+   preferencia todo queda en su estado final (fill backwards). */
+.auth-glow {
+  background:
+    radial-gradient(60% 50% at 15% 0%, rgb(var(--primary) / 0.13), transparent 70%),
+    radial-gradient(50% 40% at 100% 100%, rgb(var(--primary) / 0.07), transparent 70%);
+}
+.auth-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 40%, #000, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 60% at 30% 40%, #000, transparent 100%);
+}
+
+/* Campo con icono */
+.auth-field:focus-within .auth-field-icon {
+  color: rgb(var(--primary));
+}
+.auth-field .input-glass {
+  padding-left: 3rem;
+}
+
+/* Botón principal de auth: sólido y limpio */
+.auth-btn {
+  display: inline-flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  padding: 0.9rem 1.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #080a08;
+  background: rgb(var(--primary));
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+.auth-btn:hover:not(:disabled) {
+  background: rgb(var(--primary-200));
+  box-shadow: 0 8px 24px -10px rgb(var(--primary) / 0.6);
+}
+.auth-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+.auth-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.auth-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+@keyframes auth-rise {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@keyframes auth-fade {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-logo-in { animation: auth-fade 0.8s ease-out backwards; }
+  .auth-head-in { animation: auth-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards; }
+  .auth-stagger > * {
+    --stagger-time: 0.08s;
+    animation: auth-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(0.2s + var(--sibling-index, 1) * var(--stagger-time));
+  }
+}
+
+/* Escalonado: sibling-index() donde existe, nth-child donde no */
+@supports (animation-delay: calc(sibling-index() * 0.1s)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .auth-stagger > * {
+      animation-delay: calc(0.2s + sibling-index() * var(--stagger-time));
+    }
+  }
+}
+@supports not (animation-delay: calc(sibling-index() * 0.1s)) {
+  .auth-stagger > :nth-child(1) { --sibling-index: 1; }
+  .auth-stagger > :nth-child(2) { --sibling-index: 2; }
+  .auth-stagger > :nth-child(3) { --sibling-index: 3; }
+  .auth-stagger > :nth-child(4) { --sibling-index: 4; }
+  .auth-stagger > :nth-child(5) { --sibling-index: 5; }
+  .auth-stagger > :nth-child(6) { --sibling-index: 6; }
+}
+
+.auth-gradient-text {
+  color: rgb(var(--primary));
+}
+@media (forced-colors: active) {
+  .auth-btn { forced-color-adjust: none; background: ButtonFace; color: ButtonText; border: 2px solid ButtonText; }
+}

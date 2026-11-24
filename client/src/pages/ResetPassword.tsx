@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { authApi } from '../lib/api';
 import { Field, PasswordInput, Spinner } from '../components/ui';
 import { AuthShell } from './Login';
+import { AuthIconField } from '../components/AuthScene';
+import { Lock } from 'lucide-react';
 
 const schema = z
   .object({
@@ -55,16 +57,20 @@ export default function ResetPassword() {
 
   return (
     <AuthShell mode="none" title="Elige tu nueva contraseña" subtitle="">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 lg:space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-stagger space-y-5">
         <Field label="Nueva contraseña" error={errors.password?.message}>
-          <PasswordInput className="input-glass" placeholder="••••••••" {...register('password')} />
+          <AuthIconField icon={Lock}>
+            <PasswordInput className="input-glass" placeholder="••••••••" autoComplete="new-password" enterKeyHint="next" {...register('password')} />
+          </AuthIconField>
         </Field>
         <Field label="Confirma la contraseña" error={errors.confirm?.message}>
-          <PasswordInput className="input-glass" placeholder="••••••••" {...register('confirm')} />
+          <AuthIconField icon={Lock}>
+            <PasswordInput className="input-glass" placeholder="••••••••" autoComplete="new-password" enterKeyHint="go" {...register('confirm')} />
+          </AuthIconField>
         </Field>
         <button
           type="submit"
-          className="btn-primary w-full rounded-xl py-3.5 text-base shadow-glow sm:py-4 lg:text-lg"
+          className="auth-btn"
           disabled={loading}
         >
           {loading ? <Spinner /> : 'Guardar contraseña'}

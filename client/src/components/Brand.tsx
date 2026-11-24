@@ -160,43 +160,6 @@ export function Ambient({ className }: { className?: string }) {
   );
 }
 
-/**
- * Fondo "campo estelar" para las pantallas de auth: mismo lenguaje de aurora
- * + rejilla técnica que el resto de la app (ver `AuroraField`), más un
- * campo de estrellas tenue que acompaña la ilustración espacial del panel
- * de marca. Sin formas curvas grandes a propósito (antes había unas cintas
- * fluidas que a simple vista se leían como el logo de Spotify).
- */
-export function AuthBackdrop({ className }: { className?: string }) {
-  return (
-    <div aria-hidden className={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-ink-950', className)}>
-      {/* Brillos que flotan */}
-      <div className="animate-blob absolute -left-32 -top-24 h-[38rem] w-[38rem] rounded-full bg-primary/20 blur-[120px]" />
-      <div className="animate-blob absolute -right-28 top-1/4 h-[34rem] w-[34rem] rounded-full bg-primary/15 blur-[120px] [animation-delay:4s]" />
-      <div className="animate-blob absolute -bottom-32 left-1/3 h-[36rem] w-[36rem] rounded-full bg-primary/[0.12] blur-[130px] [animation-delay:8s]" />
-      {/* Rejilla técnica tenue */}
-      <div className="absolute inset-0 opacity-[0.6] [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:72px_72px]" />
-      {/* Campo de estrellas */}
-      <div
-        className="absolute inset-0 opacity-70"
-        style={{
-          backgroundImage:
-            'radial-gradient(1.6px 1.6px at 10% 18%, rgba(255,255,255,0.9), transparent 60%),' +
-            'radial-gradient(1.2px 1.2px at 32% 62%, rgba(255,255,255,0.7), transparent 60%),' +
-            'radial-gradient(1.8px 1.8px at 58% 28%, rgba(255,255,255,0.85), transparent 60%),' +
-            'radial-gradient(1.2px 1.2px at 74% 74%, rgba(255,255,255,0.6), transparent 60%),' +
-            'radial-gradient(1.5px 1.5px at 86% 15%, rgba(255,255,255,0.8), transparent 60%),' +
-            'radial-gradient(1.2px 1.2px at 20% 88%, rgba(255,255,255,0.65), transparent 60%),' +
-            'radial-gradient(1.6px 1.6px at 46% 42%, rgba(255,255,255,0.75), transparent 60%),' +
-            'radial-gradient(1.3px 1.3px at 94% 52%, rgba(255,255,255,0.7), transparent 60%)',
-        }}
-      />
-      {/* Viñeta */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.7)_100%)]" />
-    </div>
-  );
-}
-
 /** Espera a que el navegador confirme que ya pintó un frame real (doble
  *  requestAnimationFrame, con un timeout corto de respaldo) antes de dar luz
  *  verde a las animaciones del splash. En el arranque en frío de la app en

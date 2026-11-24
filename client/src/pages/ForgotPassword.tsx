@@ -7,6 +7,7 @@ import { Mail } from 'lucide-react';
 import { authApi } from '../lib/api';
 import { Field, Spinner } from '../components/ui';
 import { AuthShell } from './Login';
+import { AuthIconField } from '../components/AuthScene';
 
 const schema = z.object({
   email: z.string().email('Ingresa un correo válido'),
@@ -54,13 +55,25 @@ export default function ForgotPassword() {
 
   return (
     <AuthShell mode="none" title="¿Olvidaste tu contraseña?" subtitle="Te mandamos un link para elegir una nueva">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 lg:space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-stagger space-y-5">
         <Field label="Correo" error={errors.email?.message}>
-          <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
+          <AuthIconField icon={Mail}>
+            <input
+              className="input-glass"
+              type="email"
+              placeholder="tu@ejemplo.com"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="send"
+              {...register('email')}
+            />
+          </AuthIconField>
         </Field>
         <button
           type="submit"
-          className="btn-primary w-full rounded-xl py-3.5 text-base shadow-glow sm:py-4 lg:text-lg"
+          className="auth-btn"
           disabled={loading}
         >
           {loading ? <Spinner /> : 'Mandar link'}

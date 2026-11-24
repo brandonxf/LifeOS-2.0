@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Wallet, Flame, Sparkles } from 'lucide-react';
-import { LogoLockup, AuthBackdrop } from '../components/Brand';
+import { Wallet, Flame, Sparkles, Mail, Lock } from 'lucide-react';
+import { LogoLockup } from '../components/Brand';
+import { AuthBackdrop, AuthIconField } from '../components/AuthScene';
 import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, PasswordInput, Spinner } from '../components/ui';
@@ -57,28 +58,48 @@ export default function Login() {
 
   return (
     <AuthShell mode="login" title="Bienvenido de nuevo" subtitle="Inicia sesión en tu Life OS">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 lg:space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-stagger space-y-5">
         <Field label="Correo" error={errors.email?.message}>
-          <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
+          <AuthIconField icon={Mail}>
+            <input
+              className="input-glass"
+              type="email"
+              placeholder="tu@ejemplo.com"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              {...register('email')}
+            />
+          </AuthIconField>
         </Field>
         <Field label="Contraseña" error={errors.password?.message}>
-          <PasswordInput className="input-glass" placeholder="••••••••" {...register('password')} />
+          <AuthIconField icon={Lock}>
+            <PasswordInput
+              className="input-glass"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              enterKeyHint="go"
+              {...register('password')}
+            />
+          </AuthIconField>
         </Field>
         <Link
           to="/forgot-password"
-          className="inline-block text-sm text-white/60 transition hover:text-primary sm:text-base"
+          className="inline-block text-sm text-white/60 transition hover:text-primary"
         >
           ¿Olvidaste tu contraseña?
         </Link>
         <button
           type="submit"
-          className="btn-primary w-full rounded-xl py-3.5 text-base shadow-glow sm:py-4 lg:text-lg"
+          className="auth-btn"
           disabled={loading}
         >
           {loading ? <Spinner /> : 'Iniciar sesión'}
         </button>
       </form>
-      <button onClick={fillDemo} className="mt-4 w-full text-center text-sm text-white/50 transition hover:text-white/80">
+      <button onClick={fillDemo} className="mt-5 w-full text-center text-sm text-white/60 transition hover:text-white">
         Usar cuenta demo (demo@lifeos.app / demo1234)
       </button>
     </AuthShell>
@@ -97,70 +118,66 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen overflow-hidden">
+    <div className="relative flex min-h-[100dvh] overflow-hidden">
       <AuthBackdrop />
 
-      {/* Panel de marca — solo en desktop (lg+), así el móvil/app nunca lo ve
-          y conserva la tarjeta centrada de siempre. */}
-      <div className="relative z-10 hidden flex-1 flex-col p-12 lg:flex xl:p-16">
-        <LogoLockup width={240} className="xl:w-[260px]" />
-        <div className="flex flex-1 flex-col justify-center">
-          <div className="max-w-lg">
-            <h2 className="font-display text-4xl font-bold leading-[1.1] text-white xl:text-5xl">
-              Tu vida, ordenada en un solo lugar
-            </h2>
-            <p className="mt-4 max-w-md text-base text-white/55 xl:text-lg">
-              Hábitos, finanzas, tareas, metas y bienestar — todo sincronizado y siempre a mano.
-            </p>
-            <ul className="mt-9 space-y-4">
-              {BRAND_FEATURES.map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-primary shadow-glow">
-                    <Icon size={18} />
-                  </span>
-                  <span className="text-[0.95rem] text-white/75">{label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+      {/* Panel de marca — solo desktop (lg+) */}
+      <div className="relative z-10 hidden flex-1 flex-col justify-center p-14 lg:flex xl:p-20">
+        <div className="auth-logo-in absolute left-14 top-8 xl:left-20">
+          <LogoLockup width={260} />
         </div>
-        <p className="text-xs text-white/35">© {new Date().getFullYear()} Life OS</p>
+        <div className="auth-head-in max-w-xl">
+          <h2 className="font-display text-4xl font-bold leading-[1.1] text-white xl:text-[3.25rem]">
+            Tu vida, <span className="auth-gradient-text">ordenada</span> en un solo lugar
+          </h2>
+          <p className="mt-5 max-w-md text-base text-white/60 xl:text-lg">
+            Hábitos, finanzas, tareas, metas y bienestar — sincronizado y siempre a mano.
+          </p>
+          <ul className="mt-10 space-y-3.5">
+            {BRAND_FEATURES.map(({ icon: Icon, label }) => (
+              <li key={label} className="flex items-center gap-3 text-[0.95rem] text-white/70">
+                <Icon size={18} className="shrink-0 text-primary" />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="absolute bottom-8 left-14 text-xs text-white/35 xl:left-20">© {new Date().getFullYear()} Life OS</p>
       </div>
 
-      {/* Panel del formulario — sin tarjeta/vidrio: va directo sobre el fondo,
-          igual que el panel de marca, tanto en móvil/app como en desktop. */}
-      <div className="relative z-10 flex w-full items-center justify-center p-6 sm:p-10 lg:w-1/2 lg:border-l lg:border-white/10 lg:bg-black/10 lg:p-10 xl:p-16">
-        <div className="w-full max-w-md lg:max-w-lg">
+      {/* Formulario — sin tarjeta, directo sobre el fondo */}
+      <div className="relative z-10 flex w-full items-center justify-center px-6 py-10 sm:p-10 lg:w-[44%] lg:max-w-[38rem] lg:border-l lg:border-white/[0.07] lg:bg-black/20 lg:p-12 xl:p-16">
+        <div className="w-full max-w-sm">
           {/* Marca (móvil/tablet) */}
-          <div className="flex flex-col items-center lg:hidden">
-            <LogoLockup width={220} className="sm:w-[250px]" />
+          <div className="auth-logo-in mb-10 flex justify-center lg:hidden">
+            <LogoLockup width={230} className="sm:w-[260px]" />
           </div>
 
-          <div className="mb-9 mt-8 text-center lg:mb-10 lg:mt-0 lg:text-left">
-            <h1 className="font-display text-3xl font-bold text-white sm:text-4xl lg:text-4xl">{title}</h1>
-            <p className="mt-2 text-base text-white/55 lg:mt-2.5 lg:text-lg">{subtitle}</p>
+          <div className="auth-head-in mb-8 text-center lg:text-left">
+            <h1 className="font-display text-[1.75rem] font-bold leading-tight text-white sm:text-3xl">{title}</h1>
+            {subtitle && <p className="mt-2 text-base text-white/60">{subtitle}</p>}
           </div>
 
           {children}
 
           {mode !== 'none' && (
-          <p className="mt-8 text-center text-sm text-white/60 sm:text-base lg:text-left">
-            {mode === 'login' ? (
-              <>
-                ¿Nuevo por aquí?{' '}
-                <Link to="/register" className="font-bold text-white transition hover:text-primary">
-                  Regístrate
-                </Link>
-              </>
-            ) : (
-              <>
-                ¿Ya tienes cuenta?{' '}
-                <Link to="/login" className="font-bold text-white transition hover:text-primary">
-                  Inicia sesión
-                </Link>
-              </>
-            )}
-          </p>
+            <p className="mt-8 text-center text-sm text-white/65 sm:text-base lg:text-left">
+              {mode === 'login' ? (
+                <>
+                  ¿Nuevo por aquí?{' '}
+                  <Link to="/register" className="font-semibold text-white transition hover:text-primary">
+                    Regístrate
+                  </Link>
+                </>
+              ) : (
+                <>
+                  ¿Ya tienes cuenta?{' '}
+                  <Link to="/login" className="font-semibold text-white transition hover:text-primary">
+                    Inicia sesión
+                  </Link>
+                </>
+              )}
+            </p>
           )}
         </div>
       </div>

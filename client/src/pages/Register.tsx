@@ -8,6 +8,8 @@ import { authApi } from '../lib/api';
 import { useAuth, type AuthUser } from '../store/auth';
 import { Field, PasswordInput, Spinner } from '../components/ui';
 import { AuthShell } from './Login';
+import { AuthIconField } from '../components/AuthScene';
+import { User, Mail, Lock } from 'lucide-react';
 
 const schema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
@@ -45,19 +47,35 @@ export default function Register() {
 
   return (
     <AuthShell mode="register" title="Crea tu cuenta" subtitle="Empieza a organizar tu vida">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 lg:space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-stagger space-y-5">
         <Field label="Nombre" error={errors.name?.message}>
-          <input className="input-glass" placeholder="Juan Pérez" {...register('name')} />
+          <AuthIconField icon={User}>
+            <input className="input-glass" placeholder="Juan Pérez" autoComplete="name" enterKeyHint="next" {...register('name')} />
+          </AuthIconField>
         </Field>
         <Field label="Correo" error={errors.email?.message}>
-          <input className="input-glass" type="email" placeholder="tu@ejemplo.com" {...register('email')} />
+          <AuthIconField icon={Mail}>
+            <input
+              className="input-glass"
+              type="email"
+              placeholder="tu@ejemplo.com"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              {...register('email')}
+            />
+          </AuthIconField>
         </Field>
         <Field label="Contraseña" error={errors.password?.message}>
-          <PasswordInput className="input-glass" placeholder="Mínimo 8 caracteres" {...register('password')} />
+          <AuthIconField icon={Lock}>
+            <PasswordInput className="input-glass" placeholder="Mínimo 8 caracteres" autoComplete="new-password" enterKeyHint="go" {...register('password')} />
+          </AuthIconField>
         </Field>
         <button
           type="submit"
-          className="btn-primary w-full rounded-xl py-3.5 text-base shadow-glow sm:py-4 lg:text-lg"
+          className="auth-btn"
           disabled={loading}
         >
           {loading ? <Spinner /> : 'Crear cuenta'}
